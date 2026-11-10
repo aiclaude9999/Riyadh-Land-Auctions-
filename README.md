@@ -75,6 +75,17 @@
 
 ---
 
+## استضافة مجانية (GitHub Pages — تتحدث كل ساعة)
+
+الملف `.github/workflows/pages.yml` يجمع المزادات كل ساعة على خوادم GitHub وينشر صفحة واحدة (الأراضي، العقارات، كل المزادات، المصادر) على GitHub Pages — بدون قاعدة بيانات وبدون أي تكلفة.
+
+1. اجعل المستودع **عاماً** (Settings → General → Danger Zone → Change visibility → Public) — GitHub Pages مجاني للمستودعات العامة فقط.
+2. Settings → **Pages** → Source: اختر **GitHub Actions**.
+3. تبويب **Actions** → "Update auctions page" → **Run workflow** (أول مرة فقط؛ بعدها يعمل تلقائياً كل ساعة).
+4. بعد 2–3 دقائق يظهر الرابط في Settings → Pages، مثل `https://aiclaude9999.github.io/riyadh-land-auctions-/`.
+
+هذه النسخة لا تحتوي المحفوظات والإشعارات (تحتاج خادماً وقاعدة بيانات). للتجربة محلياً: `npx prisma generate && npx tsx scripts/build-static.ts` ثم افتح `site/index.html`.
+
 ## الاستضافة على الإنترنت (Render — بدون أي أوامر)
 
 المشروع جاهز للنشر بضغطة واحدة عبر ملف `render.yaml`، الذي ينشئ: خدمة الويب (الواجهة + التحديث التلقائي في حاوية واحدة)، قاعدة PostgreSQL، وطابور Key Value.
