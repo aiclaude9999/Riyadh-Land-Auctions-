@@ -13,7 +13,7 @@ export default function SourcesPage() {
 
   const refresh = async (id?: string) => {
     const r = await fetch('/api/refresh', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(id ? { sourceId: id } : {}) }).then((r) => r.json());
-    setMsg(r.error ? `خطأ: ${r.error}` : `تمت جدولة: ${r.queued.join('، ')}`);
+    setMsg(r.error ? `خطأ: ${r.error}` : r.note ?? `تمت جدولة: ${r.queued.join('، ')}`);
     setTimeout(load, 3000);
   };
   const toggle = async (s: any) => { await fetch('/api/sources', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: s.id, enabled: !s.enabled }) }); load(); };

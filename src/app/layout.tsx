@@ -3,7 +3,7 @@ import './globals.css';
 import { Nav } from '@/components/Nav';
 
 export const metadata: Metadata = {
-  title: 'متتبع مزادات الرياض',
+  title: 'رادار المزادات | Mazad Radar',
   description: 'تجميع المزادات من أشهر منصات المزادات السعودية مع التركيز على مدينة الرياض',
 };
 

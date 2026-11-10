@@ -28,7 +28,8 @@ export default function SettingsPage() {
       <h1 className="text-xl font-bold">الإعدادات</h1>
       <div className="card space-y-3 p-4">
         <h2 className="font-semibold">فترات التحديث التلقائي</h2>
-        {FIELDS.map((f) => (
+        {s.scheduler === 'github' && <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-900 dark:bg-amber-950 dark:text-amber-100">في الاستضافة المجانية يتم جمع المزادات تلقائياً كل 30 دقيقة عبر GitHub Actions، لذلك لا تنطبق فترات المزادات أدناه. فترة تحديث الواجهة تعمل.</p>}
+        {FIELDS.filter((f) => s.scheduler !== 'github' || f.k === 'uiRefreshSec').map((f) => (
           <label key={f.k} className="flex items-center justify-between gap-3 text-sm">
             <span>{f.label}</span>
             <span className="flex items-center gap-2">
@@ -62,7 +63,10 @@ export default function SettingsPage() {
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={s.telegram.enabled} onChange={(e) => setS({ ...s, telegram: { ...s.telegram, enabled: e.target.checked } })} /> تفعيل إرسال الإشعارات إلى Telegram</label>
         <input className="input" dir="ltr" placeholder="Chat ID" value={s.telegram.chatId} onChange={(e) => setS({ ...s, telegram: { ...s.telegram, chatId: e.target.value } })} />
       </div>
-      <div className="flex items-center gap-3"><button className="btn btn-primary" onClick={save}>حفظ الإعدادات</button>{saved && <span className="text-sm">{saved}</span>}</div>
+      <div className="flex flex-wrap items-center gap-3">
+        <button className="btn btn-primary" onClick={save}>حفظ الإعدادات</button>{saved && <span className="text-sm">{saved}</span>}
+        {s.passwordEnabled && <button className="btn mr-auto" onClick={async () => { await fetch('/api/logout', { method: 'POST' }); location.href = '/login'; }}>تسجيل الخروج</button>}
+      </div>
     </div>
   );
 }

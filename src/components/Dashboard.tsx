@@ -109,11 +109,12 @@ export function Dashboard({ savedOnly = false }: { savedOnly?: boolean }) {
     try {
       const r = await fetch('/api/refresh', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }).then((r) => r.json());
       if (r.error) throw new Error(r.error);
-      setMsg(`تمت جدولة تحديث ${r.queued.length} مصادر — ستظهر النتائج تلقائياً`);
+      setMsg(r.note ?? `تمت جدولة تحديث ${r.queued.length} مصادر — ستظهر النتائج تلقائياً`);
       setTimeout(() => refresh(true), 15_000);
       setTimeout(() => refresh(true), 45_000);
+      setTimeout(() => refresh(true), 150_000);
     } catch (e: any) {
-      setMsg(`تعذر بدء التحديث (تأكد من تشغيل Redis والـ worker): ${e.message}`);
+      setMsg(`تعذر بدء التحديث: ${e.message}`);
     } finally {
       setRefreshing(false);
     }

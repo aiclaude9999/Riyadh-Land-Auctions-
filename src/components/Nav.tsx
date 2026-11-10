@@ -21,12 +21,13 @@ export function Nav() {
     const t = setInterval(load, 60_000);
     return () => clearInterval(t);
   }, [path]);
+  if (path === '/login') return null;
   return (
     <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--card)]/90 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center gap-6 px-4 py-3">
         <Link href="/" className="flex items-center gap-2 text-lg font-bold text-brand-600">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-600 text-white">⚖</span>
-          متتبع مزادات الرياض
+          <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-600 text-white">◎</span>
+          رادار المزادات
         </Link>
         <nav className="flex flex-1 gap-1 overflow-x-auto text-sm">
           {LINKS.map((l) => (
