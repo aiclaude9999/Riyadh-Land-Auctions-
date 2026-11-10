@@ -41,7 +41,9 @@ const lastRun: Partial<Record<RefreshMode, number>> = { live: Date.now(), upcomi
 async function enabledSources() {
   const rows = await prisma.source.findMany({ where: { enabled: true }, select: { id: true } });
   const ids = new Set(rows.map((r) => r.id));
-  return connectors.filter((c) => ids.has(c.id));
+  // On small hosted servers the browser-based sources (blocked by Cloudflare / geo-block anyway) can be skipped to save memory.
+  const noBrowser = process.env.DISABLE_BROWSER_SOURCES === '1';
+  return connectors.filter((c) => ids.has(c.id) && !(noBrowser && c.method === 'browser'));
 }
 
 async function tick() {

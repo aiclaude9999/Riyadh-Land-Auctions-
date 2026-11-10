@@ -1,0 +1,42 @@
+# Render Blueprint — creates everything needed to host the app:
+#   1 web service (dashboard + background worker in one container)
+#   1 PostgreSQL database
+#   1 Key Value (Redis-compatible) instance for the job queue
+# In Render: New → Blueprint → choose this repository → Apply.
+services:
+  - type: web
+    name: riyadh-auctions
+    runtime: docker
+    dockerfilePath: ./Dockerfile.render
+    plan: starter          # always on (the free plan sleeps, which would stop automatic updates)
+    region: frankfurt      # closest Render region to Saudi Arabia
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: riyadh-auctions-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: riyadh-auctions-queue
+          property: connectionString
+      - key: DISABLE_BROWSER_SOURCES
+        value: "1"
+      - key: LOG_PRETTY
+        value: "0"
+      - key: WORKER_CONCURRENCY
+        value: "2"
+
+  - type: keyvalue
+    name: riyadh-auctions-queue
+    plan: free
+    region: frankfurt
+    maxmemoryPolicy: noeviction   # required by BullMQ
+    ipAllowList: []               # reachable only from this account's services
+
+databases:
+  - name: riyadh-auctions-db
+    plan: basic-256mb
+    region: frankfurt
+    databaseName: auctions
