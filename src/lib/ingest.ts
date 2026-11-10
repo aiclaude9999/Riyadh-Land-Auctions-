@@ -59,9 +59,12 @@ export interface IngestResult { found: number; created: number; updated: number;
 export async function ingest(sourceId: string, raws: RawAuction[], now = new Date()): Promise<IngestResult> {
   const res: IngestResult = { found: raws.length, created: 0, updated: 0, events: [] };
   const seen = new Set<string>();
-  for (const r of raws) {
-    if (!r.externalId || seen.has(r.externalId)) continue;
-    seen.add(r.externalId);
+  // auctions that ended more than 120 days ago are not kept (see the cleanup in scripts/collect.ts)
+  const tooOld = (r: RawAuction) => r.status === 'ended' && !!r.endAt && now.getTime() - r.endAt.getTime() > 120 * DAY;
+  const unique = raws.filter((r) => r.externalId && !tooOld(r) && !seen.has(r.externalId) && seen.add(r.externalId));
+  // Listings of ONE source never merge with each other, so they can be processed in parallel.
+  // This matters when the database is far away (each query is a network round trip).
+  await mapLimit(unique, CONCURRENCY, async (r) => {
     const d = toListingData(r, now);
     const listingFields = {
       url: r.url, title: d.title, normalizedTitle: d.normalizedTitle, category: d.category, status: d.status,
@@ -93,7 +96,7 @@ export async function ingest(sourceId: string, raws: RawAuction[], now = new Dat
       res.created++;
     }
 
-    for (const a of r.assets ?? []) {
+    await mapLimit(r.assets ?? [], 8, async (a) => {
       const ag = classifyGeo({ cities: [a.city], regions: [a.region], districts: [a.district], lat: a.latitude, lng: a.longitude });
       const fields = {
         title: a.title ?? null, url: a.url ?? null, region: a.region ?? null, city: a.city ?? null, district: a.district ?? null, geoScope: ag.scope,
@@ -101,11 +104,22 @@ export async function ingest(sourceId: string, raws: RawAuction[], now = new Dat
         propertyType: a.propertyType ?? null, usage: a.usage ?? null, areaSqm: a.areaSqm ?? null, status: a.status ?? null,
       };
       await prisma.asset.upsert({ where: { listingId_externalId: { listingId, externalId: a.externalId } }, create: { listingId, externalId: a.externalId, ...fields }, update: fields });
-    }
+    });
 
     res.events.push(...(await recomputeAuction(auctionId, now)));
-  }
+  });
   return res;
+}
+
+const CONCURRENCY = Math.max(1, Number(process.env.INGEST_CONCURRENCY ?? 8));
+
+/** Run `fn` over `items` with at most `limit` running at once. */
+export async function mapLimit<T>(items: T[], limit: number, fn: (x: T) => Promise<void>): Promise<void> {
+  let i = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (i < items.length) await fn(items[i++]);
+  });
+  await Promise.all(workers);
 }
 
 /** Find an existing canonical auction (from another source) that this listing duplicates. */
