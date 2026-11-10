@@ -113,8 +113,8 @@ const PROPERTY_RULES: [PropertyType, RegExp][] = [
   ['rest_house', /(استراحه|استراحات|شاليه|شاليهات|منتجع)/],
   ['villa', /(فيلا|فلل|فله|دوبلكس|قصر|قصور|villa)/],
   ['apartment', /(شقه|شقق|apartment)/],
-  ['building', /(عماره|عمائر|مبني|مباني|برج|building)/],
-  ['commercial', /(محل|محلات|معرض|مستودع|مستودعات|مكتب|مكاتب|ورشه|warehouse|shop)/],
+  ['building', /(عماره|عمائر|مبني|مباني|برج|ابراج|فندق|building|hotel|tower)/],
+  ['commercial', /(محل|محلات|معرض|مستودع|مستودعات|مكتب|مكاتب|ورشه|ورش|warehouse|shop|store|office)/],
 ];
 
 /** Property type from a structured value (e.g. "Land") or free text (e.g. "أرض زراعية بحي حريملاء"). */
