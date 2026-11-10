@@ -64,7 +64,7 @@ In this sandbox Node `fetch` needs `NODE_USE_ENV_PROXY=1`. netlify.app / github.
 - `src/lib/auth.ts` + `src/middleware.ts` + `/login` — site password (`APP_PASSWORD`, HMAC cookie, 90 days).
 - `src/worker/index.ts` BullMQ worker + scheduler (Docker/paid mode only).
 - `scripts/collect.ts` GitHub collector (no Redis). `scripts/build-static.ts` + `static/template.html` → GitHub Pages page. `scripts/scrape-once.ts` local test. `scripts/infath-laptop/*.ps1` Windows Infath collector (currently unused).
-- Pages: `/` dashboard (default **land** focus, Riyadh city), `/properties` (every asset), `/auctions/[id]` (plots table, change history), `/saved`, `/sources`, `/notifications`, `/settings`, `/login`.
+- Pages: `/` dashboard (default **land** focus, Riyadh city), `/properties` (every asset), `/map` (Leaflet + OpenStreetMap tiles, pins = assets with lat/lng, coloured by property type, popup with area/price/deposit/auction; API `/api/map`), `/auctions/[id]` (plots table, change history), `/saved`, `/sources`, `/notifications`, `/settings`, `/login`.
 - DB migrations: `prisma/migrations/20261110000000_init`, `20261110010000_land_fields`.
 - Tests: 78 passing (`npm test`), fixtures are trimmed real responses (personal/contact fields removed).
 
@@ -78,6 +78,8 @@ In this sandbox Node `fetch` needs `NODE_USE_ENV_PROXY=1`. netlify.app / github.
 6. First collector run timed out (US runners ↔ Frankfurt DB latency) → parallel ingest → ~2.5 min runs.
 7. Infath: confirmed geo-block; built HTML connector + Windows laptop collector; first run got 500, bypass declined, laptop cleaned up — but a scheduled run had already succeeded (Infath cards appeared), so the 500 was temporary. Laptop collector re-enabled with the same honest connector.
 8. Added **Soum**. Wasalt bypass requested and declined.
+9. Infath laptop collector re-enabled (works with plain requests). Added `CLAUDE.md` + this file.
+10. Added the **map page** (`/map`). Coordinates come mainly from Mobasher, Saudi Auctions, Mazadat; Soum sometimes; Infath/Qemah none.
 
 ## 6. Open items / to-do
 

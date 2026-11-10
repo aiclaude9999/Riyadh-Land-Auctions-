@@ -27,7 +27,7 @@ describe('soum auctions', () => {
     expect(a.startAt?.toISOString()).toBe('2026-11-10T14:00:00.000Z');
     expect(a.endAt?.toISOString()).toBe('2026-11-12T15:30:00.000Z');
     expect(toListingData(a).geo.scope).toBe('riyadh_city');
-    expect(a.images[0]).toMatch(/^https:\/\/.*oraclecloud\.com\/soom-prod-bucket-public\/auction_group_banners\//);
+    expect(a.images?.[0]).toMatch(/^https:\/\/.*oraclecloud\.com\/soom-prod-bucket-public\/auction_group_banners\//);
   });
   it('maps statuses', () => {
     expect(byId(1236).status).toBe('upcoming');
