@@ -7,8 +7,8 @@
 - Goal: aggregate Saudi auctions, focus on **land / real estate in Riyadh**.
 - Live app: https://mazad-radar.netlify.app (Netlify + Neon Postgres, password via `APP_PASSWORD`). Data collected every 30 min by GitHub Actions `collect.yml` → `scripts/collect.ts`.
 - Work on branch `ccr-684fffdf-bi3tdz` (repo default). Each push redeploys Netlify (costs 15 of 300 free monthly credits) — batch changes.
-- Sources working: Mobasher, Saudi Auctions (auctions.com.sa), Soum, Tarsyah, Mazadat, Qemah. Not connected: Infath, Wasalt, Athmann.
-- **Never bypass bot protection, Cloudflare challenges or geo-blocks** (decided; owner's requests to force Wasalt/Infath were declined).
+- Sources working: Mobasher, Saudi Auctions (auctions.com.sa), Soum, Tarsyah, Mazadat, Qemah (GitHub, every 30 min) + **Infath from the owner's Windows laptop in KSA** (task `MazadRadar-Infath`, every 2 h, plain requests). Not connected: Wasalt, Athmann (Cloudflare).
+- **Never bypass bot protection, Cloudflare challenges or geo-blocks** (decided; owner's requests to force Wasalt were declined). Running a collector from a Saudi network with honest requests is fine.
 - Never commit secrets; never repeat the database URL or passwords in chat or files.
 
 ## Commands
