@@ -1,0 +1,449 @@
+{
+ "items": [
+  {
+   "projectionVersion": "v1",
+   "documentId": "5494",
+   "schemaVersion": 1,
+   "listingType": "AUCTION",
+   "tenantId": "1",
+   "sourceContext": "auction",
+   "sourceEntityId": "5494",
+   "auctionType": "TIMED",
+   "auctionTypeLabel": "TIMED",
+   "title": "مزاد مشارق",
+   "summary": "",
+   "sellerOrgId": "441",
+   "sellerName": "samayah",
+   "sellerNameAr": "سماية العقارية",
+   "sellerLogoUrl": "https://storage.googleapis.com/mobasher-assets/blob_4d1745b54b",
+   "isInternational": false,
+   "customLabel": null,
+   "auctionCategory": "REAL_ESTATES",
+   "visitorsCount": 409,
+   "cityIds": [
+    "019ddb24-3a62-77e6-a7f2-6ad37cd05aaf",
+    "019ddb24-aae4-7699-b718-6c10cc5e65b9"
+   ],
+   "cityNames": [
+    "Al Khubar",
+    "AL_HAFOF"
+   ],
+   "cityNamesAr": [
+    "الخبر",
+    "الهفوف"
+   ],
+   "regionIds": [
+    "019ddb22-6909-77e8-a497-6aacb0af4114"
+   ],
+   "regionNames": [
+    "Eastern"
+   ],
+   "regionNamesAr": [
+    "المنطقة الشرقية"
+   ],
+   "neighborhoodIds": [],
+   "neighborhoodNames": [],
+   "neighborhoodNamesAr": [],
+   "productCount": 10,
+   "durationDays": 3,
+   "status": "LIVE",
+   "statusRank": 0,
+   "isAdvertised": true,
+   "isSpecial": false,
+   "advertisedRank": 3,
+   "startTimeUtc": "2026-11-08T09:00:00.000Z",
+   "scheduledEndTimeUtc": "2026-11-10T14:40:00.000Z",
+   "effectiveEndTimeUtc": "2026-11-10T13:10:00.000Z",
+   "nextEffectiveEndTimeUtc": "2026-11-10T13:20:00.000Z",
+   "hasEndTime": true,
+   "hasStarted": true,
+   "hasEnded": false,
+   "listingSortTimeUtc": "2026-11-08T09:00:00.000Z",
+   "currentLeadingBid": 0,
+   "sortPrice": 0,
+   "sortDateUtc": "2026-11-10T13:10:00.000Z",
+   "currency": "SAR",
+   "coverImageUrl": "https://storage.googleapis.com/mobasher-assets/Whats_App_Image_2026_10_28_at_11_56_27_AM_91cf56ab89.jpeg",
+   "createdAtUtc": "2026-10-27T07:21:56.000Z",
+   "updatedAtUtc": "2026-11-08T09:18:07.000Z",
+   "favoriteCount": 0,
+   "isFavorited": false,
+   "isPlatformSupported": true
+  },
+  {
+   "projectionVersion": "v1",
+   "documentId": "5538",
+   "schemaVersion": 1,
+   "listingType": "AUCTION",
+   "tenantId": "1",
+   "sourceContext": "auction",
+   "sourceEntityId": "5538",
+   "auctionType": "TIMED",
+   "auctionTypeLabel": "TIMED",
+   "title": "مزاد مصرف الراجحي للشاحنات (118)",
+   "summary": "",
+   "sellerOrgId": "388",
+   "sellerName": "Alrajhi",
+   "sellerNameAr": "Alrajhi",
+   "sellerLogoUrl": "https://storage.googleapis.com/mobasher-assets/blob_54cc9d2ea1",
+   "isInternational": false,
+   "customLabel": null,
+   "auctionCategory": "VEHICLES",
+   "visitorsCount": 978,
+   "cityIds": [
+    "019ddb25-f0af-720e-84fc-f7db8c1bba6f",
+    "019ddb24-3a7d-786a-953b-8decdb592f95",
+    "019ddb25-7397-7502-b993-0f785c019019",
+    "019ddb23-780e-7b84-bef4-6c164c37ef86"
+   ],
+   "cityNames": [
+    "Riyadh",
+    "Dammam",
+    "Jeddah",
+    "Abha"
+   ],
+   "cityNamesAr": [
+    "الرياض",
+    "الدمام",
+    "جدة",
+    "ابها"
+   ],
+   "regionIds": [
+    "019ddb22-68c8-7107-8c4d-da5dd46a84ac",
+    "019ddb22-6909-77e8-a497-6aacb0af4114",
+    "019ddb22-68d8-7189-9161-b63a7737b0ba",
+    "019ddb22-6918-7872-be37-8a2c6766f997"
+   ],
+   "regionNames": [
+    "Riyadh",
+    "Eastern",
+    "Makkah Al Mukarramah",
+    "Asir"
+   ],
+   "regionNamesAr": [
+    "الرياض",
+    "المنطقة الشرقية",
+    "مكة المكرمة",
+    "عسير"
+   ],
+   "neighborhoodIds": [],
+   "neighborhoodNames": [],
+   "neighborhoodNamesAr": [],
+   "productCount": 50,
+   "durationDays": 3,
+   "status": "LIVE",
+   "statusRank": 0,
+   "isAdvertised": false,
+   "isSpecial": false,
+   "advertisedRank": null,
+   "startTimeUtc": "2026-11-08T12:00:00.000Z",
+   "scheduledEndTimeUtc": "2026-11-10T17:43:00.000Z",
+   "effectiveEndTimeUtc": "2026-11-10T12:00:00.000Z",
+   "nextEffectiveEndTimeUtc": "2026-11-10T12:07:00.000Z",
+   "hasEndTime": true,
+   "hasStarted": true,
+   "hasEnded": false,
+   "listingSortTimeUtc": "2026-11-08T12:00:00.000Z",
+   "currentLeadingBid": 0,
+   "sortPrice": 0,
+   "sortDateUtc": "2026-11-10T12:00:00.000Z",
+   "currency": "SAR",
+   "coverImageUrl": "https://storage.googleapis.com/mobasher-assets/qwalb_alsyarat_alslymt_ai_108_bfc59ea934.png",
+   "createdAtUtc": "2026-11-02T08:35:24.000Z",
+   "updatedAtUtc": "2026-11-08T11:59:31.000Z",
+   "favoriteCount": 0,
+   "isFavorited": false,
+   "isPlatformSupported": true
+  },
+  {
+   "projectionVersion": "v1",
+   "documentId": "5374",
+   "schemaVersion": 1,
+   "listingType": "AUCTION",
+   "tenantId": "1",
+   "sourceContext": "auction",
+   "sourceEntityId": "5374",
+   "auctionType": "TIMED",
+   "auctionTypeLabel": "TIMED",
+   "title": "مزاد نوادر حائل",
+   "summary": "",
+   "sellerOrgId": "339",
+   "sellerName": "re",
+   "sellerNameAr": "مباشر للمزادات",
+   "sellerLogoUrl": "https://storage.googleapis.com/mobasher-assets/blob_37b44bbcc5",
+   "isInternational": false,
+   "customLabel": null,
+   "auctionCategory": "REAL_ESTATES",
+   "visitorsCount": 445,
+   "cityIds": [
+    "019ddb24-a8f9-7f8b-b1a4-f2e475790b6d"
+   ],
+   "cityNames": [
+    "Hail"
+   ],
+   "cityNamesAr": [
+    "حائل"
+   ],
+   "regionIds": [
+    "019ddb22-693c-70ad-bc2f-256cf7d4ec3e"
+   ],
+   "regionNames": [
+    "Hail"
+   ],
+   "regionNamesAr": [
+    "حائل"
+   ],
+   "neighborhoodIds": [],
+   "neighborhoodNames": [],
+   "neighborhoodNamesAr": [],
+   "productCount": 3,
+   "durationDays": 3,
+   "status": "LIVE",
+   "statusRank": 0,
+   "isAdvertised": false,
+   "isSpecial": false,
+   "advertisedRank": null,
+   "startTimeUtc": "2026-11-08T07:00:00.000Z",
+   "scheduledEndTimeUtc": "2026-11-10T13:20:00.000Z",
+   "effectiveEndTimeUtc": "2026-11-10T13:00:00.000Z",
+   "nextEffectiveEndTimeUtc": "2026-11-10T13:10:00.000Z",
+   "hasEndTime": true,
+   "hasStarted": true,
+   "hasEnded": false,
+   "listingSortTimeUtc": "2026-11-08T07:00:00.000Z",
+   "currentLeadingBid": 0,
+   "sortPrice": 0,
+   "sortDateUtc": "2026-11-10T13:00:00.000Z",
+   "currency": "SAR",
+   "coverImageUrl": "https://storage.googleapis.com/mobasher-assets/swr_kharjyt_llmzadat_1_bef0e06881.png",
+   "createdAtUtc": "2026-10-05T09:01:40.000Z",
+   "updatedAtUtc": "2026-11-08T06:59:03.000Z",
+   "favoriteCount": 0,
+   "isFavorited": false,
+   "isPlatformSupported": true
+  },
+  {
+   "projectionVersion": "v1",
+   "documentId": "5448",
+   "schemaVersion": 1,
+   "listingType": "AUCTION",
+   "tenantId": "1",
+   "sourceContext": "auction",
+   "sourceEntityId": "5448",
+   "auctionType": "TIMED",
+   "auctionTypeLabel": "TIMED",
+   "title": "مزاد شموخ الرياض",
+   "summary": "",
+   "sellerOrgId": "339",
+   "sellerName": "re",
+   "sellerNameAr": "مباشر للمزادات",
+   "sellerLogoUrl": "https://storage.googleapis.com/mobasher-assets/blob_37b44bbcc5",
+   "isInternational": false,
+   "customLabel": null,
+   "auctionCategory": "REAL_ESTATES",
+   "visitorsCount": 494,
+   "cityIds": [
+    "019ddb25-f0af-720e-84fc-f7db8c1bba6f"
+   ],
+   "cityNames": [
+    "Riyadh"
+   ],
+   "cityNamesAr": [
+    "الرياض"
+   ],
+   "regionIds": [
+    "019ddb22-68c8-7107-8c4d-da5dd46a84ac"
+   ],
+   "regionNames": [
+    "Riyadh"
+   ],
+   "regionNamesAr": [
+    "الرياض"
+   ],
+   "neighborhoodIds": [
+    "019ddb27-4dd1-72e0-93f6-c6ea30b7b818",
+    "019ddb27-4d9e-7a0f-bc37-c68eeca95d3a"
+   ],
+   "neighborhoodNames": [
+    "حي الياسمين",
+    "حي العارض"
+   ],
+   "neighborhoodNamesAr": [
+    "حي الياسمين",
+    "حي العارض"
+   ],
+   "productCount": 2,
+   "durationDays": 3,
+   "status": "LIVE",
+   "statusRank": 0,
+   "isAdvertised": false,
+   "isSpecial": false,
+   "advertisedRank": null,
+   "startTimeUtc": "2026-11-08T07:00:00.000Z",
+   "scheduledEndTimeUtc": "2026-11-10T13:10:00.000Z",
+   "effectiveEndTimeUtc": "2026-11-10T13:00:00.000Z",
+   "nextEffectiveEndTimeUtc": "2026-11-10T13:10:00.000Z",
+   "hasEndTime": true,
+   "hasStarted": true,
+   "hasEnded": false,
+   "listingSortTimeUtc": "2026-11-08T07:00:00.000Z",
+   "currentLeadingBid": 0,
+   "sortPrice": 0,
+   "sortDateUtc": "2026-11-10T13:00:00.000Z",
+   "currency": "SAR",
+   "coverImageUrl": "https://storage.googleapis.com/mobasher-assets/shmwkh_alryad_f2c5fa7a45.png",
+   "createdAtUtc": "2026-10-18T12:20:01.000Z",
+   "updatedAtUtc": "2026-11-08T09:13:22.000Z",
+   "favoriteCount": 0,
+   "isFavorited": false,
+   "isPlatformSupported": true
+  },
+  {
+   "projectionVersion": "v1",
+   "documentId": "5469",
+   "schemaVersion": 1,
+   "listingType": "AUCTION",
+   "tenantId": "1",
+   "sourceContext": "auction",
+   "sourceEntityId": "5469",
+   "auctionType": "TIMED",
+   "auctionTypeLabel": "TIMED",
+   "title": "مزاد دروب الرياض",
+   "summary": "",
+   "sellerOrgId": "389",
+   "sellerName": "amathel",
+   "sellerNameAr": "أماثل العقارية",
+   "sellerLogoUrl": "https://storage.googleapis.com/mobasher-assets/blob_8ef45cf613",
+   "isInternational": false,
+   "customLabel": null,
+   "auctionCategory": "REAL_ESTATES",
+   "visitorsCount": 440,
+   "cityIds": [
+    "019ddb25-f0af-720e-84fc-f7db8c1bba6f"
+   ],
+   "cityNames": [
+    "ديراب",
+    "Riyadh"
+   ],
+   "cityNamesAr": [
+    "ديراب",
+    "الرياض"
+   ],
+   "regionIds": [
+    "019ddb22-68c8-7107-8c4d-da5dd46a84ac"
+   ],
+   "regionNames": [
+    "Riyadh"
+   ],
+   "regionNamesAr": [
+    "الرياض"
+   ],
+   "neighborhoodIds": [
+    "019ddb27-4f9e-7885-9726-e726e5db24cd"
+   ],
+   "neighborhoodNames": [
+    "حي ظهرة لبن"
+   ],
+   "neighborhoodNamesAr": [
+    "حي ظهرة لبن"
+   ],
+   "productCount": 3,
+   "durationDays": 3,
+   "status": "LIVE",
+   "statusRank": 0,
+   "isAdvertised": false,
+   "isSpecial": false,
+   "advertisedRank": null,
+   "startTimeUtc": "2026-11-08T08:00:00.000Z",
+   "scheduledEndTimeUtc": "2026-11-10T18:00:00.000Z",
+   "effectiveEndTimeUtc": "2026-11-10T18:00:00.000Z",
+   "nextEffectiveEndTimeUtc": null,
+   "hasEndTime": true,
+   "hasStarted": true,
+   "hasEnded": false,
+   "listingSortTimeUtc": "2026-11-08T08:00:00.000Z",
+   "currentLeadingBid": 0,
+   "sortPrice": 0,
+   "sortDateUtc": "2026-11-10T18:00:00.000Z",
+   "currency": "SAR",
+   "coverImageUrl": "https://storage.googleapis.com/mobasher-assets/Whats_App_Image_2026_10_21_at_12_20_45_PM_28e9098d81.jpeg",
+   "createdAtUtc": "2026-10-21T09:39:16.000Z",
+   "updatedAtUtc": "2026-11-08T07:59:05.000Z",
+   "favoriteCount": 0,
+   "isFavorited": false,
+   "isPlatformSupported": true
+  },
+  {
+   "projectionVersion": "v1",
+   "documentId": "5533",
+   "schemaVersion": 1,
+   "listingType": "AUCTION",
+   "tenantId": "1",
+   "sourceContext": "auction",
+   "sourceEntityId": "5533",
+   "auctionType": "TIMED",
+   "auctionTypeLabel": "TIMED",
+   "title": "مزاد شركة الجبر (63)",
+   "summary": "",
+   "sellerOrgId": "496",
+   "sellerName": "aljabr",
+   "sellerNameAr": "شركة الجبر للتأجير",
+   "sellerLogoUrl": "https://storage.googleapis.com/mobasher-assets/blob_97f2949b8d",
+   "isInternational": false,
+   "customLabel": null,
+   "auctionCategory": "VEHICLES",
+   "visitorsCount": 1275,
+   "cityIds": [
+    "019ddb25-f0af-720e-84fc-f7db8c1bba6f"
+   ],
+   "cityNames": [
+    "Riyadh"
+   ],
+   "cityNamesAr": [
+    "الرياض"
+   ],
+   "regionIds": [
+    "019ddb22-68c8-7107-8c4d-da5dd46a84ac"
+   ],
+   "regionNames": [
+    "Riyadh"
+   ],
+   "regionNamesAr": [
+    "الرياض"
+   ],
+   "neighborhoodIds": [],
+   "neighborhoodNames": [],
+   "neighborhoodNamesAr": [],
+   "productCount": 16,
+   "durationDays": 7,
+   "status": "LIVE",
+   "statusRank": 0,
+   "isAdvertised": false,
+   "isSpecial": false,
+   "advertisedRank": null,
+   "startTimeUtc": "2026-11-04T13:00:00.000Z",
+   "scheduledEndTimeUtc": "2026-11-11T11:45:00.000Z",
+   "effectiveEndTimeUtc": "2026-11-11T10:00:00.000Z",
+   "nextEffectiveEndTimeUtc": "2026-11-11T10:07:00.000Z",
+   "hasEndTime": true,
+   "hasStarted": true,
+   "hasEnded": false,
+   "listingSortTimeUtc": "2026-11-04T13:00:00.000Z",
+   "currentLeadingBid": 0,
+   "sortPrice": 0,
+   "sortDateUtc": "2026-11-11T10:00:00.000Z",
+   "currency": "SAR",
+   "coverImageUrl": "https://storage.googleapis.com/mobasher-assets/mzad_alnkhbt_87_34_7a9b956adb.png",
+   "createdAtUtc": "2026-11-01T13:48:18.000Z",
+   "updatedAtUtc": "2026-11-04T12:59:38.000Z",
+   "favoriteCount": 0,
+   "isFavorited": false,
+   "isPlatformSupported": true
+  }
+ ],
+ "pageSize": 100,
+ "nextCursor": "eyJ2YWx1ZXMiOlswLC05MjIzMzcyMDM2ODU0Nzc2MDAwLDAsMywtMTc5MzI3NTI0MDAwMCwiNTQ3NyJdLCJkaXJlY3Rpb24iOiJuZXh0In0",
+ "previousCursor": null,
+ "totalItems": 5134,
+ "tokenStatus": "missing"
+}

@@ -1,0 +1,225 @@
+{
+ "success": true,
+ "data": [
+  {
+   "id": 33229,
+   "title": "مزاد مشارف",
+   "auction_type": "online",
+   "start_at": "2026-11-09 07:00:00",
+   "end_at": "2026-11-11 13:50:00",
+   "started_date": "2026-11-09 07:00:01",
+   "images": [
+    {
+     "img_url": "/web/content/auction.auction/33229/image"
+    }
+   ],
+   "region": "الرياض",
+   "city": "Riyadh",
+   "is_wishlist": false,
+   "neighborhood": "حي الملك سلمان , حي الفيصلية , حي الرمال , حي ديراب , حي عكاظ",
+   "auction_state": {
+    "title": "Current",
+    "class_name": "current",
+    "type": "current"
+   },
+   "charger": {
+    "name": "مزاد علني",
+    "img_url": "/web/content/res.partner/14907/image_1920"
+   },
+   "executor": {
+    "id": 7059,
+    "img_url": "/web/content/res.partner/7059/image_1920",
+    "name": "شركة كانف العقارية"
+   },
+   "base_url": "https://oe.auctions.com.sa",
+   "total_products": 5,
+   "auction_supervisor": false,
+   "allow_tag": false,
+   "special_auction": false
+  },
+  {
+   "id": 33292,
+   "title": "مزاد صروح الثاني عشر",
+   "auction_type": "online",
+   "start_at": "2026-11-09 06:00:00",
+   "end_at": "2026-11-11 14:00:00",
+   "started_date": "2026-11-09 06:00:01",
+   "images": [
+    {
+     "img_url": "/web/content/auction.auction/33292/image"
+    }
+   ],
+   "region": "الرياض",
+   "city": "Riyadh",
+   "is_wishlist": false,
+   "neighborhood": "",
+   "auction_state": {
+    "title": "Current",
+    "class_name": "current",
+    "type": "current"
+   },
+   "charger": {
+    "name": "مزاد علني",
+    "img_url": "/web/content/res.partner/14907/image_1920"
+   },
+   "executor": {
+    "id": 41529,
+    "img_url": "/web/content/res.partner/41529/image_1920",
+    "name": "شركة صروح العقارية"
+   },
+   "base_url": "https://oe.auctions.com.sa",
+   "total_products": 5,
+   "auction_supervisor": false,
+   "allow_tag": false,
+   "special_auction": false
+  },
+  {
+   "id": 33339,
+   "title": "مزاد الأصول المتحركة 5",
+   "auction_type": "online",
+   "start_at": "2026-11-08 07:00:00",
+   "end_at": "2026-11-11 14:15:00",
+   "started_date": "2026-11-08 07:00:02",
+   "images": [
+    {
+     "img_url": "/web/content/auction.auction/33339/image"
+    }
+   ],
+   "region": "جدة",
+   "city": "مكة المكرمة",
+   "is_wishlist": false,
+   "neighborhood": "",
+   "auction_state": {
+    "title": "Current",
+    "class_name": "current",
+    "type": "current"
+   },
+   "charger": {
+    "name": "مزاد علني",
+    "img_url": "/web/content/res.partner/14907/image_1920"
+   },
+   "executor": {
+    "id": 49527,
+    "img_url": "/web/content/res.partner/49527/image_1920",
+    "name": "شركة الجرس الذهبي للتجارة"
+   },
+   "base_url": "https://oe.auctions.com.sa",
+   "total_products": 4,
+   "auction_supervisor": false,
+   "allow_tag": false,
+   "special_auction": false
+  },
+  {
+   "id": 33285,
+   "title": "نوادر مكة 3",
+   "auction_type": "online",
+   "start_at": "2026-11-08 07:00:00",
+   "end_at": "2026-11-12 15:30:00",
+   "started_date": "2026-11-08 07:00:03",
+   "images": [
+    {
+     "img_url": "/web/content/auction.auction/33285/image"
+    }
+   ],
+   "region": "الجموم",
+   "city": "مكة المكرمة",
+   "is_wishlist": false,
+   "neighborhood": "",
+   "auction_state": {
+    "title": "Current",
+    "class_name": "current",
+    "type": "current"
+   },
+   "charger": {
+    "name": "مزاد علني",
+    "img_url": "/web/content/res.partner/14907/image_1920"
+   },
+   "executor": {
+    "id": 24944,
+    "img_url": "/web/content/res.partner/24944/image_1920",
+    "name": "شركة ائتلاف الخبرات للمزادات"
+   },
+   "base_url": "https://oe.auctions.com.sa",
+   "total_products": 3,
+   "auction_supervisor": false,
+   "allow_tag": false,
+   "special_auction": false
+  },
+  {
+   "id": 33326,
+   "title": "جواهر أبها",
+   "auction_type": "online",
+   "start_at": "2026-11-15 08:00:00",
+   "end_at": "2026-11-19 17:30:00",
+   "started_date": false,
+   "images": [
+    {
+     "img_url": "/web/content/auction.auction/33326/image"
+    }
+   ],
+   "region": "أبها",
+   "city": "عسير",
+   "is_wishlist": false,
+   "neighborhood": "",
+   "auction_state": {
+    "title": "New",
+    "class_name": "new",
+    "type": "new"
+   },
+   "charger": {
+    "name": "مزاد علني",
+    "img_url": "/web/content/res.partner/14907/image_1920"
+   },
+   "executor": {
+    "id": 27160,
+    "img_url": "/web/content/res.partner/27160/image_1920",
+    "name": "شركة حمد غالب حمد السعدون العقارية"
+   },
+   "base_url": "https://oe.auctions.com.sa",
+   "total_products": 7,
+   "auction_supervisor": false,
+   "allow_tag": false,
+   "special_auction": false
+  },
+  {
+   "id": 33437,
+   "title": "مزاد جواهر الدمام",
+   "auction_type": "online",
+   "start_at": "2026-11-18 07:00:00",
+   "end_at": "2026-11-22 15:20:00",
+   "started_date": false,
+   "images": [
+    {
+     "img_url": "/web/content/auction.auction/33437/image"
+    }
+   ],
+   "region": "الدمام",
+   "city": "الشرقية",
+   "is_wishlist": false,
+   "neighborhood": "الضباب",
+   "auction_state": {
+    "title": "New",
+    "class_name": "new",
+    "type": "new"
+   },
+   "charger": {},
+   "executor": {
+    "id": 44333,
+    "img_url": "/web/content/res.partner/44333/image_1920",
+    "name": "شركة العلوم الابتكارية"
+   },
+   "base_url": "https://oe.auctions.com.sa",
+   "total_products": 2,
+   "auction_supervisor": false,
+   "allow_tag": false,
+   "special_auction": false
+  }
+ ],
+ "nb_record": 12,
+ "item_per_page": 12,
+ "nb_page": 1,
+ "total": 12,
+ "current": 4,
+ "ended": 2591,
+ "coming": 8
+}

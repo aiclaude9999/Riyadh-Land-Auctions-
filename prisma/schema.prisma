@@ -1,0 +1,201 @@
+// Riyadh Auction Tracker — data model
+// All timestamps are stored in UTC; the UI renders them in Asia/Riyadh.
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// A data source (one per connector). Rows are created automatically from the connector registry.
+model Source {
+  id                  String      @id // connector id, e.g. "mobasher"
+  name                String
+  baseUrl             String
+  method              String // api | html | browser
+  enabled             Boolean     @default(true)
+  status              String      @default("idle") // idle | running | ok | error | blocked
+  lastRunAt           DateTime?
+  lastSuccessAt       DateTime?
+  lastDurationMs      Int?
+  lastItemCount       Int?
+  lastError           String?
+  consecutiveFailures Int         @default(0)
+  listings            Listing[]
+  runs                ScrapeRun[]
+  updatedAt           DateTime    @updatedAt
+}
+
+/// One scrape attempt (for the source health / errors panel and operational logs).
+model ScrapeRun {
+  id         String    @id @default(cuid())
+  sourceId   String
+  source     Source    @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  mode       String // discovery | live | closing | upcoming | ended | manual
+  status     String // running | ok | error
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  durationMs Int?
+  itemsFound Int?
+  created    Int?
+  updated    Int?
+  attempt    Int       @default(1)
+  error      String?
+
+  @@index([sourceId, startedAt])
+}
+
+/// Canonical (deduplicated) auction shown in the UI. Fields are merged from its listings.
+model Auction {
+  id                  String          @id @default(cuid())
+  title               String
+  normalizedTitle     String
+  category            String // real_estate | vehicle | equipment | scrap | collectible | other
+  status              String // upcoming | live | ended
+  startAt             DateTime?
+  endAt               DateTime?
+  region              String?
+  city                String?
+  district            String?
+  locationText        String?
+  cities              String[]
+  geoScope            String // riyadh_city | riyadh_region | other | unknown
+  hasRiyadhCity       Boolean         @default(false)
+  hasRiyadhRegion     Boolean         @default(false)
+  isMultiLocation     Boolean         @default(false)
+  assetCount          Int?
+  startPrice          Decimal?        @db.Decimal(16, 2)
+  currentPrice        Decimal?        @db.Decimal(16, 2)
+  deposit             Decimal?        @db.Decimal(16, 2)
+  images              String[]
+  organizer           String?
+  normalizedOrganizer String?
+  firstSeenAt         DateTime        @default(now())
+  lastSuccessAt       DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  listings            Listing[]
+  changes             AuctionChange[]
+  saved               SavedAuction?
+  notifications       Notification[]
+
+  @@index([status, endAt])
+  @@index([geoScope])
+  @@index([category])
+  @@index([firstSeenAt])
+  @@index([normalizedTitle])
+}
+
+/// An auction as it appears on ONE source platform. Several listings may point to one Auction.
+model Listing {
+  id                  String    @id @default(cuid())
+  sourceId            String
+  source              Source    @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  externalId          String
+  url                 String
+  auctionId           String
+  auction             Auction   @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  title               String
+  normalizedTitle     String
+  category            String
+  status              String
+  startAt             DateTime?
+  endAt               DateTime?
+  region              String?
+  city                String?
+  district            String?
+  locationText        String?
+  cities              String[]
+  assetCount          Int?
+  startPrice          Decimal?  @db.Decimal(16, 2)
+  currentPrice        Decimal?  @db.Decimal(16, 2)
+  deposit             Decimal?  @db.Decimal(16, 2)
+  images              String[]
+  organizer           String?
+  normalizedOrganizer String?
+  crossRefs           String[]
+  raw                 Json?
+  firstSeenAt         DateTime  @default(now())
+  lastSuccessAt       DateTime  @default(now())
+  assets              Asset[]
+
+  @@unique([sourceId, externalId])
+  @@index([auctionId])
+}
+
+/// An individual asset/lot inside a listing. Kept separate so different assets are never merged.
+model Asset {
+  id           String   @id @default(cuid())
+  listingId    String
+  listing      Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  externalId   String
+  title        String?
+  url          String?
+  region       String?
+  city         String?
+  district     String?
+  geoScope     String   @default("unknown")
+  latitude     Float?
+  longitude    Float?
+  startPrice   Decimal? @db.Decimal(16, 2)
+  currentPrice Decimal? @db.Decimal(16, 2)
+  deposit      Decimal? @db.Decimal(16, 2)
+  images       String[]
+  updatedAt    DateTime @updatedAt
+
+  @@unique([listingId, externalId])
+}
+
+/// History of meaningful changes (dates / prices / status) used for notifications.
+model AuctionChange {
+  id        String   @id @default(cuid())
+  auctionId String
+  auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  field     String
+  oldValue  String?
+  newValue  String?
+  at        DateTime @default(now())
+
+  @@index([auctionId, at])
+}
+
+model Setting {
+  key   String @id
+  value Json
+}
+
+model SavedAuction {
+  id        String   @id @default(cuid())
+  auctionId String   @unique
+  auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+/// type: new_riyadh | new_category | ending_saved | date_changed | price_changed
+model NotificationRule {
+  id        String   @id @default(cuid())
+  type      String
+  enabled   Boolean  @default(true)
+  params    Json     @default("{}")
+  channels  String[] @default(["in_app"])
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  type      String
+  auctionId String?
+  auction   Auction?  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  dedupeKey String    @unique
+  channels  String[]
+  delivered String[]
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+
+  @@index([createdAt])
+}

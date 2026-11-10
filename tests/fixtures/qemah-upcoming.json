@@ -1,0 +1,17 @@
+{
+ "success": true,
+ "data": [
+  {
+   "id": 445,
+   "auction_name": "مزاد لوح 71",
+   "auction_type": 2,
+   "start_date": "2026-11-11",
+   "start_time": "19:20:00",
+   "status": 2,
+   "category": "car_plates",
+   "total_cars": 65,
+   "has_more_cars": true
+  }
+ ],
+ "hasMore": false
+}

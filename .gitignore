@@ -1,0 +1,8 @@
+node_modules
+.next
+.env
+*.log
+coverage
+next-env.d.ts
+*.tsbuildinfo
+dump.rdb
