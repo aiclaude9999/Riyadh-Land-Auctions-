@@ -3,7 +3,7 @@
  * Collects every API-based source straight into the database (no Redis), then updates statuses,
  * sends "ending soon" notifications and cleans up old data.
  */
-import { connectors } from '@/connectors';
+import { connectorsForThisNetwork } from '@/connectors';
 import { ensureSources, runScrape } from '@/lib/scrape';
 import { ensureDefaultRules, checkEndingSoon } from '@/lib/notify';
 import { sweepEnded } from '@/lib/ingest';
@@ -14,7 +14,8 @@ async function main() {
   await ensureDefaultRules();
   await prisma.source.updateMany({ where: { status: 'running' }, data: { status: 'idle' } });
   const enabled = new Set((await prisma.source.findMany({ where: { enabled: true }, select: { id: true } })).map((s) => s.id));
-  const api = connectors.filter((c) => c.method !== 'browser' && enabled.has(c.id));
+  // GitHub: every API/HTML source except Saudi-only ones. Laptop in KSA (SAUDI_NETWORK=1): only Saudi-only ones (Infath).
+  const api = connectorsForThisNetwork().filter((c) => c.method !== 'browser' && enabled.has(c.id));
   const now = new Date();
   // once a day (first run after midnight UTC) also refresh recently ended auctions for final status/prices
   const daily = process.env.COLLECT_ENDED === '1' || (now.getUTCHours() === 0 && now.getUTCMinutes() < 30);

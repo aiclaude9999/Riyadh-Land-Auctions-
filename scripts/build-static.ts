@@ -21,7 +21,7 @@ async function main() {
   const sources: { id: string; n: string; s: string; ok: string | null; e: string | null }[] = [];
   const raws: { src: string; r: RawAuction }[] = [];
   for (const c of connectors) {
-    if (c.method === 'browser') {
+    if (c.method === 'browser' || c.saudiOnly) {
       sources.push({ id: c.id, n: c.name, s: 'blocked', ok: null, e: 'Not collected in free hosting mode (the site blocks automated access from outside Saudi Arabia).' });
       continue;
     }

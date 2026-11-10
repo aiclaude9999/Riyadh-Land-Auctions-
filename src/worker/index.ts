@@ -43,7 +43,8 @@ async function enabledSources() {
   const ids = new Set(rows.map((r) => r.id));
   // On small hosted servers the browser-based sources (blocked by Cloudflare / geo-block anyway) can be skipped to save memory.
   const noBrowser = process.env.DISABLE_BROWSER_SOURCES === '1';
-  return connectors.filter((c) => ids.has(c.id) && !(noBrowser && c.method === 'browser'));
+  const saudi = process.env.SAUDI_NETWORK === '1';
+  return connectors.filter((c) => ids.has(c.id) && !(noBrowser && c.method === 'browser') && (!c.saudiOnly || saudi));
 }
 
 async function tick() {

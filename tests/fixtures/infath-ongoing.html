@@ -1,0 +1,2001 @@
+<!DOCTYPE html><html lang="ar" id="myElement" dir="rtl" class="mainFont light-mode">
+<body data-aos-easing="ease" data-aos-duration="400" data-aos-delay="0">
+   
+    
+    
+      
+    <div class="d-flex flex-column gap-3 floating-icon">
+        <button class="open-setting" aria-label="open accessibility">
+            <div class="icon-box">
+                
+            </div>
+        </button>
+    </div>
+    
+
+<div class="chat-popup" id="chat-popup">
+    <div class="chat_header">
+        <div class="close">
+            <figure class="closeBtn">
+                
+            </figure>
+        </div>
+
+        <div class="title">
+            <div class="title-status">
+                <span class="title-text" data-message="CallbackTitle">المساعدة والدعم</span>
+
+                <div class="online">
+                    <div class="dot"></div>
+                    <p>متوفر</p>
+                </div>
+            </div>
+
+            <div class="chat-support-icon">
+                <figure>
+                    
+                </figure>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-container">
+        <div class="chat_converse" id="chatBotDiv">
+            <p class="day-date">21 مارس في 9:23ص</p>
+            <div class="chat_msg chat_msg_admin">
+                <p class="text">مرحبا بك</p>
+            </div>
+            <div class="chat_msg chat_msg_user">
+                <div class="text">السلام عليكم</div>
+            </div>
+
+            <div class="loading-bubble">
+                <div class="spinner">
+                    <div class="bounce1"></div>
+                    <div class="bounce2"></div>
+                    <div class="bounce3"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="fab_field">
+            <button id="send_msg_icon" class="send_msg_icon" aria-label="send message" (click)="sendMessage()">
+                
+            </button>
+            <input type="text" id="chat_message" name="chat_message" placeholder="رسالة" class="chat_text" (keyup.enter)="sendMessage()">
+        </div>
+    </div>
+</div>
+
+    
+
+<div class="setting-popup menu-left" id="setting-popup">
+    <div class="chat_header-ass">
+        <div class="title">
+            <span class="i18n" data-message="CallbackTitle" id="accessMenuText">قائمة الوصول</span>
+        </div>
+        <div class="close-icon">
+            <figure>
+                
+            </figure>
+        </div>
+    </div>
+    <div class="setting-container">
+        <div class="alert alert-success gap-3" role="alert" id="toast_alert">
+            <!-- <i class="fas fa-check-circle"></i> -->
+            
+            تمت إعادة ضبط إعدادات الوصول.
+        </div>
+
+        <div class="arabic-drob">
+            <div class="selected-language">
+                <div id="selectedBtn">
+                    <div class="form-check form-switch d-flex justify-content-between pt-0">
+                        <label class="form-check-label" id="lbl_lang" for="flexSwitchCheckDefault">عربي (Arabic)</label>
+
+                        <div class="switch-div">
+                            <label class="switch" for="checkbox">
+                                <input type="checkbox" id="checkbox">
+                                <div class="accessibility-slider round"></div>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-check form-switch d-flex justify-content-between">
+                        <label class="form-check-label" id="lbl_XL">تكبير هذه القائمة</label>
+
+                        <div class="switch-div">
+                            <label class="switch" for="checkbox2">
+                                <input type="checkbox" id="checkbox2">
+                                <div class="accessibility-slider round"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="box-wrapper">
+            <div class="row">
+                <div class="setting_col col-4">
+                    <div class="wrapper-features">
+                        <div type="button" class="features-item">
+                            <div class="features-item-enable">
+                                <span>
+                                    <!-- <i class="fas fa-check-circle"></i> -->
+                                    
+                                </span>
+                            </div>
+                            <div class="features-content text-center">
+                                
+                                <p class="features-text" id="readPageText">قراءة الصفحة</p>
+                            </div>
+                            <div class="features-steps d-flex justify-content-around">
+                                <button class="btn-none play-btn" aria-label="play btn">
+                                    <!-- <i class="fas fa-play"></i> -->
+                                    
+                                </button>
+                                <button class="btn-none play-btn" aria-label="pause btn">
+                                    <!-- <i class="fas fa-pause"></i> -->
+                                    
+                                </button>
+                                <button class="btn-none play-btn" aria-label="stop btn">
+                                    <!-- <i class="fas fa-stop"></i> -->
+                                    
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="setting_col col-4">
+                    <div class="wrapper-features">
+                        <button type="button" class="features-item" id="toggleInvertMode" aria-label="invert mode">
+                            <div class="features-item-enable" id="InvertMode_check" style="visibility: hidden;">
+                                <span>
+                                    <!-- <i class="fas fa-check-circle"></i> -->
+                                    
+                                </span>
+                            </div>
+                            <div class="features-content">
+                                
+                                <p class="features-text" id="ContrastText">التباين</p>
+                            </div>
+
+                            <div class="features-steps d-flex gap-3">
+                                <span class="step-container">
+                                    <span class="step" id="toggleInvertStepOne"></span>
+                                </span>
+                                <span class="step-container">
+                                    <span class="step" id="toggleInvertStepTwo"></span>
+                                </span>
+                                <span class="step-container">
+                                    <span class="step" id="toggleInvertStepThree"></span>
+                                </span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                <div class="setting_col col-4">
+                    <div class="wrapper-features">
+                        <button type="button" class="features-item" id="toggleLink" aria-label="highlight links" style="border-width: medium; border-style: none; border-color: currentcolor; border-image: none;">
+                            <div class="features-item-enable" id="link_check" style="visibility: hidden;">
+                                <span>
+                                    <!-- <i class="fas fa-check-circle"></i> -->
+                                    
+                                </span>
+                            </div>
+                            <div class="features-content">
+                                
+                                <p class="features-text" id="featuresText">ابرز الروابط</p>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                <div class="setting_col col-4">
+                    <div class="wrapper-features">
+                        <button type="button" class="features-item" id="increaseFontBtn" aria-label="increase font size">
+                            <div class="features-item-enable" id="increaseFont_check">
+                                <span>
+                                    <!-- <i class="fas fa-check-circle"></i> -->
+                                    
+                                </span>
+                            </div>
+                            <div class="features-content">
+                                
+                                <p class="features-text" id="IncreaseFontSizeText">
+                                    تكبير النص
+                                </p>
+                            </div>
+                            <div class="features-steps d-flex gap-3">
+                                <span class="step-container">
+                                    <span class="step" id="fontSizeStepOne"></span>
+                                </span>
+                                <span class="step-container">
+                                    <span class="step" id="fontSizeStepTwo"></span>
+                                </span>
+                                <span class="step-container">
+                                    <span class="step" id="fontSizeStepThree"></span>
+                                </span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                <div class="setting_col col-4">
+                    <div class="wrapper-features">
+                        <button type="button" class="features-item" id="switchClassButton" aria-label="switch font">
+                            <div class="features-item-enable" id="switchClass_check" style="visibility: hidden">
+                                <span>
+                                    <!-- <i class="fas fa-check-circle"></i> -->
+                                    
+                                </span>
+                            </div>
+                            <div class="features-content">
+                                
+                                <p id="fontFamilyP" class="features-text">مناسب لعسر القراءة</p>
+                            </div>
+                            <div class="features-steps d-flex gap-3">
+                                <span class="step-container">
+                                    <span class="step" id="fontFamilyStepOne"></span>
+                                </span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                <div class="setting_col col-4">
+                    <div class="wrapper-features">
+                        <button type="button" class="features-item" id="toggleDarkTheme" aria-label="dark mode">
+                            <div class="features-item-enable" id="DarkTheme_check" style="visibility: hidden;">
+                                <span>
+                                    <!-- <i class="fas fa-check-circle"></i> -->
+                                    
+                                </span>
+                            </div>
+                            <div class="features-content">
+                                
+                                <p class="features-text" id="DarkModeText">الوضع المظلم</p>
+                            </div>
+                            <!-- <div class="features-steps">
+                              <span class="step-container"
+                                ><span class="step" id="toggleInvertStepOne"></span
+                              ></span>
+                              <span class="step-container"
+                                ><span class="step" id="toggleInvertStepTwo"></span
+                              ></span>
+                              <span class="step-container"
+                                ><span class="step" id="toggleInvertStepThree"></span
+                              ></span>
+                            </div> -->
+                        </button>
+                    </div>
+                </div>
+                <div class="setting_col col-4">
+                    <div class="wrapper-features">
+                        <button type="button" class="features-item" id="increaseLetterSpacingBtn" aria-label="increase Letter Spacing">
+                            <div class="features-item-enable" id="LetterSpacing_check" style="visibility: hidden;">
+                                <span>
+                                    <!-- <i class="fas fa-check-circle"></i> -->
+                                    
+                                </span>
+                            </div>
+                            <div class="features-content">
+                                
+                                <p class="features-text" id="letterSpacingText">تباعد النص</p>
+                            </div>
+                            <div class="features-steps d-flex gap-3">
+                                <span class="step-container">
+                                    <span class="step" id="letterSpacingStepOne"></span>
+                                </span>
+                                <span class="step-container">
+                                    <span class="step" id="letterSpacingStepTwo"></span>
+                                </span>
+                                <span class="step-container">
+                                    <span class="step" id="letterSpacingStepThree"></span>
+                                </span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                <div class="setting_col col-4">
+                    <div class="wrapper-features">
+                        <button type="button" class="features-item" id="toggleButton" aria-label="hide images">
+                            <div class="features-item-enable" id="img_check" style="visibility: hidden;">
+                                <span>
+                                    <!-- <i class="fas fa-check-circle"></i> -->
+                                    
+                                </span>
+                            </div>
+                            <div class="features-content">
+                                
+                                <p class="features-text" id="featuresTextToggle">إخفاء الصور</p>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                <div class="setting_col col-4">
+                    <div class="wrapper-features">
+                        <button type="button" class="features-item" id="changeCursorBtn" aria-label="change cursor">
+                            <div class="features-item-enable" id="cursor_check">
+                                <span>
+                                    <!-- <i class="fas fa-check-circle"></i> -->
+                                    
+                                </span>
+                            </div>
+                            <div class="features-content">
+                                
+                                <p class="features-text" id="CursorText">المؤشر</p>
+                            </div>
+                            <div class="features-steps d-flex gap-3">
+                                <span class="step-container">
+                                    <span class="step"></span>
+                                </span>
+                                <span class="step-container">
+                                    <span class="step"></span>
+                                </span>
+                                <span class="step-container">
+                                    <span class="step"></span>
+                                </span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                <div class="setting_col col-4">
+                    <div class="wrapper-features">
+                        <button type="button" class="features-item" id="toggleTextAlign" aria-label="change text align">
+                            <div class="features-item-enable" id="TextAlign_check" style="visibility: hidden;">
+                                <span>
+                                    <!-- <i class="fas fa-check-circle"></i> -->
+                                    
+                                </span>
+                            </div>
+                            <div class="features-content">
+                                
+                                <p class="features-text" id="TextAlign_text">محاذاه النص</p>
+                            </div>
+                            <div class="features-steps d-flex gap-3">
+                                <span class="step-container">
+                                    <span class="step" id="TextAlignStepOne"></span>
+                                </span>
+                                <span class="step-container">
+                                    <span class="step" id="TextAlignStepTwo"></span>
+                                </span>
+                                <span class="step-container">
+                                    <span class="step" id="TextAlignStepThree"></span>
+                                </span>
+                                <span class="step-container">
+                                    <span class="step" id="TextAlignStepFour"></span>
+                                </span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                <div class="setting_col col-4">
+                    <div class="wrapper-features">
+                        <button type="button" class="features-item" id="toggleLineheight" aria-label="change line height">
+                            <div class="features-item-enable" id="Lineheight_check" style="visibility: hidden;">
+                                <span>
+                                    <!-- <i class="fas fa-check-circle"></i> -->
+                                    
+                                </span>
+                            </div>
+                            <div class="features-content">
+                                
+                                <p class="features-text" id="LineHeight">ارتفاع خط</p>
+                            </div>
+                            <div class="features-steps d-flex gap-3">
+                                <span class="step-container">
+                                    <span class="step" id="linesStepOne"></span>
+                                </span>
+                                <span class="step-container">
+                                    <span class="step" id="linesStepTwo"></span>
+                                </span>
+                                <span class="step-container">
+                                    <span class="step" id="linesStepThree"></span>
+                                </span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                <div class="setting_col col-4">
+                    <div class="wrapper-features">
+                        <button type="button" class="features-item" id="toggleSaturateMode" aria-label="saturation mode">
+                            <div class="features-item-enable" id="SaturateMode_check" style="visibility: hidden;">
+                                <span>
+                                    <!-- <i class="fas fa-check-circle"></i> -->
+                                    
+                                </span>
+                            </div>
+                            <div class="features-content">
+                                
+                                <p class="features-text" id="Saturation">التشبع</p>
+                            </div>
+                            <div class="features-steps d-flex gap-3">
+                                <span class="step-container">
+                                    <span class="step" id="toggleSaturateStepOne"></span>
+                                </span>
+                                <span class="step-container">
+                                    <span class="step" id="toggleSaturateStepTwo"></span>
+                                </span>
+                                <span class="step-container">
+                                    <span class="step" id="toggleSaturateStepThree"></span>
+                                </span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <button class="resetButton d-flex gap-4 w-100" id="resetButton" aria-label="reset button">
+                        <span>
+                            <!-- <i class="fas fa-sync-alt"></i> -->
+                            
+                        </span>
+                        <span id="reset"> إعادة تعيين كافة إعدادات إمكانية الوصول</span>
+                    </button>
+                </div>
+            </div>
+            <div class="row mb-4">
+                <div class="col-12 mt-3 mb-3">
+                    <button type="button" data-bs-toggle="collapse" data-bs-target="#content" aria-expanded="false" aria-controls="content" class="btn-none d-flex gap-2 align-items-center" aria-label="change position">
+                        <p>
+                            
+                        </p>
+                        <span id="moving">نقل القطعة</span>
+                        <!-- <i class="fas fa-chevron-left" style="font-size: 12px"></i> -->
+                        
+                    </button>
+                    <div id="content" class="collapse accord-content">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="menuPosition" value="left" checked="">
+                            <label class="form-check-label" for="flexRadioDefault1" id="left">
+                                يسار
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="menuPosition" value="right">
+                            <label class="form-check-label" for="flexRadioDefault2" id="right">
+                                يمين
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+    
+<div class="contact-popup toast-success d-none">
+    <button class="close-btn">✕</button>
+    <div class="contact-text d-flex gap-4 flex-column">
+        <div class="d-flex align-items-center gap-2">
+            <div class="icon">
+                
+            </div>
+            <h4>تم الإرسال بنجاح</h4>
+        </div>
+    </div>
+</div>
+
+    
+<div class="contact-popup toast-danger d-none">
+    <button class="close-btn">✕</button>
+    <div class="contact-text d-flex gap-4 flex-column">
+        <div class="d-flex align-items-center gap-2">
+            <div class="icon">
+                
+            </div>
+            <h4>خطأ في الإرسال</h4>
+        </div>
+    </div>
+</div>
+
+  
+
+    
+<!-- ======= Start header Section ======= -->
+
+
+
+ <div class="search-popup">
+    <button class="search-close-btn">✕</button>
+    
+    
+</div>
+
+
+<!-- ======= End header Section ======= -->
+
+
+    <main role="main">
+    
+        
+<div class="inner-page" style="margin-top: 72px;">
+    <div class="inner-baner" style="margin-top: 112px;">
+        <div class="container-xxl">
+            
+
+            <h1 class="title desc-w60">
+                المزادات
+            </h1>
+
+            <div class="limit-three desc-w60">
+                <p>يشرف المركز على المزادات المنظمة من وكلاء البيع سواء كانت مزادات علنية وإلكترونية لتصفية وبيع الأصول التي تسندها إليه الجهات القضائية، مما يضمن الشفافية والعدالة لتحقيق أعلى عائد مالي لأصحاب الحقوق.</p>
+            </div>
+        </div>
+    </div>
+
+    
+
+
+
+<!-- ============= Start auctions search section ============= -->
+<section class="auctions-search-section" id="main-search-section">
+    <!-- Overlay -->
+    
+    <div class="container-xxl" id="Searchdata">
+        <div class="form-box">
+            
+        </div>
+    </div>
+</section>
+
+<!-- ============= End auctions search section ============= -->
+<!-- ======= Start  infaz auctions links Section ======= -->
+<section class="about-infaz about-infaz-news">
+    <div class="container-xxl">
+        <ul class="nav nav-links mt-0">
+            <li class="nav-item">
+                <a class="nav-link" href="https://infath.gov.sa/ar/auctions/?tab=all#Searchdata">
+                    جميع المزادات
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link active" href="https://infath.gov.sa/ar/auctions/?tab=ongoing#Searchdata">
+                    المزادات الجارية
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link" href="https://infath.gov.sa/ar/auctions/?tab=upcoming#Searchdata">
+                    المزادات القادمة
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link" href="https://infath.gov.sa/ar/auctions/?tab=ended#Searchdata">
+                    المزادات المنتهية
+                </a>
+            </li>
+        </ul>
+
+    </div>
+</section>
+
+
+<!-- ============= End auctions search section ============= -->
+<!-- ============= Start auctions cards ============= -->
+<section class="auctions pt-0">
+    <div class="container-xxl">
+        <div class="row g-4">
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <div class="card-light-border auction-single">
+                            <div class="auction-name2">
+                                <div class="row d-flex gap-3 align-items-center justify-content-center h-100">
+                                    <div class="col-10">
+
+
+
+                                        <div class="timer timer-new" data-end="2026-11-10T19:30:00">
+                                            <div class="item">
+                                                <p class="number js-days">0</p>
+                                                <p class="unit">يوم</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-hours">0</p>
+                                                <p class="unit">ساعة</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-minutes">39</p>
+                                                <p class="unit">دقيقة</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-seconds">24</p>
+                                                <p class="unit">ثانية</p>
+                                            </div>
+                                        </div>
+
+
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="d-flex flex-column gap-3 img-div">
+                                            <h3 class="ac-title-img align-self-center h3-new">
+                                                مزاد بركة الشرقية
+                                            </h3>
+                                                <div class="icon align-self-center d-flex align-items-center gap-3">
+                                                    <span class="count-badge clip">0</span>
+
+                                                    <p class="limit-two p-new">
+                                                        فرصة عقارية
+                                                    </p>
+                                                </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-10">
+                                        <div class="d-flex justify-content-start">
+                                            <p class="service-tag  align-self-center green-tag">
+                                                مزاد جاري
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="content d-flex flex-column">
+                                <h3 class="limit-two">  مزاد بركة الشرقية</h3>
+
+                                <div class="row g-4">
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>تاريخ بداية المزاد </h4>
+
+                                                <time class="date" datetime="08  نوفمبر  2026">08  نوفمبر  2026 &nbsp; 10:00:00</time>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>  تاريخ نهاية المزاد</h4>
+
+                                                <time class="date" datetime="10  نوفمبر  2026">10  نوفمبر  2026 &nbsp; 07:30:00</time>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>المنطقة </h4>
+                                                <p>المنطقة الشرقية</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>المدينة</h4>
+                                                <p>الدمام</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4> نوع الأصل</h4>
+
+                                                <p> </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>نوع المزاد </h4>
+
+                                                <p>إلكتروني </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex mt-auto flex-wrap gap-3">
+                                        <a href="https://infath.gov.sa/ar/auction?AuctionId=613" class="btn btn-primary" aria-label="more"> قراءة المزيد</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <div class="card-light-border auction-single">
+                            <div class="auction-name2">
+                                <div class="row d-flex gap-3 align-items-center justify-content-center h-100">
+                                    <div class="col-10">
+
+
+
+                                        <div class="timer timer-new" data-end="2026-11-10T20:00:00">
+                                            <div class="item">
+                                                <p class="number js-days">0</p>
+                                                <p class="unit">يوم</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-hours">1</p>
+                                                <p class="unit">ساعة</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-minutes">9</p>
+                                                <p class="unit">دقيقة</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-seconds">24</p>
+                                                <p class="unit">ثانية</p>
+                                            </div>
+                                        </div>
+
+
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="d-flex flex-column gap-3 img-div">
+                                            <h3 class="ac-title-img align-self-center h3-new">
+                                                كنوز عسير
+                                            </h3>
+                                                <div class="icon align-self-center d-flex align-items-center gap-3">
+                                                    <span class="count-badge clip">16</span>
+
+                                                    <p class="limit-two p-new">
+                                                        فرصة عقارية
+                                                    </p>
+                                                </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-10">
+                                        <div class="d-flex justify-content-start">
+                                            <p class="service-tag  align-self-center green-tag">
+                                                مزاد جاري
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="content d-flex flex-column">
+                                <h3 class="limit-two">  كنوز عسير</h3>
+
+                                <div class="row g-4">
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>تاريخ بداية المزاد </h4>
+
+                                                <time class="date" datetime="08  نوفمبر  2026">08  نوفمبر  2026 &nbsp; 10:00:00</time>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>  تاريخ نهاية المزاد</h4>
+
+                                                <time class="date" datetime="10  نوفمبر  2026">10  نوفمبر  2026 &nbsp; 08:00:00</time>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>المنطقة </h4>
+                                                <p>عسير</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>المدينة</h4>
+                                                <p>ابها</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4> نوع الأصل</h4>
+
+                                                <p>عقارات </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>نوع المزاد </h4>
+
+                                                <p>إلكتروني </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex mt-auto flex-wrap gap-3">
+                                        <a href="https://infath.gov.sa/ar/auction?AuctionId=596" class="btn btn-primary" aria-label="more"> قراءة المزيد</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <div class="card-light-border auction-single">
+                            <div class="auction-name2">
+                                <div class="row d-flex gap-3 align-items-center justify-content-center h-100">
+                                    <div class="col-10">
+
+
+
+                                        <div class="timer timer-new" data-end="2026-11-11T16:00:00">
+                                            <div class="item">
+                                                <p class="number js-days">0</p>
+                                                <p class="unit">يوم</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-hours">21</p>
+                                                <p class="unit">ساعة</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-minutes">9</p>
+                                                <p class="unit">دقيقة</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-seconds">24</p>
+                                                <p class="unit">ثانية</p>
+                                            </div>
+                                        </div>
+
+
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="d-flex flex-column gap-3 img-div">
+                                            <h3 class="ac-title-img align-self-center h3-new">
+                                                أصول رفحاء
+                                            </h3>
+                                                <div class="icon align-self-center d-flex align-items-center gap-3">
+                                                    <span class="count-badge clip">0</span>
+
+                                                    <p class="limit-two p-new">
+                                                        فرصة عقارية
+                                                    </p>
+                                                </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-10">
+                                        <div class="d-flex justify-content-start">
+                                            <p class="service-tag  align-self-center green-tag">
+                                                مزاد جاري
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="content d-flex flex-column">
+                                <h3 class="limit-two">  أصول رفحاء</h3>
+
+                                <div class="row g-4">
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>تاريخ بداية المزاد </h4>
+
+                                                <time class="date" datetime="10  نوفمبر  2026">10  نوفمبر  2026 &nbsp; 10:00:00</time>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>  تاريخ نهاية المزاد</h4>
+
+                                                <time class="date" datetime="11  نوفمبر  2026">11  نوفمبر  2026 &nbsp; 04:00:00</time>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>المنطقة </h4>
+                                                <p>الحدود الشمالية</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>المدينة</h4>
+                                                <p>رفحاء</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4> نوع الأصل</h4>
+
+                                                <p> </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>نوع المزاد </h4>
+
+                                                <p>إلكتروني </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex mt-auto flex-wrap gap-3">
+                                        <a href="https://infath.gov.sa/ar/auction?AuctionId=606" class="btn btn-primary" aria-label="more"> قراءة المزيد</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <div class="card-light-border auction-single">
+                            <div class="auction-name2">
+                                <div class="row d-flex gap-3 align-items-center justify-content-center h-100">
+                                    <div class="col-10">
+
+
+
+                                        <div class="timer timer-new" data-end="2026-11-11T17:00:00">
+                                            <div class="item">
+                                                <p class="number js-days">0</p>
+                                                <p class="unit">يوم</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-hours">22</p>
+                                                <p class="unit">ساعة</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-minutes">9</p>
+                                                <p class="unit">دقيقة</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-seconds">24</p>
+                                                <p class="unit">ثانية</p>
+                                            </div>
+                                        </div>
+
+
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="d-flex flex-column gap-3 img-div">
+                                            <h3 class="ac-title-img align-self-center h3-new">
+                                                مركبة حائل 
+                                            </h3>
+                                                <div class="icon align-self-center d-flex align-items-center gap-3">
+                                                    <span class="count-badge clip">0</span>
+
+                                                    <p class="limit-two p-new">
+                                                        فرصة عقارية
+                                                    </p>
+                                                </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-10">
+                                        <div class="d-flex justify-content-start">
+                                            <p class="service-tag  align-self-center green-tag">
+                                                مزاد جاري
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="content d-flex flex-column">
+                                <h3 class="limit-two">  مركبة حائل </h3>
+
+                                <div class="row g-4">
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>تاريخ بداية المزاد </h4>
+
+                                                <time class="date" datetime="09  نوفمبر  2026">09  نوفمبر  2026 &nbsp; 10:00:00</time>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>  تاريخ نهاية المزاد</h4>
+
+                                                <time class="date" datetime="11  نوفمبر  2026">11  نوفمبر  2026 &nbsp; 05:00:00</time>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>المنطقة </h4>
+                                                <p>الرياض</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>المدينة</h4>
+                                                <p>الرياض</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4> نوع الأصل</h4>
+
+                                                <p> </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>نوع المزاد </h4>
+
+                                                <p>إلكتروني </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex mt-auto flex-wrap gap-3">
+                                        <a href="https://infath.gov.sa/ar/auction?AuctionId=574" class="btn btn-primary" aria-label="more"> قراءة المزيد</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <div class="card-light-border auction-single">
+                            <div class="auction-name2">
+                                <div class="row d-flex gap-3 align-items-center justify-content-center h-100">
+                                    <div class="col-10">
+
+
+
+                                        <div class="timer timer-new" data-end="2026-11-11T17:00:00">
+                                            <div class="item">
+                                                <p class="number js-days">0</p>
+                                                <p class="unit">يوم</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-hours">22</p>
+                                                <p class="unit">ساعة</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-minutes">9</p>
+                                                <p class="unit">دقيقة</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-seconds">24</p>
+                                                <p class="unit">ثانية</p>
+                                            </div>
+                                        </div>
+
+
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="d-flex flex-column gap-3 img-div">
+                                            <h3 class="ac-title-img align-self-center h3-new">
+                                                بيوت الرياض 
+                                            </h3>
+                                                <div class="icon align-self-center d-flex align-items-center gap-3">
+                                                    <span class="count-badge clip">4</span>
+
+                                                    <p class="limit-two p-new">
+                                                        فرصة عقارية
+                                                    </p>
+                                                </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-10">
+                                        <div class="d-flex justify-content-start">
+                                            <p class="service-tag  align-self-center green-tag">
+                                                مزاد جاري
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="content d-flex flex-column">
+                                <h3 class="limit-two">  بيوت الرياض </h3>
+
+                                <div class="row g-4">
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>تاريخ بداية المزاد </h4>
+
+                                                <time class="date" datetime="08  نوفمبر  2026">08  نوفمبر  2026 &nbsp; 08:00:00</time>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>  تاريخ نهاية المزاد</h4>
+
+                                                <time class="date" datetime="11  نوفمبر  2026">11  نوفمبر  2026 &nbsp; 05:00:00</time>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>المنطقة </h4>
+                                                <p>الرياض</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>المدينة</h4>
+                                                <p>الرياض</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4> نوع الأصل</h4>
+
+                                                <p>عقارات </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>نوع المزاد </h4>
+
+                                                <p>إلكتروني </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex mt-auto flex-wrap gap-3">
+                                        <a href="https://infath.gov.sa/ar/auction?AuctionId=651" class="btn btn-primary" aria-label="more"> قراءة المزيد</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <div class="card-light-border auction-single">
+                            <div class="auction-name2">
+                                <div class="row d-flex gap-3 align-items-center justify-content-center h-100">
+                                    <div class="col-10">
+
+
+
+                                        <div class="timer timer-new" data-end="2026-11-11T20:10:00">
+                                            <div class="item">
+                                                <p class="number js-days">1</p>
+                                                <p class="unit">يوم</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-hours">1</p>
+                                                <p class="unit">ساعة</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-minutes">19</p>
+                                                <p class="unit">دقيقة</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-seconds">24</p>
+                                                <p class="unit">ثانية</p>
+                                            </div>
+                                        </div>
+
+
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="d-flex flex-column gap-3 img-div">
+                                            <h3 class="ac-title-img align-self-center h3-new">
+                                                مكاسب عسير
+                                            </h3>
+                                                <div class="icon align-self-center d-flex align-items-center gap-3">
+                                                    <span class="count-badge clip">15</span>
+
+                                                    <p class="limit-two p-new">
+                                                        فرصة عقارية
+                                                    </p>
+                                                </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-10">
+                                        <div class="d-flex justify-content-start">
+                                            <p class="service-tag  align-self-center green-tag">
+                                                مزاد جاري
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="content d-flex flex-column">
+                                <h3 class="limit-two">  مكاسب عسير</h3>
+
+                                <div class="row g-4">
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>تاريخ بداية المزاد </h4>
+
+                                                <time class="date" datetime="09  نوفمبر  2026">09  نوفمبر  2026 &nbsp; 01:00:00</time>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>  تاريخ نهاية المزاد</h4>
+
+                                                <time class="date" datetime="11  نوفمبر  2026">11  نوفمبر  2026 &nbsp; 08:10:00</time>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>المنطقة </h4>
+                                                <p>عسير</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>المدينة</h4>
+                                                <p>ابها</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4> نوع الأصل</h4>
+
+                                                <p>عقارات </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>نوع المزاد </h4>
+
+                                                <p>إلكتروني </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex mt-auto flex-wrap gap-3">
+                                        <a href="https://infath.gov.sa/ar/auction?AuctionId=593" class="btn btn-primary" aria-label="more"> قراءة المزيد</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <div class="card-light-border auction-single">
+                            <div class="auction-name2">
+                                <div class="row d-flex gap-3 align-items-center justify-content-center h-100">
+                                    <div class="col-10">
+
+
+
+                                        <div class="timer timer-new" data-end="2026-11-12T17:00:00">
+                                            <div class="item">
+                                                <p class="number js-days">1</p>
+                                                <p class="unit">يوم</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-hours">22</p>
+                                                <p class="unit">ساعة</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-minutes">9</p>
+                                                <p class="unit">دقيقة</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-seconds">24</p>
+                                                <p class="unit">ثانية</p>
+                                            </div>
+                                        </div>
+
+
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="d-flex flex-column gap-3 img-div">
+                                            <h3 class="ac-title-img align-self-center h3-new">
+                                                 مركبة القصيم
+                                            </h3>
+                                                <div class="icon align-self-center d-flex align-items-center gap-3">
+                                                    <span class="count-badge clip">0</span>
+
+                                                    <p class="limit-two p-new">
+                                                        فرصة عقارية
+                                                    </p>
+                                                </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-10">
+                                        <div class="d-flex justify-content-start">
+                                            <p class="service-tag  align-self-center green-tag">
+                                                مزاد جاري
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="content d-flex flex-column">
+                                <h3 class="limit-two">   مركبة القصيم</h3>
+
+                                <div class="row g-4">
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>تاريخ بداية المزاد </h4>
+
+                                                <time class="date" datetime="10  نوفمبر  2026">10  نوفمبر  2026 &nbsp; 10:00:00</time>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>  تاريخ نهاية المزاد</h4>
+
+                                                <time class="date" datetime="12  نوفمبر  2026">12  نوفمبر  2026 &nbsp; 05:00:00</time>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>المنطقة </h4>
+                                                <p></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>المدينة</h4>
+                                                <p></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4> نوع الأصل</h4>
+
+                                                <p> </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>نوع المزاد </h4>
+
+                                                <p>إلكتروني </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex mt-auto flex-wrap gap-3">
+                                        <a href="https://infath.gov.sa/ar/auction?AuctionId=599" class="btn btn-primary" aria-label="more"> قراءة المزيد</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <div class="card-light-border auction-single">
+                            <div class="auction-name2">
+                                <div class="row d-flex gap-3 align-items-center justify-content-center h-100">
+                                    <div class="col-10">
+
+
+
+                                        <div class="timer timer-new" data-end="2026-11-12T17:00:00">
+                                            <div class="item">
+                                                <p class="number js-days">1</p>
+                                                <p class="unit">يوم</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-hours">22</p>
+                                                <p class="unit">ساعة</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-minutes">9</p>
+                                                <p class="unit">دقيقة</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-seconds">24</p>
+                                                <p class="unit">ثانية</p>
+                                            </div>
+                                        </div>
+
+
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="d-flex flex-column gap-3 img-div">
+                                            <h3 class="ac-title-img align-self-center h3-new">
+                                                مزاد فـــال الرياض 
+                                            </h3>
+                                                <div class="icon align-self-center d-flex align-items-center gap-3">
+                                                    <span class="count-badge clip">21</span>
+
+                                                    <p class="limit-two p-new">
+                                                        فرصة عقارية
+                                                    </p>
+                                                </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-10">
+                                        <div class="d-flex justify-content-start">
+                                            <p class="service-tag  align-self-center green-tag">
+                                                مزاد جاري
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="content d-flex flex-column">
+                                <h3 class="limit-two">  مزاد فـــال الرياض </h3>
+
+                                <div class="row g-4">
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>تاريخ بداية المزاد </h4>
+
+                                                <time class="date" datetime="10  نوفمبر  2026">10  نوفمبر  2026 &nbsp; 11:00:00</time>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>  تاريخ نهاية المزاد</h4>
+
+                                                <time class="date" datetime="12  نوفمبر  2026">12  نوفمبر  2026 &nbsp; 05:00:00</time>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>المنطقة </h4>
+                                                <p>الرياض</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>المدينة</h4>
+                                                <p>الرياض</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4> نوع الأصل</h4>
+
+                                                <p>عقارات </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>نوع المزاد </h4>
+
+                                                <p>إلكتروني </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex mt-auto flex-wrap gap-3">
+                                        <a href="https://infath.gov.sa/ar/auction?AuctionId=602" class="btn btn-primary" aria-label="more"> قراءة المزيد</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <div class="card-light-border auction-single">
+                            <div class="auction-name2">
+                                <div class="row d-flex gap-3 align-items-center justify-content-center h-100">
+                                    <div class="col-10">
+
+
+
+                                        <div class="timer timer-new" data-end="2026-11-12T18:00:00">
+                                            <div class="item">
+                                                <p class="number js-days">1</p>
+                                                <p class="unit">يوم</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-hours">23</p>
+                                                <p class="unit">ساعة</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-minutes">9</p>
+                                                <p class="unit">دقيقة</p>
+                                            </div>
+                                            <div class="item">
+                                                <p class="number js-seconds">24</p>
+                                                <p class="unit">ثانية</p>
+                                            </div>
+                                        </div>
+
+
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="d-flex flex-column gap-3 img-div">
+                                            <h3 class="ac-title-img align-self-center h3-new">
+                                                جود الشمال 
+                                            </h3>
+                                                <div class="icon align-self-center d-flex align-items-center gap-3">
+                                                    <span class="count-badge clip">10</span>
+
+                                                    <p class="limit-two p-new">
+                                                        فرصة عقارية
+                                                    </p>
+                                                </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-10">
+                                        <div class="d-flex justify-content-start">
+                                            <p class="service-tag  align-self-center green-tag">
+                                                مزاد جاري
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="content d-flex flex-column">
+                                <h3 class="limit-two">  جود الشمال </h3>
+
+                                <div class="row g-4">
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>تاريخ بداية المزاد </h4>
+
+                                                <time class="date" datetime="10  نوفمبر  2026">10  نوفمبر  2026 &nbsp; 09:00:00</time>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>  تاريخ نهاية المزاد</h4>
+
+                                                <time class="date" datetime="12  نوفمبر  2026">12  نوفمبر  2026 &nbsp; 06:00:00</time>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>المنطقة </h4>
+                                                <p>متعدد المناطق</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>المدينة</h4>
+                                                <p>متعدد المدن</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4> نوع الأصل</h4>
+
+                                                <p>عقارات </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="auction-data">
+                                            <div class="icon">
+                                                
+                                            </div>
+                                            <div class="data">
+                                                <h4>نوع المزاد </h4>
+
+                                                <p>إلكتروني </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex mt-auto flex-wrap gap-3">
+                                        <a href="https://infath.gov.sa/ar/auction?AuctionId=615" class="btn btn-primary" aria-label="more"> قراءة المزيد</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+        </div>
+        <!-- ============= Pagination ============= -->
+        
+<!-- ======= Start Pagination ======= -->
+    <section class="d-flex justify-content-center pagination">
+        
+    </section>
+<!-- ======= End Pagination ======= -->
+
+    </div>
+
+</section>
+<!-- ============= start advanced search  ============= -->
+<div class="advanced-search" id="advanced-search">
+    <div class="container">
+        <div class="advanced-search-content">
+            <div class="form-box request-form">
+                <div class="head d-flex justify-content-end">
+                    <a class="form-close-btn" aria-label="form">
+                        
+                    </a>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============= End   advanced search ============= -->
+<!-- ============= End auctions cards ============= -->
+
+
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </main>
+
+     <div id="cookieBar" class="cookie-bar card">
+    <div class="header-cookie d-flex gap-2 align-items-center justify-content-between">
+        <div class="d-flex gap-2 align-items-center">
+          <div class="icon">
+            
+          </div>
+          <h3>ملفات تعريف الارتباط</h3>
+        </div>
+        <button type="button" class="btn-close cookie-close" aria-label="Close">
+      </button>
+    </div>
+
+    <div class="d-flex flex-column gap-2">
+        <p class="first-p">
+             هذا الموقع يستخدم ملفات تعريف الارتباط لضمان أفضل تجربة استخدام وتحسين
+ الأداء أثناء التصفح.
+        </p>
+        <a class="a-cookie" href="https://infath.gov.sa/ar/privacy-and-policy/">سياسة الخصوصية</a>
+    </div>
+
+    <div class="d-flex gap-2 flex-column">
+        <button class="btn btn-primary btn-success flex-fill">قبول</button>
+        <button class="btn btn-outline-light tertiary-btn flex-fill">رفض</button>
+    </div>
+</div>
+
+   
+  
+    <section class="lastedit">
+    <div class="container-xxl">
+        <p>
+            تاريخ اّخر تعديل &nbsp;
+            <span> 25‏/06‏/2026 12:37 م </span>  &nbsp;  بتوقيت السعودية 
+        </p>
+    </div>
+</section>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+    <!-- New scripts -->
+    
+    
+    
+    
+
+    
+    
+  
+    
+ 
+
+
+    
+
+    
+    
+    
+    
+   
+    
+   
+    
+    
+
+    
+
+
+      
+
+
+
+
+
+
+<div><div style="display: none;" data-original-tag="iframe"></div></div><div id="hudhud-widget-wrapper" class="hudhud-widget-rtl theme-minimal">
+                <div id="hudhud-widget-container" class="initialized-state hudhud-widget-right-position"><div id="hudhud-widget-header">
+                <div id="hudhud-widget-header-actions">
+                    <button id="hudhud-widget-language-switch-button">
+                        <i class="iconoir-language" title="English"></i>
+                    </button>
+                    <button id="hudhud-widget-close-button">
+                        <i class="iconoir-xmark hudhud-widget-close-icon"></i>
+                    </button>
+                </div>
+                <div id="hudhud-widget-header-logo">
+                    <div class="hudhud-widget-header-super-text">إطلاق تجريبي</div>
+                    <div class="hudhud-widget-logo-wrapper">
+                        
+                    </div>
+                </div>
+                <div id="hudhud-widget-header-title">
+                    <h2>المساعد الرقمي</h2>
+                </div>
+            </div><div id="hudhud-widget-body"><div id="hudhud-widget-header-separator"></div><div id="hudhud-widget-chat-elements"></div></div><div id="hudhud-widget-editor" class="hudhud-widget-editor-disabled hudhud-widget-disabled-editor">
+                <input type="file" id="hudhud-widget-file-input" accept="image/*,video/*,.pdf" style="display: none;">
+                <div id="hudhud-widget-editor-input">
+                    <textarea type="text" id="hudhud-widget-editor-textarea" placeholder="اكتب رسالتك هنا..." disabled=""></textarea>
+                </div>
+                <div id="hudhud-widget-editor-actions">
+                    <div id="hudhud-widget-editor-attachment" style="display: none;">
+                        
+                    </div>
+                    <div id="hudhud-widget-editor-send">
+                        <button id="hudhud-widget-editor-send-button" disabled="" style="margin: -10px 25px;"><i class="iconoir-arrow-right hudhud-widget-reflectable-icon"></i></button>
+                    </div>
+                </div>
+            </div><div class="hudhud-widget-validation-message" style="display: none;"></div>
+            <div id="hudhud-widget-footer">
+                <div id="hudhud-widget-footer-separator"></div>
+                <div id="hudhud-widget-footer-text"></div>
+            </div>
+        </div><div id="hudhud-widget-reference-popup" class="hudhud-widget-reference-popup-right-position hudhud-widget-popup-hidden" style="display:none;">
+                <div class="hudhud-widget-reference-popup-actions">
+                    <button id="hudhud-widget-reference-popup-close-button">
+                    إغلاق
+                    <i class="iconoir-xmark-circle-solid hudhud-widget-close-icon"></i>
+                    </button>
+                </div>
+                <div class="hudhud-widget-reference-popup-content">
+                    <h1>مصادر الإجابة</h1>
+                    <div class="hudhud-widget-reference-popup-content-list">
+                    </div>
+                </div>
+            </div><div id="hudhud-widget-warning-popup" class="hudhud-widget-warning-popup-right-position hudhud-widget-popup-hidden" style="display:none;">
+                <div class="hudhud-widget-warning-popup-content">
+                    <h2>هل أنت متأكد من إنهاء المحادثة؟</h2>
+                </div>
+                <div class="hudhud-widget-warning-popup-actions">
+                    <button id="hudhud-widget-warning-popup-confirm-button">إنهاء المحادثة</button>
+                    <button id="hudhud-widget-warning-popup-cancel-button">تراجع</button>
+                </div>
+            </div>
+                <div id="hudhud-widget-button">
+                    <button id="hudhud-widget-open-button" class="hudhud-widget-button-right-position">
+                        <i class="iconoir-chat-bubble-empty-solid"></i>
+                    </button>
+                </div>
+            </div></body></html>

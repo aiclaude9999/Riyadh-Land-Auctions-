@@ -7,7 +7,6 @@
  */
 import { loadAndCapture } from './browser';
 import { findAuctionArrays, mapHeuristic } from './heuristic';
-import { getText } from '@/lib/http';
 import type { Connector, RawAuction } from './types';
 
 function browserConnector(cfg: { id: string; name: string; baseUrl: string; pages: string[]; match?: RegExp; urlFor: (id: string, o: any) => string }): Connector {
@@ -38,24 +37,3 @@ export const athmann = browserConnector({
   id: 'athmann', name: 'أثمان', baseUrl: 'https://athmann.com.sa', pages: ['/', '/auctions'],
   urlFor: (id) => `https://athmann.com.sa/auctions/${id}`,
 });
-
-const infathBrowser = browserConnector({
-  id: 'infath', name: 'إنفاذ', baseUrl: 'https://infath.gov.sa', pages: ['/ar/auctions', '/'],
-  urlFor: (id) => `https://infath.gov.sa/ar/auctions/${id}`,
-});
-
-export const infath: Connector = {
-  ...infathBrowser,
-  async fetchAuctions(ctx) {
-    // Fast reachability probe first so a geo-block fails quickly with a clear message.
-    try {
-      await getText('https://infath.gov.sa/', { timeoutMs: 15_000, retries: 0 });
-    } catch (e: any) {
-      if (/ECONNRESET|socket|fetch failed|other side closed|terminated/i.test(`${e?.cause?.code ?? ''} ${e?.cause?.message ?? ''} ${e?.message ?? ''}`)) {
-        const { BlockedError } = await import('./types');
-        throw new BlockedError(`infath.gov.sa reset the connection (the site appears to accept only Saudi networks): ${e?.cause?.code ?? e.message}`);
-      }
-    }
-    return infathBrowser.fetchAuctions(ctx);
-  },
-};

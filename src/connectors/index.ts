@@ -8,10 +8,17 @@ import { saudiaAuctions } from './saudia-auctions';
 import { mazadat } from './mazadat';
 import { tarsyah } from './tarsyah';
 import { qemah } from './qemah';
-import { wasalt, athmann, infath } from './protected';
+import { wasalt, athmann } from './protected';
+import { infath } from './infath';
 
 export const connectors: Connector[] = [mobasher, saudiaAuctions, mazadat, tarsyah, qemah, infath, wasalt, athmann];
 
 export function getConnector(id: string): Connector | undefined {
   return connectors.find((c) => c.id === id);
+}
+
+/** Connectors this machine can reach: Saudi-only sources run only where SAUDI_NETWORK=1, and then alone. */
+export function connectorsForThisNetwork(): Connector[] {
+  const saudi = process.env.SAUDI_NETWORK === '1';
+  return connectors.filter((c) => (saudi ? c.saudiOnly : !c.saudiOnly));
 }

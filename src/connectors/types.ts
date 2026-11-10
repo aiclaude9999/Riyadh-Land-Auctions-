@@ -66,6 +66,8 @@ export interface Connector {
   method: 'api' | 'html' | 'browser';
   /** Modes the connector can serve with a narrower (cheaper) request. Others fall back to `discovery`. */
   modes: RefreshMode[];
+  /** Site only answers Saudi networks: run it only where SAUDI_NETWORK=1 (e.g. the laptop collector). */
+  saudiOnly?: boolean;
   fetchAuctions(ctx: ConnectorContext): Promise<RawAuction[]>;
 }
 

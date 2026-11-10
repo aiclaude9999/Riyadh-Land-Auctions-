@@ -65,7 +65,7 @@
 | **مزادات** `mazadat.sa` | ✅ يعمل | JSON API: `POST api.mazadat.sa/api/v2/search` | كل سجل = أصل (مركبة غالباً): سعر البداية، أعلى مزايدة، المدينة، الإحداثيات، صورة، البداية/النهاية |
 | **ترسية** `tarsyah.sa` (`tarsyah.com` يحوّل إليه) | ✅ يعمل | JSON API: `admin.tarsyah.sa/api/v1/auctions` | الاسم، النوع، الحالة، التواريخ، عدد الأصناف، صورة. **لا يوجد حقل مدينة** — الموقع يُستخرج فقط إن ورد في نص المزاد نفسه |
 | **قمة** `qemah.sa` | ✅ يعمل | JSON من صفحات Laravel: `/auctions/{live,upcoming,finished}` | الاسم، التصنيف (سيارات/لوحات)، تاريخ ووقت البدء، عدد المعروضات. **لا يوجد وقت انتهاء ولا موقع** في المصدر |
-| **إنفاذ** `infath.gov.sa` | ⛔ محجوب | Playwright + محلّل JSON عام | الخادم يقطع الاتصال (`ECONNRESET`) من شبكات خارج السعودية — يُتوقّع أن يعمل عند التشغيل من شبكة سعودية |
+| **إنفاذ** `infath.gov.sa` | ✅ من جهاز داخل السعودية | HTML (Cheerio): `/ar/auctions/?tab=ongoing\|upcoming` + صفحة كل مزاد | الاسم، عدد الأصول، البداية، **وقت الإغلاق الدقيق** (من العدّاد)، المنطقة والمدينة، نوع الأصل، والأصول (النوع، المساحة، الحي، سعر البداية). الموقع يرفض الاتصال من خارج السعودية، لذلك يُجمع من لابتوب داخل المملكة (انظر أدناه) |
 | **وصلت** `auction.wasalt.sa` | ⛔ محجوب | Playwright + محلّل JSON عام | تحدي Cloudflare ("لحظة…") يمنع المتصفح الآلي |
 | **أثمان** `athmann.com.sa` | ⛔ محجوب | Playwright + محلّل JSON عام | Cloudflare "Attention Required" |
 
@@ -87,6 +87,18 @@
 3. **Actions** → "Collect auctions" → Run workflow (ينشئ الجداول ويجلب البيانات).
 4. **Netlify**: Add new project → Import from GitHub → هذا المستودع والفرع `ccr-684fffdf-bi3tdz`، اسم المشروع `mazad-radar`، ومتغيرات البيئة: `DATABASE_URL` و `APP_PASSWORD` → Deploy.
 5. (اختياري) زر "تحديث الآن": أضف في Netlify `GITHUB_REPO=aiclaude9999/Riyadh-Land-Auctions-` و `GITHUB_TOKEN` (Fine-grained token بصلاحية Actions: Read and write على هذا المستودع).
+
+## جمع إنفاذ من لابتوب داخل السعودية (Windows)
+
+إنفاذ لا يقبل الاتصال إلا من شبكات سعودية، لذلك يُجمع من جهاز داخل المملكة إلى نفس قاعدة البيانات (باقي المنصات تبقى على GitHub Actions).
+افتح **PowerShell** والصق هذا السطر (لا يحتاج صلاحيات مدير):
+
+```powershell
+irm https://raw.githubusercontent.com/aiclaude9999/Riyadh-Land-Auctions-/ccr-684fffdf-bi3tdz/scripts/infath-laptop/setup.ps1 | iex
+```
+
+يقوم بـ: تثبيت Node.js إن لم يكن موجوداً، تنزيل الكود إلى `%LOCALAPPDATA%\MazadRadarInfath`، طلب رابط قاعدة البيانات مرة واحدة (يُحفظ على الجهاز فقط)، تجربة الجمع فوراً، ثم إنشاء مهمة مجدولة **كل ساعتين** وعند تسجيل الدخول (وتعمل المهام الفائتة عند تشغيل الجهاز). إعادة تشغيل نفس السطر تحدّث الكود.
+للإيقاف: `Unregister-ScheduledTask -TaskName MazadRadar-Infath`. الإعداد `SAUDI_NETWORK=1` يجعل الجامع يشغّل مصادر السعودية فقط.
 
 ## استضافة مجانية (GitHub Pages — تتحدث كل ساعة)
 
