@@ -44,7 +44,7 @@ In this sandbox Node `fetch` needs `NODE_USE_ENV_PROXY=1`. netlify.app / github.
 | Tarsyah `tarsyah.sa` | ✅ | `admin.tarsyah.sa/api/v1/auctions?limit=30&page=N`, `/api/v1/auction/{id}` (items) | No city field; location from text only. |
 | Mazadat `mazadat.sa` | ✅ | `POST api.mazadat.sa/api/v2/search` body `{"$and":[{"status":{"$in":[...]}}]}` | Each hit is one lot (vehicles). Epoch ms. No organiser name. |
 | Qemah `qemah.sa` | ✅ | `/auctions/{live\|upcoming\|finished}?page=N` (XHR JSON) | Car plates/cars. Only start date/time (Riyadh local). Lot records contain personal documents → only auction-level fields read. |
-| Infath `infath.gov.sa` | ❌ | Connector exists (`src/connectors/infath.ts`, `saudiOnly`) | Resets connections from outside KSA. From the owner's KSA laptop it answered **HTTP 500 to scripted requests** (browsers OK). Disguising as a browser / driving Edge was **blocked by the safety classifier as bot-check circumvention** → not done. Laptop task + files were removed by the owner. Parts of Infath appear via Soum/Mobasher/Wasalt. |
+| Infath `infath.gov.sa` | ✅ via owner's KSA laptop | `src/connectors/infath.ts` (`saudiOnly`), HTML list + detail pages, plain honest requests | Resets connections from outside KSA, so it runs on the owner's Windows laptop (`scripts/infath-laptop`, task `MazadRadar-Infath` every 2 h). First test run got HTTP 500, but the scheduled run 5 min later **succeeded with the same plain request** → the 500 was a temporary server error, not a block. Disguising as a browser was proposed earlier and **blocked by the safety classifier** — never do that. Re-enabled on 10 Nov after the owner saw Infath cards on the site. Updates only while the laptop is on. |
 | Wasalt `auction.wasalt.sa` | ❌ | — | Cloudflare "Just a moment…" on every host. Owner asked to force past it twice ("not against their terms") → **declined** (deliberate bot barrier). Offered: bookmarklet "Import from Wasalt" (human-in-the-loop) and/or email asking for API key — owner said **no** to both. Search engines index Wasalt pages (public snippets). |
 | Athmann `athmann.com.sa` | ❌ | — | Cloudflare "Attention Required". Not bypassed. |
 
@@ -76,7 +76,7 @@ In this sandbox Node `fetch` needs `NODE_USE_ENV_PROXY=1`. netlify.app / github.
 4. "العقارات" properties page (every asset).
 5. Hosting: Render (paid) prepared → owner has no money → free GitHub Pages static page (made repo public) → owner wanted full version → **Netlify + Neon + GitHub Actions** with password, renamed **Mazad Radar**.
 6. First collector run timed out (US runners ↔ Frankfurt DB latency) → parallel ingest → ~2.5 min runs.
-7. Infath: confirmed geo-block; built HTML connector + Windows laptop collector; Infath returned 500 to scripts; bypass declined; laptop cleaned up.
+7. Infath: confirmed geo-block; built HTML connector + Windows laptop collector; first run got 500, bypass declined, laptop cleaned up — but a scheduled run had already succeeded (Infath cards appeared), so the 500 was temporary. Laptop collector re-enabled with the same honest connector.
 8. Added **Soum**. Wasalt bypass requested and declined.
 
 ## 6. Open items / to-do

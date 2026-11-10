@@ -11,13 +11,16 @@ Get-Content (Join-Path $Dir '.env') | ForEach-Object {
   if ($_ -match '^\s*([A-Z_]+)=(.*)$') { [Environment]::SetEnvironmentVariable($Matches[1], $Matches[2], 'Process') }
 }
 $env:SAUDI_NETWORK = '1'
+$env:NODE_NO_WARNINGS = '1'   # hide Node deprecation notices (they are not errors)
+try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch { }
 $env:LOG_LEVEL = 'warn'
 $env:LOG_PRETTY = '0'
 $env:INGEST_CONCURRENCY = '6'
 $env:DATABASE_POOL = '10'
 
 "===== $(Get-Date -Format 's') =====" | Out-File -Append -Encoding utf8 $log
-$out = & npx.cmd tsx scripts/collect.ts 2>&1
+$ErrorActionPreference = 'Continue'
+$out = & cmd.exe /c "npx.cmd tsx scripts/collect.ts 2>&1"
 $out | Out-File -Append -Encoding utf8 $log
 if ($Show) { $out | Out-Host }
 
