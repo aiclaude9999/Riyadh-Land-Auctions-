@@ -88,7 +88,7 @@ export default function AuctionPage({ params }: { params: Promise<{ id: string }
                         <td className="whitespace-nowrap">{propertyLabel(x.propertyType)}</td>
                         <td className="whitespace-nowrap">{x.usage ? usageLabel(x.usage) : '—'}</td>
                         <td className="num whitespace-nowrap">{fmtArea(x.areaSqm) ?? '—'}</td>
-                        <td className="text-xs">{[x.district, x.city].filter(Boolean).join('، ') || '—'}{x.latitude != null && <> · <a className="text-brand-600" target="_blank" rel="noreferrer" href={`https://www.google.com/maps?q=${x.latitude},${x.longitude}`}>خريطة</a></>}</td>
+                        <td className="text-xs">{[x.district, x.city ?? x.region].filter(Boolean).join('، ') || '—'}{x.latitude != null && <> · <a className="text-brand-600" target="_blank" rel="noreferrer" href={`https://www.google.com/maps?q=${x.latitude},${x.longitude}`}>خريطة</a></>}</td>
                         <td className="num whitespace-nowrap">{fmtMoney(x.currentPrice ?? x.startPrice) ?? '—'}</td>
                         <td className="num whitespace-nowrap">{fmtMoney(x.deposit) ?? '—'}</td>
                         <td>{x.url && <a className="text-xs text-brand-600" href={x.url} target="_blank" rel="noreferrer">↗</a>}</td>

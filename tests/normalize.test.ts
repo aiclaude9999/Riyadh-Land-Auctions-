@@ -60,6 +60,7 @@ describe('geo classification', () => {
       expect(g.hasRiyadhRegion).toBe(true);
     }
   });
+  it('district given as city', () => expect(classifyGeo({ cities: ['ديراب'] }).scope).toBe('riyadh_city'));
   it('other cities', () => expect(classifyGeo({ cities: ['جدة'] }).scope).toBe('other'));
   it('unknown without data', () => expect(classifyGeo({}).scope).toBe('unknown'));
   it('multi-location auction with a Riyadh asset', () => {

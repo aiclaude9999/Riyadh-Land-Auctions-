@@ -7,6 +7,7 @@
 import { getJson } from '@/lib/http';
 import { mapCategory, mapPropertyType, mapUsage, parseArea, parseMoney, cleanText, uniq, type Category, type Status } from '@/lib/normalize';
 import { parseUtcNaive } from '@/lib/time';
+import { districtsInText } from '@/lib/geo';
 import type { Connector, RawAsset, RawAuction } from './types';
 
 const BASE = 'https://www.auctions.com.sa';
@@ -44,6 +45,7 @@ export function parseSaudiaProduct(p: any, auctionUrl: string, loc?: { lat: numb
     title: name,
     url: auctionUrl,
     region: cleanText(p.region),
+    district: districtsInText(name)[0] ?? null,
     latitude: loc?.lat ?? null,
     longitude: loc?.lng ?? null,
     startPrice: parseMoney(p.opening_price),

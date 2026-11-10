@@ -33,6 +33,7 @@ describe('saudia products (real fixture)', () => {
     expect(ps.map((p: any) => p.propertyType)).toEqual(['villa', 'villa', 'rest_house', 'rest_house', 'land']);
     expect(ps[0]).toMatchObject({ areaSqm: 600, deposit: 100000, startPrice: 4000000, latitude: 24.7 });
     expect(ps[4].usage).toBe('residential');
+    expect(parseSaudiaProduct({ id: 1, name: 'عمارة تجارية سكنية بحي الدار البيضاء' }, 'u').district).toBe('الدار البيضاء');
   });
 });
 

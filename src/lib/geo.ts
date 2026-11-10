@@ -115,7 +115,8 @@ export function classifyGeo(inp: GeoInput): GeoResult {
   const cities = uniq(inp.cities ?? []);
   const regions = uniq(inp.regions ?? []);
   const districts = uniq(inp.districts ?? []);
-  let city = cities.some(isRiyadhCity);
+  // Some sources put a Riyadh district (e.g. "ديراب") in the city field.
+  let city = cities.some(isRiyadhCity) || cities.some((c) => isRiyadhDistrict(c) && !isRiyadhRegionTown(c));
   let region = city || cities.some(isRiyadhRegionTown);
   const regionIsRiyadh = regions.some(isRiyadhRegionName);
 
