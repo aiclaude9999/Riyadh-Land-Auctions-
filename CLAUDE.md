@@ -1,6 +1,6 @@
 # Mazad Radar (رادار المزادات) — notes for Claude
 
-**Read `docs/PROJECT_HISTORY.md` first** — full history, decisions, live setup and open to-dos.
+**Read `docs/PROJECT_HISTORY.md` first** — full history, decisions, live setup and open to-dos. Code map with diagrams: `docs/ARCHITECTURE.md`.
 
 ## Essentials
 - Owner: non-developer in Riyadh, writes English/Arabic, sends phone photos of screens, has **no money** (keep everything free), wants click-by-click steps.
