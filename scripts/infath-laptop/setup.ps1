@@ -48,10 +48,18 @@ Remove-Item -Recurse -Force $tmp, $zip
 # 3) Database link (asked once, stored only on this laptop)
 $envFile = Join-Path $Dir '.env'
 if (-not (Test-Path $envFile) -or -not (Select-String -Path $envFile -Pattern '^DATABASE_URL=' -Quiet)) {
-  Say 'Paste your Neon database link (the same one you put in GitHub and Netlify), then press Enter. It will not be shown on screen:' 'Yellow'
-  $sec = Read-Host -AsSecureString 'DATABASE_URL'
-  $url = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec)).Trim()
-  if ($url -notmatch '^postgres(ql)?://') { Say 'The link must start with postgresql:// - run the command again.' 'Red'; return }
+  # Read the link from the clipboard: pasting into a hidden prompt is unreliable in Windows PowerShell 5.1.
+  Say 'COPY your Neon database link (Ctrl+C) - do not paste it here - then press Enter in this window.' 'Yellow'
+  [void](Read-Host 'Press Enter after copying the link')
+  $url = ''
+  try { $url = (Get-Clipboard -Raw) } catch { }
+  if ($url) { $url = $url.Trim().Trim('"').Trim("'") }
+  if ($url -notmatch '^postgres(ql)?://\S+$') {
+    Say 'The clipboard does not contain a link starting with postgresql:// - copy it again and run the command again.' 'Red'
+    return
+  }
+  try { Set-Clipboard -Value ' ' } catch { }   # clear the clipboard
+  Say 'Database link received (hidden).' 'Green'
   Set-Content -Path $envFile -Value "DATABASE_URL=$url" -Encoding ASCII
 }
 
