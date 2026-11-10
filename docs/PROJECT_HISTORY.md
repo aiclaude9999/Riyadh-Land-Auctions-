@@ -64,7 +64,7 @@ In this sandbox Node `fetch` needs `NODE_USE_ENV_PROXY=1`. netlify.app / github.
 - `src/lib/auth.ts` + `src/middleware.ts` + `/login` — site password (`APP_PASSWORD`, HMAC cookie, 90 days).
 - `src/worker/index.ts` BullMQ worker + scheduler (Docker/paid mode only).
 - `scripts/collect.ts` GitHub collector (no Redis). `scripts/build-static.ts` + `static/template.html` → GitHub Pages page. `scripts/scrape-once.ts` local test. `scripts/infath-laptop/*.ps1` Windows Infath collector (currently unused).
-- Pages: `/` dashboard (default **land** focus, Riyadh city), `/properties` (every asset), `/map` (Leaflet + OpenStreetMap tiles, pins = assets with lat/lng, coloured by property type, popup with area/price/deposit/auction; API `/api/map`), `/auctions/[id]` (plots table, change history), `/saved`, `/sources`, `/notifications`, `/settings`, `/login`.
+- Pages: `/` dashboard (default **land** focus, Riyadh city), `/properties` (every asset), `/map` (Leaflet; base maps: OpenStreetMap streets, Esri satellite, satellite + roads/names, choice remembered; pins = assets with lat/lng, coloured by property type, popup with area/price/deposit/auction; API `/api/map`), `/auctions/[id]` (plots table, change history), `/saved`, `/sources`, `/notifications`, `/settings`, `/login`.
 - DB migrations: `prisma/migrations/20261110000000_init`, `20261110010000_land_fields`.
 - Tests: 78 passing (`npm test`), fixtures are trimmed real responses (personal/contact fields removed).
 

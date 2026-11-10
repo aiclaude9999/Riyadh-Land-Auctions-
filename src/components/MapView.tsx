@@ -36,9 +36,23 @@ export default function MapView() {
   useEffect(() => {
     if (!el.current || map.current) return;
     map.current = L.map(el.current, { center: GEO[0].center, zoom: GEO[0].zoom, preferCanvas: true });
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // Base maps (both free): OpenStreetMap streets, and Esri World Imagery satellite photos
+    const streets = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(map.current);
+    });
+    const esriAttr = 'Tiles &copy; Esri &mdash; Esri, Maxar, Earthstar Geographics';
+    const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: esriAttr });
+    const hybrid = L.layerGroup([
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: esriAttr }),
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }),
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }),
+    ]);
+    const bases: Record<string, L.Layer> = { 'خريطة الشوارع': streets, 'قمر صناعي': satellite, 'قمر صناعي + الطرق والأسماء': hybrid };
+    let saved = 'خريطة الشوارع';
+    try { saved = localStorage.getItem('mapBase') ?? saved; } catch { /* ignore */ }
+    (bases[saved] ?? streets).addTo(map.current);
+    L.control.layers(bases, undefined, { position: 'topright', collapsed: false }).addTo(map.current);
+    map.current.on('baselayerchange', (e: L.LayersControlEvent) => { try { localStorage.setItem('mapBase', e.name); } catch { /* ignore */ } });
     layer.current = L.layerGroup().addTo(map.current);
     return () => { map.current?.remove(); map.current = null; };
   }, []);
