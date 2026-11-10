@@ -48,18 +48,19 @@ Remove-Item -Recurse -Force $tmp, $zip
 # 3) Database link (asked once, stored only on this laptop)
 $envFile = Join-Path $Dir '.env'
 if (-not (Test-Path $envFile) -or -not (Select-String -Path $envFile -Pattern '^DATABASE_URL=' -Quiet)) {
-  # Read the link from the clipboard: pasting into a hidden prompt is unreliable in Windows PowerShell 5.1.
-  Say 'COPY your Neon database link (Ctrl+C) - do not paste it here - then press Enter in this window.' 'Yellow'
-  [void](Read-Host 'Press Enter after copying the link')
-  $url = ''
-  try { $url = (Get-Clipboard -Raw) } catch { }
+  # Visible input (pasting into a hidden prompt is unreliable in Windows PowerShell 5.1).
+  # An empty answer falls back to the clipboard.
+  Say 'Paste your Neon database link (right-click), then press Enter. If you only copied it, just press Enter:' 'Yellow'
+  $url = Read-Host 'DATABASE_URL'
+  if (-not $url) { try { $url = (Get-Clipboard -Raw) } catch { } }
   if ($url) { $url = $url.Trim().Trim('"').Trim("'") }
   if ($url -notmatch '^postgres(ql)?://\S+$') {
-    Say 'The clipboard does not contain a link starting with postgresql:// - copy it again and run the command again.' 'Red'
+    Say 'That is not a link starting with postgresql:// - run the command again.' 'Red'
     return
   }
   try { Set-Clipboard -Value ' ' } catch { }   # clear the clipboard
-  Say 'Database link received (hidden).' 'Green'
+  Clear-Host
+  Say 'Database link saved on this laptop.' 'Green'
   Set-Content -Path $envFile -Value "DATABASE_URL=$url" -Encoding ASCII
 }
 
