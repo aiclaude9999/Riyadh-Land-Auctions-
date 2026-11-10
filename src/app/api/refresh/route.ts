@@ -19,6 +19,11 @@ export const POST = handle(async (req: Request) => {
     return json({ queued: ids, via: 'github', note: 'بدأ التحديث على GitHub — النتائج خلال 2–3 دقائق' });
   }
   const { enqueueScrape } = await import('@/lib/queue'); // Redis only needed in worker mode
-  await Promise.all(ids.map((id) => enqueueScrape(id, 'manual')));
+  const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('لا يمكن الوصول إلى Redis — تأكد من تشغيله وتشغيل الـ worker')), 5000));
+  try {
+    await Promise.race([Promise.all(ids.map((id) => enqueueScrape(id, 'manual'))), timeout]);
+  } catch (e: any) {
+    return json({ error: e.message }, { status: 503 });
+  }
   return json({ queued: ids, via: 'worker' });
 });

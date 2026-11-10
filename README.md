@@ -75,6 +75,19 @@
 
 ---
 
+## النسخة الكاملة مجاناً: Netlify + Neon + GitHub Actions
+
+- **Netlify**: يستضيف التطبيق الكامل (كل الصفحات، المحفوظة، الإشعارات، الإعدادات) مع **كلمة مرور** (`APP_PASSWORD`).
+- **Neon**: قاعدة PostgreSQL مجانية.
+- **GitHub Actions** (`collect.yml`): يجمع المزادات إلى القاعدة **كل 30 دقيقة** (بدون Redis)، ويحدّث المنتهية يومياً.
+
+خطوات الإعداد:
+1. **Neon** (neon.tech): أنشئ مشروعاً مجانياً وانسخ Connection string.
+2. **GitHub**: Settings → Secrets and variables → Actions → New repository secret: `DATABASE_URL` = الرابط.
+3. **Actions** → "Collect auctions" → Run workflow (ينشئ الجداول ويجلب البيانات).
+4. **Netlify**: Add new project → Import from GitHub → هذا المستودع والفرع `ccr-684fffdf-bi3tdz`، اسم المشروع `mazad-radar`، ومتغيرات البيئة: `DATABASE_URL` و `APP_PASSWORD` → Deploy.
+5. (اختياري) زر "تحديث الآن": أضف في Netlify `GITHUB_REPO=aiclaude9999/Riyadh-Land-Auctions-` و `GITHUB_TOKEN` (Fine-grained token بصلاحية Actions: Read and write على هذا المستودع).
+
 ## استضافة مجانية (GitHub Pages — تتحدث كل ساعة)
 
 الملف `.github/workflows/pages.yml` يجمع المزادات كل ساعة على خوادم GitHub وينشر صفحة واحدة (الأراضي، العقارات، كل المزادات، المصادر) على GitHub Pages — بدون قاعدة بيانات وبدون أي تكلفة.
