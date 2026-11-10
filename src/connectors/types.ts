@@ -1,5 +1,5 @@
 import type { Logger } from '@/lib/logger';
-import type { Category, Status } from '@/lib/normalize';
+import type { Category, PropertyType, Status, Usage } from '@/lib/normalize';
 
 export type RefreshMode = 'discovery' | 'live' | 'closing' | 'upcoming' | 'ended' | 'manual';
 
@@ -16,6 +16,10 @@ export interface RawAsset {
   currentPrice?: number | null;
   deposit?: number | null;
   images?: string[];
+  propertyType?: PropertyType | null;
+  usage?: Usage | null;
+  areaSqm?: number | null;
+  status?: string | null;
 }
 
 /** What a connector returns for each auction. Leave unknown fields null/undefined — never invent values. */

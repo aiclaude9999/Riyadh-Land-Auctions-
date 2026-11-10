@@ -12,6 +12,8 @@ export interface AppSettings {
   };
   closingWindowMin: number;
   defaultGeo: GeoFilter;
+  /** land = land auctions only (default), real_estate = all real estate, all = every auction type */
+  defaultFocus: 'land' | 'real_estate' | 'all';
   telegram: { enabled: boolean; chatId: string };
 }
 
@@ -19,6 +21,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   intervals: { discoveryMin: 30, liveMin: 10, closingMin: 3, upcomingMin: 60, endedMin: 1440, uiRefreshSec: 60 },
   closingWindowMin: 60,
   defaultGeo: 'riyadh_city',
+  defaultFocus: 'land',
   telegram: { enabled: false, chatId: '' },
 };
 
@@ -41,6 +44,7 @@ export function sanitizeSettings(input: any): AppSettings {
     },
     closingWindowMin: clamp(input?.closingWindowMin, 10, 240, d.closingWindowMin),
     defaultGeo: ['riyadh_city', 'riyadh_region', 'all'].includes(input?.defaultGeo) ? input.defaultGeo : d.defaultGeo,
+    defaultFocus: ['land', 'real_estate', 'all'].includes(input?.defaultFocus) ? input.defaultFocus : d.defaultFocus,
     telegram: { enabled: !!input?.telegram?.enabled, chatId: String(input?.telegram?.chatId ?? '').slice(0, 64) },
   };
 }

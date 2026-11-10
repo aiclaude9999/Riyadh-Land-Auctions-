@@ -5,11 +5,13 @@
  * Cursor pagination. Times are UTC ISO strings.
  */
 import { getJson } from '@/lib/http';
-import { mapCategory, parseMoney, cleanText, uniq, type Status } from '@/lib/normalize';
+import { mapCategory, mapPropertyType, mapUsage, parseArea, parseMoney, cleanText, uniq, type Status } from '@/lib/normalize';
 import { parseIso } from '@/lib/time';
-import type { Connector, RawAuction, RefreshMode } from './types';
+import type { Connector, RawAsset, RawAuction, RefreshMode } from './types';
 
 const API = 'https://discovery-api.prod.mobasher.sa/api/v1/discovery/auctions';
+const PRODUCTS_API = 'https://discovery-api.prod.mobasher.sa/api/v1/discovery/auction-products';
+const PRODUCT_STATUSES = ',SOLD,PASS,POSTPONE,PAUSED,RUNNING,PENDING,CREATED,POSTPONE_WITH_HBID,LIVE_NOW,SOLD_BUY_NOW,OFFER,PAYMENT_PENDING,WAITING_INFATH_RESPONSE';
 const STATUS: Record<string, Status> = { LIVE: 'live', SCHEDULED: 'upcoming', CLOSED: 'ended', ENDED: 'ended', CANCELLED: 'ended' };
 
 export function parseMobasherItem(i: any): RawAuction {
@@ -41,6 +43,52 @@ export function parseMobasherItem(i: any): RawAuction {
   };
 }
 
+/** One product (= asset, e.g. a land plot) of a Mobasher auction. */
+export function parseMobasherProduct(p: any, auctionUrl: string): RawAsset {
+  const re = p.realEstateDetails ?? {};
+  const title = cleanText(p.title);
+  return {
+    externalId: String(p.sourceEntityId ?? p.documentId),
+    title,
+    url: auctionUrl,
+    city: cleanText(p.cityNameAr ?? p.cityName),
+    region: cleanText(p.regionNameAr ?? p.regionName),
+    district: cleanText(p.neighborhoodNameAr ?? p.neighborhoodName),
+    latitude: typeof p.geoLocation?.lat === 'number' ? p.geoLocation.lat : null,
+    longitude: typeof p.geoLocation?.lon === 'number' ? p.geoLocation.lon : null,
+    startPrice: parseMoney(p.openingPrice),
+    currentPrice: parseMoney(p.currentLeadingBid),
+    deposit: parseMoney(p.insuranceAmount),
+    images: uniq<string>([...(p.imageUrls ?? []), p.coverImageUrl]),
+    propertyType: p.category === 'REAL_ESTATES' || re.propertyType ? mapPropertyType(re.propertyType, re.propertyTypeAr, title) : null,
+    usage: mapUsage(re.usageType, re.usageTypeAr, title),
+    areaSqm: parseArea(re.spaceSqm ?? re.listedAreaSqm),
+    status: p.productStatus ?? null,
+  };
+}
+
+/** Attach products (assets) to real-estate auctions — one batched request per 25 auctions. */
+async function attachProducts(auctions: RawAuction[], log: any) {
+  const targets = auctions.filter((a) => a.category === 'real_estate' && a.status !== 'ended');
+  const byId = new Map(targets.map((a) => [a.externalId, a]));
+  for (let i = 0; i < targets.length; i += 25) {
+    const ids = targets.slice(i, i + 25).map((a) => a.externalId);
+    let cursor: string | null = null;
+    for (let page = 0; page < 10; page++) {
+      const qs = new URLSearchParams({ productStatus: PRODUCT_STATUSES, auctionContainerIds: ids.join(','), pageSize: '100', includeTotal: 'true', includeImageUrls: 'true' });
+      if (cursor) qs.set('cursor', cursor);
+      const d: any = await getJson(`${PRODUCTS_API}?${qs}`);
+      for (const p of d.items ?? []) {
+        const a = byId.get(String(p.auctionContainerId));
+        if (a) (a.assets ??= []).push(parseMobasherProduct(p, a.url));
+      }
+      cursor = d.nextCursor ?? null;
+      if (!cursor) break;
+    }
+  }
+  log.debug({ auctions: targets.length, assets: targets.reduce((n, a) => n + (a.assets?.length ?? 0), 0) }, 'mobasher products');
+}
+
 const MODE_STATUSES: Record<RefreshMode, string[]> = {
   discovery: ['LIVE', 'SCHEDULED'], manual: ['LIVE', 'SCHEDULED'], live: ['LIVE'], closing: ['LIVE'], upcoming: ['SCHEDULED'], ended: ['CLOSED'],
 };
@@ -67,6 +115,7 @@ export const mobasher: Connector = {
         if (!cursor || items.length === 0) break;
       }
     }
+    await attachProducts(out, log);
     return out;
   },
 };

@@ -1,11 +1,12 @@
 import { prisma } from '@/lib/db';
-import { geoWhere } from '@/lib/query';
+import { focusWhere, geoWhere } from '@/lib/query';
 import { handle, json } from '../_util';
 
 export const dynamic = 'force-dynamic';
 
 export const GET = handle(async (req: Request) => {
-  const g = geoWhere(new URL(req.url).searchParams.get('geo') ?? undefined);
+  const sp = new URL(req.url).searchParams;
+  const g = { ...geoWhere(sp.get('geo') ?? undefined), ...focusWhere(sp.get('focus') ?? undefined) };
   const [cities, organizers, districts, sources] = await Promise.all([
     prisma.$queryRawUnsafe<{ v: string; n: bigint }[]>(`select unnest(cities) v, count(*) n from "Auction" group by 1 order by 2 desc limit 80`),
     prisma.auction.groupBy({ by: ['organizer'], where: { ...g, organizer: { not: null } }, _count: true, orderBy: { _count: { organizer: 'desc' } }, take: 80 }),

@@ -67,6 +67,13 @@ model Auction {
   hasRiyadhCity       Boolean         @default(false)
   hasRiyadhRegion     Boolean         @default(false)
   isMultiLocation     Boolean         @default(false)
+  /// true when at least one asset is land (from asset data, or the title when assets are unknown)
+  hasLand             Boolean         @default(false)
+  landCount           Int?
+  /// sum of land plot areas in m² (only plots with a known area)
+  landAreaSqm         Float?
+  propertyTypes       String[]
+  usages              String[]
   assetCount          Int?
   startPrice          Decimal?        @db.Decimal(16, 2)
   currentPrice        Decimal?        @db.Decimal(16, 2)
@@ -87,6 +94,7 @@ model Auction {
   @@index([category])
   @@index([firstSeenAt])
   @@index([normalizedTitle])
+  @@index([hasLand])
 }
 
 /// An auction as it appears on ONE source platform. Several listings may point to one Auction.
@@ -138,6 +146,12 @@ model Asset {
   city         String?
   district     String?
   geoScope     String   @default("unknown")
+  /// land | villa | apartment | building | rest_house | farm | commercial | other
+  propertyType String?
+  /// residential | commercial | agricultural | industrial | mixed | ...
+  usage        String?
+  areaSqm      Float?
+  status       String?
   latitude     Float?
   longitude    Float?
   startPrice   Decimal? @db.Decimal(16, 2)

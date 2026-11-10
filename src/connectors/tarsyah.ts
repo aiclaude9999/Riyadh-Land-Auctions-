@@ -5,10 +5,10 @@
  * name / address / description text (e.g. "البديعة والملقا، الرياض") and coordinates when present.
  */
 import { getJson } from '@/lib/http';
-import { mapCategory, cleanText, uniq, type Status } from '@/lib/normalize';
+import { mapCategory, mapPropertyType, mapUsage, parseArea, parseMoney, cleanText, uniq, type Status } from '@/lib/normalize';
 import { citiesInText, districtsInText } from '@/lib/geo';
 import { parseIso } from '@/lib/time';
-import type { Connector, RawAuction } from './types';
+import type { Connector, RawAsset, RawAuction } from './types';
 
 const API = 'https://admin.tarsyah.sa/api/v1/auctions';
 const STATUS: Record<string, Status> = { current: 'live', upcoming: 'upcoming', coming: 'upcoming', soon: 'upcoming', finished: 'ended', ended: 'ended' };
@@ -42,6 +42,29 @@ export function parseTarsyahItem(x: any, imagesPrefix = 'https://admin.tarsyah.s
   };
 }
 
+/** One item of a Tarsyah auction (from GET /api/v1/auction/{id}). */
+export function parseTarsyahAsset(it: any, auctionUrl: string, imagesPrefix = 'https://admin.tarsyah.sa/storage/'): RawAsset {
+  const name = cleanText(it.name);
+  const text = [it.name, it.description_short, it.description].filter(Boolean).join(' ');
+  const cities = citiesInText(text);
+  const img = (x: string) => (x.startsWith('http') ? x : imagesPrefix + x);
+  return {
+    externalId: String(it.id),
+    title: name,
+    url: auctionUrl,
+    city: cities[0] ?? null,
+    district: districtsInText(text)[0] ?? null,
+    startPrice: parseMoney(it.price),
+    currentPrice: parseMoney(it.current_price) !== parseMoney(it.price) ? parseMoney(it.current_price) : null,
+    deposit: parseMoney(it.insurance_value),
+    areaSqm: parseArea(it.space),
+    propertyType: mapPropertyType(name, it.description_short),
+    usage: mapUsage(name, it.description_short),
+    images: uniq<string>([it.cover_image, ...(it.images ?? [])].filter(Boolean).map(img)).slice(0, 6),
+    status: it.status_key ?? null,
+  };
+}
+
 export const tarsyah: Connector = {
   id: 'tarsyah',
   name: 'ترسية',
@@ -58,6 +81,15 @@ export const tarsyah: Connector = {
       log.debug({ page, n: items.length, pages: d.paginator?.total_page }, 'tarsyah page');
       // stop when the page is only finished auctions (list is sorted newest first) or no more pages
       if (page >= (d.paginator?.total_page ?? 1) || items.every((x: any) => x.status_key === 'finished')) break;
+    }
+    // item details only for active real-estate auctions (one request each)
+    for (const a of out.filter((x) => x.category === 'real_estate' && x.status !== 'ended')) {
+      try {
+        const d: any = await getJson(`https://admin.tarsyah.sa/api/v1/auction/${a.externalId}`);
+        a.assets = (d.content?.items ?? []).map((it: any) => parseTarsyahAsset(it, a.url));
+      } catch (e: any) {
+        log.warn({ auction: a.externalId, err: e.message }, 'tarsyah items failed — auction kept without assets');
+      }
     }
     return out;
   },

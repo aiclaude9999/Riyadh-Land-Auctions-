@@ -2,7 +2,7 @@
 import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Countdown } from '@/components/Countdown';
-import { CAT_ICON, STATUS_STYLE, catLabel, fmtMoney, formatRiyadh, statusLabel, timeAgo } from '@/components/format';
+import { CAT_ICON, STATUS_STYLE, catLabel, fmtArea, fmtMoney, formatRiyadh, propertyLabel, statusLabel, timeAgo, usageLabel } from '@/components/format';
 
 const FIELD: Record<string, string> = { startAt: 'موعد البدء', endAt: 'موعد الإغلاق', currentPrice: 'السعر المعروض', status: 'الحالة' };
 const GEO_LABEL: Record<string, string> = { riyadh_city: 'مدينة الرياض', riyadh_region: 'منطقة الرياض', other: 'خارج منطقة الرياض', unknown: 'غير محدد' };
@@ -30,9 +30,13 @@ export default function AuctionPage({ params }: { params: Promise<{ id: string }
     ['العنوان / الموقع', a.locationText ?? '—'],
     ['النطاق', `${GEO_LABEL[a.geoScope]}${a.isMultiLocation ? ' · مزاد متعدد المواقع' : ''}`],
     ['عدد الأصول', a.assetCount ?? '—'],
-    ['سعر البداية', fmtMoney(a.startPrice) ?? '—'],
+    ['قطع الأراضي', a.landCount != null ? a.landCount : a.hasLand ? 'غير محدد' : '—'],
+    ['إجمالي مساحة الأراضي', fmtArea(a.landAreaSqm) ?? '—'],
+    ['أنواع العقارات', a.propertyTypes.length ? a.propertyTypes.map(propertyLabel).join('، ') : '—'],
+    ['الاستخدام', a.usages.length ? a.usages.map(usageLabel).join('، ') : '—'],
+    [a.assetCount > 1 ? 'سعر الافتتاح (أقل أصل)' : 'سعر البداية', fmtMoney(a.startPrice) ?? '—'],
     ['آخر سعر معروض', fmtMoney(a.currentPrice) ?? '—'],
-    ['قيمة العربون', fmtMoney(a.deposit) ?? '—'],
+    [a.assetCount > 1 ? 'العربون (أقل أصل)' : 'قيمة العربون', fmtMoney(a.deposit) ?? '—'],
     ['الجهة المنظمة', a.organizer ?? '—'],
     ['أول ظهور', formatRiyadh(a.firstSeenAt)],
     ['آخر تحديث ناجح', `${formatRiyadh(a.lastSuccessAt)} (${timeAgo(a.lastSuccessAt)})`],
@@ -71,13 +75,27 @@ export default function AuctionPage({ params }: { params: Promise<{ id: string }
           {assets.length > 0 && (
             <div className="card p-4">
               <h2 className="mb-3 font-semibold">الأصول ({assets.length})</h2>
-              <div className="divide-y divide-[var(--border)] text-sm">
-                {assets.map((x: any) => (
-                  <div key={x.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
-                    <div>{x.title ?? x.externalId} <span className="muted text-xs">· {[x.district, x.city].filter(Boolean).join('، ') || 'موقع غير محدد'}{x.geoScope === 'riyadh_city' ? ' · الرياض' : ''}</span></div>
-                    <div className="num flex items-center gap-3 text-xs">{fmtMoney(x.currentPrice ?? x.startPrice) ?? ''}{x.url && <a className="text-brand-600" href={x.url} target="_blank" rel="noreferrer">تفاصيل الأصل ↗</a>}</div>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[640px] text-sm">
+                  <thead className="muted text-xs"><tr className="text-right">
+                    <th className="py-1 font-medium">الأصل</th><th className="font-medium">النوع</th><th className="font-medium">الاستخدام</th>
+                    <th className="font-medium">المساحة</th><th className="font-medium">الموقع</th><th className="font-medium">سعر الافتتاح</th><th className="font-medium">العربون</th><th></th>
+                  </tr></thead>
+                  <tbody>
+                    {[...assets].sort((x: any, y: any) => (x.propertyType === 'land' ? 0 : 1) - (y.propertyType === 'land' ? 0 : 1)).map((x: any) => (
+                      <tr key={x.id} className={`border-t border-[var(--border)] align-top ${x.propertyType === 'land' ? 'bg-amber-50/60 dark:bg-amber-950/20' : ''}`}>
+                        <td className="py-2 pl-2">{x.title ?? x.externalId}</td>
+                        <td className="whitespace-nowrap">{propertyLabel(x.propertyType)}</td>
+                        <td className="whitespace-nowrap">{x.usage ? usageLabel(x.usage) : '—'}</td>
+                        <td className="num whitespace-nowrap">{fmtArea(x.areaSqm) ?? '—'}</td>
+                        <td className="text-xs">{[x.district, x.city].filter(Boolean).join('، ') || '—'}{x.latitude != null && <> · <a className="text-brand-600" target="_blank" rel="noreferrer" href={`https://www.google.com/maps?q=${x.latitude},${x.longitude}`}>خريطة</a></>}</td>
+                        <td className="num whitespace-nowrap">{fmtMoney(x.currentPrice ?? x.startPrice) ?? '—'}</td>
+                        <td className="num whitespace-nowrap">{fmtMoney(x.deposit) ?? '—'}</td>
+                        <td>{x.url && <a className="text-xs text-brand-600" href={x.url} target="_blank" rel="noreferrer">↗</a>}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}

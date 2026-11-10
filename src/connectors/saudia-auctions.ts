@@ -5,9 +5,9 @@
  * Dates are naive UTC ("YYYY-MM-DD HH:MM:SS"; server clock /api/get/datetime is +00:00).
  */
 import { getJson } from '@/lib/http';
-import { mapCategory, cleanText, uniq, type Category, type Status } from '@/lib/normalize';
+import { mapCategory, mapPropertyType, mapUsage, parseArea, parseMoney, cleanText, uniq, type Category, type Status } from '@/lib/normalize';
 import { parseUtcNaive } from '@/lib/time';
-import type { Connector, RawAuction } from './types';
+import type { Connector, RawAsset, RawAuction } from './types';
 
 const BASE = 'https://www.auctions.com.sa';
 const STATE: Record<string, Status> = { current: 'live', new: 'upcoming', coming: 'upcoming', ended: 'ended', end: 'ended', finished: 'ended' };
@@ -36,6 +36,42 @@ export function parseSaudiaItem(x: any, categoryHint?: Category): RawAuction {
   };
 }
 
+/** One product (= asset) from /api/auction/products/{id}, with coordinates from /api/auction/products/map/{id}. */
+export function parseSaudiaProduct(p: any, auctionUrl: string, loc?: { lat: number; lng: number }): RawAsset {
+  const name = cleanText(p.name);
+  return {
+    externalId: String(p.id),
+    title: name,
+    url: auctionUrl,
+    region: cleanText(p.region),
+    latitude: loc?.lat ?? null,
+    longitude: loc?.lng ?? null,
+    startPrice: parseMoney(p.opening_price),
+    currentPrice: parseMoney(p.max_bid),
+    deposit: parseMoney(p.advance),
+    areaSqm: parseArea(p.area),
+    propertyType: mapPropertyType(name),
+    usage: mapUsage(name),
+    images: p.image ? [String(p.image).startsWith('http') ? p.image : BASE + p.image] : [],
+    status: p.solded ? 'sold' : p.state ?? null,
+  };
+}
+
+async function attachProducts(auctions: RawAuction[], log: any) {
+  for (const a of auctions.filter((x) => x.category === 'real_estate' && x.status !== 'ended')) {
+    try {
+      const [prods, map]: any[] = await Promise.all([
+        getJson(`${BASE}/en_US/api/auction/products/${a.externalId}`),
+        getJson(`${BASE}/en_US/api/auction/products/map/${a.externalId}`).catch(() => ({ data: [] })),
+      ]);
+      const locs = new Map<string, { lat: number; lng: number }>((map.data ?? []).filter((m: any) => m.location?.center).map((m: any) => [String(m.prod_id), m.location.center]));
+      a.assets = (prods.data?.product_list ?? []).map((p: any) => parseSaudiaProduct(p, a.url, locs.get(String(p.id))));
+    } catch (e: any) {
+      log.warn({ auction: a.externalId, err: e.message }, 'saudia products failed — auction kept without assets');
+    }
+  }
+}
+
 function codeToCategory(c: any): Category {
   if (c.code === 'real_estate') return 'real_estate';
   return mapCategory(c.name, c.code);
@@ -61,6 +97,8 @@ export const saudiaAuctions: Connector = {
         if (!d.nb_page || page >= d.nb_page) break;
       }
     }
-    return [...byId.values()];
+    const out = [...byId.values()];
+    await attachProducts(out, log);
+    return out;
   },
 };

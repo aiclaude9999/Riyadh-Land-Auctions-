@@ -5,7 +5,7 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from './db';
 import { classifyGeo, type GeoScope } from './geo';
-import { normalizeOrganizer, normalizeTitle, statusFromDates, uniq, type Status } from './normalize';
+import { mapPropertyType, mapUsage, normalizeOrganizer, normalizeTitle, statusFromDates, uniq, type Status } from './normalize';
 import { findBestMatch, type DedupRecord } from './dedup';
 import type { RawAuction } from '@/connectors/types';
 
@@ -98,6 +98,7 @@ export async function ingest(sourceId: string, raws: RawAuction[], now = new Dat
       const fields = {
         title: a.title ?? null, url: a.url ?? null, region: a.region ?? null, city: a.city ?? null, district: a.district ?? null, geoScope: ag.scope,
         latitude: a.latitude ?? null, longitude: a.longitude ?? null, startPrice: dec(a.startPrice), currentPrice: dec(a.currentPrice), deposit: dec(a.deposit), images: a.images ?? [],
+        propertyType: a.propertyType ?? null, usage: a.usage ?? null, areaSqm: a.areaSqm ?? null, status: a.status ?? null,
       };
       await prisma.asset.upsert({ where: { listingId_externalId: { listingId, externalId: a.externalId } }, create: { listingId, externalId: a.externalId, ...fields }, update: fields });
     }
@@ -138,6 +139,37 @@ interface MergeInput {
   region: string | null; city: string | null; district: string | null; locationText: string | null; cities: string[];
   regions?: string[]; districts?: string[]; assetCount: number | null; startPrice: number | null; currentPrice: number | null; deposit: number | null;
   images: string[]; organizer: string | null; normalizedOrganizer: string | null; assetCities?: string[]; geoScopes?: GeoScope[];
+  assetInfo?: AssetInfo[];
+}
+
+export interface AssetInfo { propertyType: string | null; usage: string | null; areaSqm: number | null; startPrice: number | null; deposit: number | null }
+
+/** Pure: land / property summary for an auction from its assets, falling back to the title when assets are unknown. */
+export function propertySummary(category: string, title: string, assets: AssetInfo[]) {
+  const known = assets.filter((a) => a.propertyType);
+  let propertyTypes = uniq<string>(known.map((a) => a.propertyType));
+  const usages = uniq<string>(assets.map((a) => a.usage));
+  const lands = known.filter((a) => a.propertyType === 'land');
+  let landCount: number | null = known.length ? lands.length : null;
+  const areas = lands.map((a) => a.areaSqm).filter((x): x is number => x != null);
+  if (!known.length && category === 'real_estate') {
+    const t = mapPropertyType(title);
+    if (t) propertyTypes = [t];
+    const u = mapUsage(title);
+    if (u && !usages.includes(u)) usages.push(u);
+    landCount = null; // unknown count
+  }
+  const prices = assets.map((a) => a.startPrice).filter((x): x is number => x != null);
+  const deposits = assets.map((a) => a.deposit).filter((x): x is number => x != null);
+  return {
+    hasLand: propertyTypes.includes('land'),
+    landCount,
+    landAreaSqm: areas.length ? Math.round(areas.reduce((a, b) => a + b, 0) * 100) / 100 : null,
+    propertyTypes,
+    usages,
+    minAssetPrice: prices.length ? Math.min(...prices) : null,
+    minAssetDeposit: deposits.length ? Math.min(...deposits) : null,
+  };
 }
 
 /** Pure: merge listings (most recent first) into canonical auction fields. */
@@ -151,6 +183,7 @@ export function auctionFieldsFrom(ls: MergeInput[]) {
   const hasRiyadhCity = geo.hasRiyadhCity || scopes.includes('riyadh_city');
   const hasRiyadhRegion = geo.hasRiyadhRegion || hasRiyadhCity || scopes.includes('riyadh_region');
   const scope: GeoScope = hasRiyadhCity ? 'riyadh_city' : hasRiyadhRegion ? 'riyadh_region' : geo.scope;
+  const props = propertySummary(first('category') as string, first('title') as string, ls.flatMap((l) => l.assetInfo ?? []));
   const statuses = ls.map((l) => l.status);
   const status = statuses.includes('live') ? 'live' : (first('status') as string) ?? 'upcoming';
   return {
@@ -170,9 +203,15 @@ export function auctionFieldsFrom(ls: MergeInput[]) {
     hasRiyadhRegion,
     isMultiLocation: geo.isMultiLocation,
     assetCount: first('assetCount') as number | null,
-    startPrice: dec(first('startPrice') as number | null),
+    // auction-level price/deposit when the source gives one, else the lowest among its assets ("يبدأ من")
+    startPrice: dec((first('startPrice') as number | null) ?? props.minAssetPrice),
     currentPrice: dec(first('currentPrice') as number | null),
-    deposit: dec(first('deposit') as number | null),
+    deposit: dec((first('deposit') as number | null) ?? props.minAssetDeposit),
+    hasLand: props.hasLand,
+    landCount: props.landCount,
+    landAreaSqm: props.landAreaSqm,
+    propertyTypes: props.propertyTypes,
+    usages: props.usages,
     images: uniq<string>(ls.flatMap((l) => l.images)).slice(0, 12),
     organizer: first('organizer') as string | null,
     normalizedOrganizer: first('normalizedOrganizer') as string | null,
@@ -184,11 +223,12 @@ const iso = (d: Date | null) => (d ? d.toISOString() : null);
 
 async function recomputeAuction(auctionId: string, now: Date): Promise<AuctionEvent[]> {
   const before = await prisma.auction.findUnique({ where: { id: auctionId } });
-  const listings = await prisma.listing.findMany({ where: { auctionId }, orderBy: { lastSuccessAt: 'desc' }, include: { assets: { select: { city: true, geoScope: true } } } });
+  const listings = await prisma.listing.findMany({ where: { auctionId }, orderBy: { lastSuccessAt: 'desc' }, include: { assets: { select: { city: true, geoScope: true, propertyType: true, usage: true, areaSqm: true, startPrice: true, deposit: true } } } });
   if (!before || !listings.length) return [];
   const merged = auctionFieldsFrom(listings.map((l) => ({
     ...l, startPrice: numOrNull(l.startPrice), currentPrice: numOrNull(l.currentPrice), deposit: numOrNull(l.deposit),
     assetCities: uniq<string>(l.assets.map((a) => a.city)), geoScopes: l.assets.map((a) => a.geoScope as GeoScope),
+    assetInfo: l.assets.map((a) => ({ propertyType: a.propertyType, usage: a.usage, areaSqm: a.areaSqm, startPrice: numOrNull(a.startPrice), deposit: numOrNull(a.deposit) })),
   })));
   const events: AuctionEvent[] = [];
   const diffs: [AuctionEvent & { kind: 'changed' }][] = [];

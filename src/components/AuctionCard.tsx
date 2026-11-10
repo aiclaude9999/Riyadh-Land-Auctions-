@@ -1,11 +1,12 @@
 'use client';
 import Link from 'next/link';
 import { Countdown } from './Countdown';
-import { CAT_ICON, STATUS_STYLE, catLabel, fmtMoney, formatRiyadh, statusLabel } from './format';
+import { CAT_ICON, STATUS_STYLE, catLabel, fmtArea, fmtMoney, formatRiyadh, statusLabel, usageLabel } from './format';
 
 export interface AuctionItem {
   id: string; title: string; category: string; status: string; startAt: string | null; endAt: string | null;
   city: string | null; district: string | null; cities: string[]; isMultiLocation: boolean; hasRiyadhCity: boolean;
+  hasLand: boolean; landCount: number | null; landAreaSqm: number | null; propertyTypes: string[]; usages: string[];
   assetCount: number | null; startPrice: number | null; currentPrice: number | null; deposit: number | null;
   images: string[]; organizer: string | null; firstSeenAt: string; locationText: string | null;
   listings: { sourceId: string; url: string }[]; saved: { id: string } | null;
@@ -43,6 +44,14 @@ export function AuctionCard({ a, sourceNames, onToggleSave }: { a: AuctionItem; 
           )}
         </div>
         <div className="muted text-xs">📍 {place ?? 'الموقع غير متوفر'}{a.isMultiLocation && a.cities.length > 1 ? ` (${a.cities.length} مدن)` : ''}</div>
+        {a.hasLand && (
+          <div className="flex flex-wrap items-center gap-1 text-xs">
+            <span className="chip bg-amber-100 text-amber-900 dark:bg-amber-900/50 dark:text-amber-100">
+              🟫 {a.landCount ? `${a.landCount} ${a.landCount === 1 ? 'قطعة أرض' : a.landCount <= 10 ? 'قطع أراضٍ' : 'قطعة أرض'}` : 'أراضٍ'}{a.landAreaSqm ? ` · ${fmtArea(a.landAreaSqm)}` : ''}
+            </span>
+            {a.usages.map((u) => <span key={u} className="chip border border-[var(--border)]">{usageLabel(u)}</span>)}
+          </div>
+        )}
         {a.organizer && <div className="muted truncate text-xs">🏢 {a.organizer}</div>}
         <div className="mt-auto space-y-1 border-t border-[var(--border)] pt-2 text-xs">
           {a.status === 'live' && a.endAt ? (
@@ -50,9 +59,10 @@ export function AuctionCard({ a, sourceNames, onToggleSave }: { a: AuctionItem; 
           ) : a.status === 'upcoming' && a.startAt ? (
             <div className="flex items-center justify-between"><span className="muted">يبدأ</span><span className="num">{formatRiyadh(a.startAt)}</span></div>
           ) : null}
+          {a.deposit != null && <div className="flex items-center justify-between"><span className="muted">العربون{a.assetCount && a.assetCount > 1 ? ' (من)' : ''}</span><span className="num">{fmtMoney(a.deposit)}</span></div>}
           <div className="flex items-center justify-between"><span className="muted">الإغلاق</span><span className="num">{formatRiyadh(a.endAt)}</span></div>
           <div className="flex items-center justify-between">
-            <span className="muted">{a.currentPrice ? 'آخر سعر' : a.startPrice ? 'سعر البداية' : 'الأصول'}</span>
+            <span className="muted">{a.currentPrice ? 'آخر سعر' : a.startPrice ? (a.assetCount && a.assetCount > 1 ? 'يبدأ من' : 'سعر البداية') : 'الأصول'}</span>
             <span className="num font-semibold">{price ? fmtMoney(price) : a.assetCount != null ? `${a.assetCount} أصل` : '—'}</span>
           </div>
         </div>

@@ -54,6 +54,9 @@ export default function NotificationsPage() {
                   {SCOPES.map((s) => <option key={s.v} value={s.v}>{s.l}</option>)}
                 </select>
               )}
+              {r.type === 'new_riyadh' && (
+                <label className="muted flex items-center gap-2 text-xs"><input type="checkbox" checked={!!p.landOnly} onChange={(e) => update(r, { params: { ...p, landOnly: e.target.checked } })} /> مزادات الأراضي فقط</label>
+              )}
               {r.type === 'new_category' && (
                 <div className="flex flex-wrap gap-1">
                   {Object.entries(CATEGORY_LABELS).map(([k, v]) => {

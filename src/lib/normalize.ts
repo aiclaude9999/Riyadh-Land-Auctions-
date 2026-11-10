@@ -95,3 +95,52 @@ export function cleanText(s?: string | null): string | null {
 export function uniq<T>(arr: (T | null | undefined)[]): T[] {
   return [...new Set(arr.filter((x): x is T => x != null && x !== ''))];
 }
+
+// ---- real-estate property types -------------------------------------------------
+export type PropertyType = 'land' | 'villa' | 'apartment' | 'building' | 'rest_house' | 'farm' | 'commercial' | 'other';
+export type Usage = 'residential' | 'commercial' | 'agricultural' | 'industrial' | 'mixed' | 'other';
+
+export const PROPERTY_LABELS: Record<PropertyType, string> = {
+  land: 'أرض', villa: 'فيلا', apartment: 'شقة', building: 'عمارة / مبنى', rest_house: 'استراحة', farm: 'مزرعة', commercial: 'تجاري (محل/مستودع)', other: 'أخرى',
+};
+export const USAGE_LABELS: Record<Usage, string> = {
+  residential: 'سكني', commercial: 'تجاري', agricultural: 'زراعي', industrial: 'صناعي', mixed: 'متعدد الاستخدام', other: 'أخرى',
+};
+
+const PROPERTY_RULES: [PropertyType, RegExp][] = [
+  ['land', /(^|\s)(ارض|اراضي|قطعه|قطع|مخطط|بلك|land|plot)(\s|$)/],
+  ['farm', /(مزرعه|مزارع|farm)/],
+  ['rest_house', /(استراحه|استراحات|شاليه|شاليهات|منتجع)/],
+  ['villa', /(فيلا|فلل|فله|دوبلكس|قصر|قصور|villa)/],
+  ['apartment', /(شقه|شقق|apartment)/],
+  ['building', /(عماره|عمائر|مبني|مباني|برج|building)/],
+  ['commercial', /(محل|محلات|معرض|مستودع|مستودعات|مكتب|مكاتب|ورشه|warehouse|shop)/],
+];
+
+/** Property type from a structured value (e.g. "Land") or free text (e.g. "أرض زراعية بحي حريملاء"). */
+export function mapPropertyType(...hints: (string | null | undefined)[]): PropertyType | null {
+  for (const h of hints) {
+    if (!h) continue;
+    const n = ' ' + normalizeArabic(h) + ' ';
+    for (const [t, re] of PROPERTY_RULES) if (re.test(n.trim()) || re.test(n)) return t;
+  }
+  return null;
+}
+
+export function mapUsage(...hints: (string | null | undefined)[]): Usage | null {
+  for (const h of hints) {
+    if (!h) continue;
+    const n = normalizeArabic(h);
+    if (/(سكني تجاري|تجاري سكني|متعدده الاستخدام|متعدده الاستخدامات|mixed|multi)/.test(n)) return 'mixed';
+    if (/(زراعي|agricultur)/.test(n)) return 'agricultural';
+    if (/(صناعي|industrial)/.test(n)) return 'industrial';
+    if (/(تجاري|commercial)/.test(n)) return 'commercial';
+    if (/(سكني|residential)/.test(n)) return 'residential';
+  }
+  return null;
+}
+
+/** Parse an area like "755.64", 600, "1,200 م²" → m² (null when missing/zero). */
+export function parseArea(v: unknown): number | null {
+  return parseMoney(v);
+}

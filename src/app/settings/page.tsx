@@ -43,7 +43,13 @@ export default function SettingsPage() {
         </label>
       </div>
       <div className="card space-y-3 p-4">
-        <h2 className="font-semibold">النطاق الجغرافي الافتراضي</h2>
+        <h2 className="font-semibold">نوع المزادات الافتراضي</h2>
+        <select className="input" value={s.defaultFocus} onChange={(e) => setS({ ...s, defaultFocus: e.target.value })}>
+          <option value="land">مزادات الأراضي فقط</option>
+          <option value="real_estate">كل المزادات العقارية</option>
+          <option value="all">كل أنواع المزادات</option>
+        </select>
+        <h2 className="pt-2 font-semibold">النطاق الجغرافي الافتراضي</h2>
         <select className="input" value={s.defaultGeo} onChange={(e) => setS({ ...s, defaultGeo: e.target.value })}>
           <option value="riyadh_city">مدينة الرياض فقط</option>
           <option value="riyadh_region">منطقة الرياض بالكامل (الخرج، الدرعية، المزاحمية…)</option>

@@ -1,12 +1,13 @@
 import { prisma } from '@/lib/db';
-import { geoWhere } from '@/lib/query';
+import { focusWhere, geoWhere } from '@/lib/query';
 import { riyadhDayBounds } from '@/lib/time';
 import { handle, json } from '../_util';
 
 export const dynamic = 'force-dynamic';
 
 export const GET = handle(async (req: Request) => {
-  const g = geoWhere(new URL(req.url).searchParams.get('geo') ?? undefined);
+  const sp = new URL(req.url).searchParams;
+  const g = { ...geoWhere(sp.get('geo') ?? undefined), ...focusWhere(sp.get('focus') ?? undefined) };
   const now = new Date();
   const { end } = riyadhDayBounds(now);
   const [total, live, upcoming, endingToday, new24h, lastRun, sources] = await Promise.all([

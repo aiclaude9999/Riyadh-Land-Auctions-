@@ -2,9 +2,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AuctionCard, type AuctionItem } from './AuctionCard';
 import { SOURCE_STATUS, catLabel, formatRiyadh, timeAgo } from './format';
-import { CATEGORY_LABELS } from '@/lib/normalize';
+import { CATEGORY_LABELS, PROPERTY_LABELS, USAGE_LABELS } from '@/lib/normalize';
 
 type Geo = 'riyadh_city' | 'riyadh_region' | 'all';
+type Focus = 'land' | 'real_estate' | 'all';
+const FOCUS: { v: Focus; label: string }[] = [
+  { v: 'land', label: '🟫 الأراضي' },
+  { v: 'real_estate', label: '🏠 كل العقارات' },
+  { v: 'all', label: 'كل الأنواع' },
+];
 const GEO: { v: Geo; label: string }[] = [
   { v: 'riyadh_city', label: 'مدينة الرياض' },
   { v: 'riyadh_region', label: 'منطقة الرياض' },
@@ -16,8 +22,10 @@ const SORTS = [
   { v: 'starting', label: 'الأقرب بدءاً' },
   { v: 'price_desc', label: 'الأعلى سعراً' },
   { v: 'price_asc', label: 'الأقل سعراً' },
+  { v: 'area_desc', label: 'الأكبر مساحة' },
+  { v: 'area_asc', label: 'الأصغر مساحة' },
 ];
-const EMPTY_FILTERS = { q: '', category: '', source: '', status: '', city: '', district: '', organizer: '', startFrom: '', startTo: '', endFrom: '', endTo: '', minPrice: '', maxPrice: '' };
+const EMPTY_FILTERS = { q: '', category: '', source: '', status: '', city: '', district: '', organizer: '', startFrom: '', startTo: '', endFrom: '', endTo: '', minPrice: '', maxPrice: '', usage: '', propertyType: '', minArea: '', maxArea: '' };
 type Filters = typeof EMPTY_FILTERS;
 
 interface Stats {
@@ -30,6 +38,7 @@ const store = (k: string, v: unknown) => { try { localStorage.setItem(k, JSON.st
 
 export function Dashboard({ savedOnly = false }: { savedOnly?: boolean }) {
   const [geo, setGeo] = useState<Geo | null>(null);
+  const [focus, setFocus] = useState<Focus>('land');
   const [sort, setSort] = useState('newest');
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [quick, setQuick] = useState<'' | 'endingToday' | 'new24h' | 'live' | 'upcoming'>('');
@@ -48,6 +57,7 @@ export function Dashboard({ savedOnly = false }: { savedOnly?: boolean }) {
   useEffect(() => {
     fetch('/api/settings').then((r) => r.json()).then((s) => {
       setUiRefresh(s?.intervals?.uiRefreshSec ?? 60);
+      setFocus(load<Focus | null>('focus', null) ?? s?.defaultFocus ?? 'land');
       setGeo(load<Geo | null>('geo', null) ?? s?.defaultGeo ?? 'riyadh_city');
     }).catch(() => setGeo(load<Geo>('geo', 'riyadh_city')));
     setSort(load('sort', 'newest'));
@@ -55,7 +65,7 @@ export function Dashboard({ savedOnly = false }: { savedOnly?: boolean }) {
 
   const qs = useMemo(() => {
     if (!geo) return null;
-    const p = new URLSearchParams({ geo, sort, page: String(page), pageSize: String(pageSize) });
+    const p = new URLSearchParams({ geo, focus, sort, page: String(page), pageSize: String(pageSize) });
     for (const [k, v] of Object.entries(filters)) if (v) p.set(k, v);
     if (savedOnly) p.set('saved', '1');
     if (quick === 'endingToday') p.set('endingToday', '1');
@@ -63,7 +73,7 @@ export function Dashboard({ savedOnly = false }: { savedOnly?: boolean }) {
     if (quick === 'new24h' || quick === 'endingToday') p.delete('status');
     if (quick === 'live' || quick === 'upcoming') p.set('status', quick);
     return p.toString();
-  }, [geo, sort, filters, page, savedOnly, quick]);
+  }, [geo, focus, sort, filters, page, savedOnly, quick]);
 
   const reqId = useRef(0);
   const refresh = useCallback(async (silent = false) => {
@@ -71,7 +81,7 @@ export function Dashboard({ savedOnly = false }: { savedOnly?: boolean }) {
     const id = ++reqId.current;
     if (!silent) setLoading(true);
     try {
-      const [a, s] = await Promise.all([fetch(`/api/auctions?${qs}`).then((r) => r.json()), fetch(`/api/stats?geo=${geo}`).then((r) => r.json())]);
+      const [a, s] = await Promise.all([fetch(`/api/auctions?${qs}`).then((r) => r.json()), fetch(`/api/stats?geo=${geo}&focus=${focus}`).then((r) => r.json())]);
       if (id !== reqId.current) return;
       if (a.error) throw new Error(a.error);
       setData(a); setStats(s);
@@ -80,10 +90,10 @@ export function Dashboard({ savedOnly = false }: { savedOnly?: boolean }) {
     } finally {
       if (id === reqId.current) setLoading(false);
     }
-  }, [qs, geo]);
+  }, [qs, geo, focus]);
 
   useEffect(() => { refresh(); }, [refresh]);
-  useEffect(() => { if (geo) fetch(`/api/facets?geo=${geo}`).then((r) => r.json()).then(setFacets).catch(() => {}); }, [geo]);
+  useEffect(() => { if (geo) fetch(`/api/facets?geo=${geo}&focus=${focus}`).then((r) => r.json()).then(setFacets).catch(() => {}); }, [geo, focus]);
   // UI auto-refresh from the database (default every 60s)
   useEffect(() => { const t = setInterval(() => refresh(true), uiRefresh * 1000); return () => clearInterval(t); }, [refresh, uiRefresh]);
 
@@ -91,6 +101,7 @@ export function Dashboard({ savedOnly = false }: { savedOnly?: boolean }) {
 
   const setF = (k: keyof Filters, v: string) => { setFilters((f) => ({ ...f, [k]: v })); setPage(1); };
   const chooseGeo = (g: Geo) => { setGeo(g); store('geo', g); setPage(1); };
+  const chooseFocus = (f: Focus) => { setFocus(f); store('focus', f); setPage(1); };
   const chooseSort = (s: string) => { setSort(s); store('sort', s); setPage(1); };
 
   async function refreshNow() {
@@ -129,10 +140,15 @@ export function Dashboard({ savedOnly = false }: { savedOnly?: boolean }) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold">{savedOnly ? 'المزادات المحفوظة' : 'لوحة المزادات'}</h1>
+          <h1 className="text-xl font-bold">{savedOnly ? 'المزادات المحفوظة' : focus === 'land' ? 'مزادات الأراضي' : focus === 'real_estate' ? 'المزادات العقارية' : 'لوحة المزادات'}</h1>
           <p className="muted text-xs">آخر تحديث ناجح: <span className="num">{stats?.lastUpdate ? `${formatRiyadh(stats.lastUpdate)} (${timeAgo(stats.lastUpdate)})` : '—'}</span> · بتوقيت الرياض</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <div className="card flex p-1 text-sm">
+            {FOCUS.map((f) => (
+              <button key={f.v} onClick={() => chooseFocus(f.v)} className={`rounded-lg px-3 py-1.5 font-medium ${focus === f.v ? 'bg-amber-700 text-white' : 'muted'}`}>{f.label}</button>
+            ))}
+          </div>
           <div className="card flex p-1 text-sm">
             {GEO.map((g) => (
               <button key={g.v} onClick={() => chooseGeo(g.v)} className={`rounded-lg px-3 py-1.5 font-medium ${geo === g.v ? 'bg-brand-600 text-white' : 'muted'}`}>{g.label}</button>
@@ -164,10 +180,12 @@ export function Dashboard({ savedOnly = false }: { savedOnly?: boolean }) {
       <div className="card space-y-3 p-3">
         <div className="flex flex-wrap items-center gap-2">
           <input className="input max-w-sm flex-1" placeholder="بحث بالاسم أو الجهة أو الموقع..." value={filters.q} onChange={(e) => setF('q', e.target.value)} />
-          <select className="input w-auto" value={filters.category} onChange={(e) => setF('category', e.target.value)}>
-            <option value="">كل الأنواع</option>
-            {Object.entries(CATEGORY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
+          {focus === 'all' && (
+            <select className="input w-auto" value={filters.category} onChange={(e) => setF('category', e.target.value)}>
+              <option value="">كل الأنواع</option>
+              {Object.entries(CATEGORY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+          )}
           <select className="input w-auto" value={filters.status} onChange={(e) => setF('status', e.target.value)}>
             <option value="">النشطة (جاري + قادم)</option><option value="live">جاري</option><option value="upcoming">قادم</option><option value="ended">منتهي</option><option value="all">كل الحالات</option>
           </select>
@@ -179,6 +197,16 @@ export function Dashboard({ savedOnly = false }: { savedOnly?: boolean }) {
         </div>
         {showFilters && (
           <div className="grid grid-cols-1 gap-3 border-t border-[var(--border)] pt-3 sm:grid-cols-2 lg:grid-cols-4">
+            <label className="text-xs"><span className="muted">الاستخدام</span>
+              <select className="input mt-1" value={filters.usage} onChange={(e) => setF('usage', e.target.value)}>
+                <option value="">كل الاستخدامات</option>{Object.entries(USAGE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </select></label>
+            <label className="text-xs"><span className="muted">نوع العقار</span>
+              <select className="input mt-1" value={filters.propertyType} onChange={(e) => setF('propertyType', e.target.value)}>
+                <option value="">كل الأنواع</option>{Object.entries(PROPERTY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </select></label>
+            <label className="text-xs sm:col-span-2"><span className="muted">مساحة قطعة الأرض (م²)</span>
+              <div className="mt-1 flex gap-1"><input inputMode="numeric" className="input" placeholder="من" value={filters.minArea} onChange={(e) => setF('minArea', e.target.value.replace(/\D/g, ''))} /><input inputMode="numeric" className="input" placeholder="إلى" value={filters.maxArea} onChange={(e) => setF('maxArea', e.target.value.replace(/\D/g, ''))} /></div></label>
             <label className="text-xs"><span className="muted">المنصة</span>
               <select className="input mt-1" value={filters.source} onChange={(e) => setF('source', e.target.value)}>
                 <option value="">كل المنصات</option>{facets?.sources.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}

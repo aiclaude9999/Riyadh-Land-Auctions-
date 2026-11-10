@@ -1,4 +1,4 @@
-import { CATEGORY_LABELS, STATUS_LABELS, type Category, type Status } from '@/lib/normalize';
+import { CATEGORY_LABELS, PROPERTY_LABELS, STATUS_LABELS, USAGE_LABELS, type Category, type PropertyType, type Status, type Usage } from '@/lib/normalize';
 export { formatRiyadh } from '@/lib/time';
 
 export const catLabel = (c: string) => CATEGORY_LABELS[c as Category] ?? c;
@@ -31,3 +31,8 @@ export const SOURCE_STATUS: Record<string, { label: string; cls: string }> = {
   blocked: { label: 'محجوب', cls: 'bg-amber-500' },
   idle: { label: 'لم يبدأ', cls: 'bg-zinc-400' },
 };
+
+export const usageLabel = (u: string) => USAGE_LABELS[u as Usage] ?? u;
+export const propertyLabel = (t?: string | null) => (t ? PROPERTY_LABELS[t as PropertyType] ?? t : '—');
+const area = new Intl.NumberFormat('ar-SA-u-nu-latn', { maximumFractionDigits: 0 });
+export const fmtArea = (n?: number | null) => (n == null ? null : `${area.format(n)} م²`);
