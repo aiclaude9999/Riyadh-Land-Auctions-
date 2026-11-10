@@ -51,6 +51,7 @@ async function main() {
       ci: d.cities, d: d.district, rc, rr, ml: d.geo.isMultiLocation,
       L: ps.hasLand, lc: ps.landCount, la: ps.landAreaSqm, pt: ps.propertyTypes, u: ps.usages,
       n: d.assetCount, sp: d.startPrice ?? ps.minAssetPrice, cp: d.currentPrice, dp: d.deposit ?? ps.minAssetDeposit, o: d.organizer,
+      im: d.images[0] ?? null,
       src: [[src, r.url]] as [string, string][],
       // for in-memory de-duplication across platforms
       _dedup: { sourceIds: [src], normalizedTitle: d.normalizedTitle, normalizedOrganizer: d.normalizedOrganizer, category: d.category, startAt: d.startAt, endAt: d.endAt, cities: d.cities, assetCount: d.assetCount, crossRefs: d.crossRefs },
@@ -66,6 +67,7 @@ async function main() {
     (r.assets ?? []).forEach((a, k) => assets.push({
       t: a.title, pt: a.propertyType ?? null, u: a.usage ?? null, ar: a.areaSqm ?? null, sp: a.startPrice ?? null, cp: a.currentPrice ?? null, dp: a.deposit ?? null,
       d: a.district ?? null, ci: a.city ?? a.region ?? null, g: assetGeo[k].scope, lat: a.latitude ?? null, lng: a.longitude ?? null,
+      im: a.images?.[0] ?? null,
       ai: rec.i, at: rec.t, as: rec.s, aen: rec.en, ast: rec.st, src, url: a.url ?? r.url,
     }));
   }

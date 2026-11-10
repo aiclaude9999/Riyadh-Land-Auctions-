@@ -58,8 +58,16 @@ input[type=search] { flex: 1 1 220px }
 .chip[aria-pressed="true"] { background: var(--land); border-color: var(--land); color: #fff }
 .chip small { opacity: .7; font-variant-numeric: tabular-nums }
 .count { color: var(--muted); font-size: 13px }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 12px }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: 12px }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0 }
+.card.has-img { padding: 0; overflow: hidden }
+.card.has-img .body { padding: 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0 }
+.thumb { display: block; aspect-ratio: 16 / 9; max-width: 100%; background: var(--land-bg); position: relative }
+.thumb img { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; object-fit: cover; display: block }
+.thumb .ph { position: absolute; inset: 0; display: grid; place-items: center; font-size: 42px; opacity: .6 }
+.card.side { flex-direction: row }
+.card.side .thumb { aspect-ratio: auto; width: 30%; min-width: 100px; flex: none }
+@media (max-width: 480px) { .card.side { flex-direction: column } .card.side .thumb { width: 100%; aspect-ratio: 16 / 9 } }
 .tags { display: flex; flex-wrap: wrap; gap: 5px }
 .tag { font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted) }
 .tag.live { background: var(--live-bg); color: var(--live); border-color: transparent }
@@ -70,7 +78,7 @@ input[type=search] { flex: 1 1 220px }
 .loc, .org { color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere }
 .kv { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; border-top: 1px solid var(--line); padding-top: 8px; font-variant-numeric: tabular-nums }
 .kv div span { display: block; color: var(--muted); font-size: 11.5px }
-.kv div b { font-size: 13px }
+.kv div b { font-size: 12.5px; white-space: nowrap }
 .foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px; margin-top: auto; font-size: 12.5px }
 .cd { font-weight: 700; color: var(--live); font-variant-numeric: tabular-nums }
 .cd.urgent { color: var(--urgent) }
@@ -186,13 +194,18 @@ function cdHTML(s, end, start) {
   if (s === 'upcoming' && start) return `<span>يبدأ ${date(start)}</span>`;
   return `<span>يغلق ${date(end)}</span>`;
 }
+function thumb(src, icon, href) {
+  const img = src ? `<img src="${esc(src)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : '';
+  return `<a class="thumb" href="${esc(href)}" target="_blank" rel="noopener" tabindex="-1"><span class="ph">${icon}</span>${img}</a>`;
+}
 function srcLinks(list) { return list.map(([id, u]) => `<a class="src" href="${esc(u)}" target="_blank" rel="noopener">${SRC[id] ?? id} ↗</a>`).join(' · '); }
 
 function auctionCard(a) {
   const loc = [a.d && 'حي ' + a.d.replace(/^حي\s+/, ''), a.ci.join('، ')].filter(Boolean).join('، ') || 'الموقع غير متوفر';
   const land = a.L ? `<span class="tag land">🟫 ${a.lc ? a.lc + (a.lc === 1 ? ' قطعة أرض' : ' قطع أراضٍ') : 'أراضٍ'}${a.la ? ' · ' + area(a.la) : ''}</span>` : '';
   const many = a.n > 1;
-  return `<article class="card">
+  const ICON = { real_estate: a.L ? '🟫' : '🏠', vehicle: '🚗', equipment: '🏗️', scrap: '♻️', collectible: '💎', other: '📦' }[a.c] ?? '📦';
+  return `<article class="card has-img">${thumb(a.im, ICON, a.src[0][1])}<div class="body">
     <div class="tags"><span class="tag ${a.s}">${ST[a.s]}</span><span class="tag">${CAT[a.c] ?? a.c}</span>${land}${a.u.map(u => `<span class="tag">${US[u] ?? u}</span>`).join('')}${a.ml ? '<span class="tag multi">متعدد المواقع</span>' : ''}</div>
     <h3>${esc(a.t)}</h3>
     <div class="loc">📍 ${esc(loc)}</div>
@@ -203,13 +216,13 @@ function auctionCard(a) {
       <div><span>عدد الأصول</span><b>${a.n ?? '—'}</b></div>
     </div>
     <div class="foot">${cdHTML(a.s, a.en, a.st)}<span>${srcLinks(a.src)}</span></div>
-  </article>`;
+  </div></article>`;
 }
 function assetCard(x) {
   const [pl, pi] = PT[x.pt] ?? ['غير محدد', '🏠'];
   const loc = [x.d && 'حي ' + x.d.replace(/^حي\s+/, ''), x.ci].filter(Boolean).join('، ') || (x.lat != null ? 'على الخريطة' : 'الموقع غير متوفر');
   const map = x.lat != null ? ` · <a class="src" href="https://www.google.com/maps?q=${x.lat},${x.lng}" target="_blank" rel="noopener">خريطة ↗</a>` : '';
-  return `<article class="card">
+  return `<article class="card has-img side">${thumb(x.im, pi, x.url)}<div class="body">
     <div class="tags"><span class="tag land">${pi} ${pl}</span>${x.u ? `<span class="tag">${US[x.u] ?? x.u}</span>` : ''}<span class="tag ${x.as}">${ST[x.as]}</span></div>
     <h3>${esc(x.t ?? x.at)}</h3>
     <div class="loc">📍 ${esc(loc)}${map}</div>
@@ -219,7 +232,7 @@ function assetCard(x) {
       <div><span>العربون</span><b>${money(x.dp)}</b></div>
     </div>
     <div class="foot">${cdHTML(x.as, x.aen, x.ast)}<span class="org">🔨 ${esc(x.at)} · <a class="src" href="${esc(x.url)}" target="_blank" rel="noopener">${SRC[x.src] ?? x.src} ↗</a></span></div>
-  </article>`;
+  </div></article>`;
 }
 
 function stat(label, v) { return `<div class="stat"><span>${label}</span><b>${v}</b></div>`; }
