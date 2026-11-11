@@ -80,7 +80,7 @@ flowchart TD
 | `src/worker/index.ts` | Long-running BullMQ worker + scheduler (only for Docker/paid hosting; not used on the free setup). |
 | `src/app/` | Next.js App Router: pages and `api/` routes (below). |
 | `src/components/` | `Dashboard`, `AuctionCard`, `Countdown`, `MapView` (Leaflet), `Nav`, `format`. |
-| `src/lib/deals.ts`, `src/data/`, `scripts/deals/` | Ministry of Justice sales → per-district Riyadh summaries for the map (`build-deals.ts`), district centroids (`district-centroids.ts`). |
+| `src/lib/deals.ts`, `src/data/`, `scripts/deals/` | Ministry of Justice sales → per-district Riyadh summaries for the map (`build-deals.ts`), district centroids + simplified boundaries (`district-centroids.ts`). |
 | `prisma/` | `schema.prisma` + migrations. |
 | `scripts/` | `collect.ts` (GitHub collector), `scrape-once.ts` (local test), `build-static.ts` (GitHub Pages page), `start-all.sh` (Render), `infath-laptop/` (Windows setup + runner). |
 | `static/template.html` | Single-file page used by the GitHub Pages build. |

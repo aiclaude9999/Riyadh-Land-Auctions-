@@ -22,7 +22,22 @@ const GEO = [
 ];
 // Deals layer (Ministry of Justice sales): cheap → expensive SAR/m², 5 classes
 const DEAL_COLORS = ['#fde68a', '#fbbf24', '#f97316', '#dc2626', '#7f1d1d'];
-const qLabel = (q: string) => (q === 'all' ? 'كل الأرباع' : q.replace(/^(\d{4})-Q(\d)$/, (_, y, n) => `الربع ${['', 'الأول', 'الثاني', 'الثالث', 'الرابع'][+n]} ${y}`));
+const qLabel = (q: string) => (q === 'all' ? 'كل الأرباع معاً' : q.replace(/^(\d{4})-Q(\d)$/, (_, y, n) => `الربع ${['', 'الأول', 'الثاني', 'الثالث', 'الرابع'][+n]} ${y}`));
+const MIN_DEALS = 3; // fewer deals than this → district shown grey (not enough data)
+type MetricKey = 'land' | 'all' | 'res' | 'com' | 'count';
+const METRICS: Record<MetricKey, { label: string; unit: string; value: (r: DistrictDeals) => number | null; count: (r: DistrictDeals) => number }> = {
+  land: { label: 'سعر متر الأراضي (تقدير)', unit: 'ريال/م²', value: (r) => r.ml, count: (r) => r.nl },
+  all: { label: 'سعر المتر — كل الصفقات', unit: 'ريال/م²', value: (r) => r.m, count: (r) => r.n },
+  res: { label: 'سعر المتر — السكني', unit: 'ريال/م²', value: (r) => r.mr, count: (r) => r.nr },
+  com: { label: 'سعر المتر — التجاري', unit: 'ريال/م²', value: (r) => r.mc, count: (r) => r.nc },
+  count: { label: 'عدد الصفقات', unit: 'صفقة', value: (r) => r.n, count: (r) => r.n },
+};
+interface Shape { name: string; rings: [number, number][][] }
+/** Drop-pin icon for auction assets (so they don't look like the coloured districts). */
+const pinIcon = (color: string) => L.divIcon({
+  className: '', iconSize: [22, 30], iconAnchor: [11, 29], popupAnchor: [0, -26],
+  html: `<svg width="22" height="30" viewBox="0 0 22 30" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.45))"><path d="M11 29C11 29 21 17.5 21 11A10 10 0 0 0 1 11C1 17.5 11 29 11 29Z" fill="${color}" stroke="#fff" stroke-width="1.6"/><circle cx="11" cy="11" r="3.6" fill="#fff"/></svg>`,
+});
 const sar = (n: number | null) => (n == null ? '—' : Math.round(n).toLocaleString('en-US'));
 function quantileBreaks(values: number[], k = DEAL_COLORS.length): number[] {
   const s = [...values].sort((a, b) => a - b);
@@ -36,9 +51,10 @@ export default function MapView() {
   const map = useRef<L.Map | null>(null);
   const layer = useRef<L.LayerGroup | null>(null);
   const dealsLayer = useRef<L.LayerGroup | null>(null);
-  const [dealsMode, setDealsMode] = useState<'off' | 'all' | 'land'>('off');
-  const [dealsQ, setDealsQ] = useState('');
+  const [dealsMode, setDealsMode] = useState<'off' | MetricKey>('land');
+  const [dealsQ, setDealsQ] = useState('all');
   const [deals, setDeals] = useState<DealsData | null>(null);
+  const [shapes, setShapes] = useState<Shape[] | null>(null);
   const [geo, setGeo] = useState('riyadh_city');
   const [category, setCategory] = useState('real_estate');
   const [status, setStatus] = useState('');
@@ -67,7 +83,7 @@ export default function MapView() {
     (bases[saved] ?? streets).addTo(map.current);
     L.control.layers(bases, undefined, { position: 'topright', collapsed: false }).addTo(map.current);
     map.current.on('baselayerchange', (e: L.LayersControlEvent) => { try { localStorage.setItem('mapBase', e.name); } catch { /* ignore */ } });
-    dealsLayer.current = L.layerGroup().addTo(map.current); // under the auction pins
+    dealsLayer.current = L.layerGroup().addTo(map.current); // coloured districts (pins are markers, always on top)
     layer.current = L.layerGroup().addTo(map.current);
     return () => { map.current?.remove(); map.current = null; };
   }, []);
@@ -105,7 +121,7 @@ export default function MapView() {
         <div>${esc(closing)}</div>
         <div style="margin-top:4px">🔨 <a href="/auctions/${esc(p.a.id)}">${esc(p.a.title)}</a> · <a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(SOURCE[p.src] ?? p.src)} ↗</a></div>
       </div>`;
-      L.circleMarker([p.lat, p.lng], { radius: 7, color: '#fff', weight: 1.5, fillColor: color, fillOpacity: 0.9 }).bindPopup(html).addTo(lg);
+      L.marker([p.lat, p.lng], { icon: pinIcon(color), riseOnHover: true }).bindPopup(html).addTo(lg);
     }
     if (shown.length && map.current) {
       const b = L.latLngBounds(shown.map((p) => [p.lat, p.lng] as [number, number]));
@@ -113,47 +129,60 @@ export default function MapView() {
     }
   }, [shown]);
 
-  // load the deals summary only when the layer is switched on
+  // load deal summaries + district boundaries (only while the layer is on)
   useEffect(() => {
     if (dealsMode === 'off' || deals) return;
-    import('@/data/riyadh-deals.json').then((m) => {
-      const d = (m.default ?? m) as unknown as DealsData;
-      setDeals(d);
-      const latest = [...d.quarters].reverse().find((q) => q.mapped >= 100);
-      setDealsQ((cur) => cur || latest?.q || 'all');
+    Promise.all([import('@/data/riyadh-deals.json'), import('@/data/riyadh-district-shapes.json')]).then(([d, sh]) => {
+      setShapes((sh.default ?? sh) as unknown as Shape[]);
+      setDeals((d.default ?? d) as unknown as DealsData);
     }).catch((e) => setErr(String(e)));
   }, [dealsMode, deals]);
 
-  const dealRows = useMemo(() => {
-    if (!deals || dealsMode === 'off') return [] as DistrictDeals[];
-    return deals.rows.filter((r) => r.q === dealsQ && (dealsMode === 'land' ? r.ml != null : r.m != null));
-  }, [deals, dealsMode, dealsQ]);
-  const breaks = useMemo(() => quantileBreaks(dealRows.map((r) => (dealsMode === 'land' ? r.ml! : r.m!))), [dealRows, dealsMode]);
+  const metric = dealsMode === 'off' ? null : METRICS[dealsMode];
+  // district boundary name → deals record for the chosen period
+  const byShape = useMemo(() => {
+    const m = new Map<string, DistrictDeals>();
+    deals?.rows.filter((r) => r.q === dealsQ).forEach((r) => r.p.forEach((name) => m.set(name, r)));
+    return m;
+  }, [deals, dealsQ]);
+  const rated = useMemo(() => {
+    if (!metric) return [] as DistrictDeals[];
+    return [...new Set(byShape.values())].filter((r) => metric.count(r) >= MIN_DEALS && metric.value(r) != null);
+  }, [byShape, metric]);
+  const breaks = useMemo(() => (metric ? quantileBreaks(rated.map((r) => metric.value(r)!)) : []), [rated, metric]);
 
-  // draw the deals circles (one per district)
+  // colour every district by the chosen metric
   useEffect(() => {
     const lg = dealsLayer.current;
     if (!lg) return;
     lg.clearLayers();
-    for (const r of dealRows) {
-      const val = (dealsMode === 'land' ? r.ml : r.m)!;
-      const cls = breaks.filter((b) => val >= b).length;
-      const color = DEAL_COLORS[cls];
-      const count = dealsMode === 'land' ? r.nl : r.n;
-      const html = `<div dir="rtl" style="font-family:inherit;min-width:220px;line-height:1.7">
-        <div style="font-weight:700">حي ${esc(r.d)}</div>
-        <div class="muted" style="font-size:12px">صفقات وزارة العدل · ${esc(qLabel(r.q))}</div>
-        <div>متوسط سعر المتر (الوسيط) — كل الصفقات: <b>${sar(r.m)} ريال</b></div>
-        <div>الأراضي (تقدير): <b>${sar(r.ml)} ريال/م²</b> · ${r.nl} صفقة</div>
-        <div>عدد الصفقات: <b>${r.n}</b> (سكني ${r.nr} · تجاري ${r.nc})</div>
+    if (!metric || !shapes) return;
+    const ok = new Set(rated);
+    for (const sh of shapes) {
+      const name = sh.name.replace(/^حي\s+/, '');
+      const r = byShape.get(sh.name);
+      const val = r && ok.has(r) ? metric.value(r)! : null;
+      const color = val == null ? null : DEAL_COLORS[breaks.filter((b) => val >= b).length];
+      const html = r
+        ? `<div dir="rtl" style="font-family:inherit;min-width:230px;line-height:1.7">
+        <div style="font-weight:700">حي ${esc(name)}</div>
+        <div style="font-size:12px;color:#6b7280">صفقات وزارة العدل · ${esc(qLabel(r.q))}${r.p.length > 1 ? ' · ' + esc(r.d) + ' (يشمل ' + r.p.length + ' أجزاء)' : ''}</div>
+        <div>الأراضي (تقدير): <b>${sar(r.ml)}</b> ريال/م² · ${r.nl} صفقة</div>
+        <div>كل الصفقات: <b>${sar(r.m)}</b> ريال/م² · ${r.n} صفقة</div>
+        <div>السكني: <b>${sar(r.mr)}</b> ريال/م² · ${r.nr} صفقة</div>
+        <div>التجاري: <b>${sar(r.mc)}</b> ريال/م² · ${r.nc} صفقة</div>
         <div>إجمالي القيمة: ${esc(fmtMoney(r.v) ?? '—')}</div>
-        <div class="muted" style="font-size:11px;margin-top:4px">موقع الدائرة = وسط الحي، وليس موقع العقار. "أرض" تقدير: صفقة سكنية لعقار واحد مساحته أكبر من 200 م².</div>
-      </div>`;
-      L.circleMarker([r.lat, r.lng], {
-        radius: Math.max(6, Math.min(26, 4 + Math.sqrt(count) * 2.2)), color: '#7c2d12', weight: 1, fillColor: color, fillOpacity: 0.55,
-      }).bindPopup(html).bindTooltip(`${r.d}: ${sar(val)} ريال/م²`, { direction: 'top' }).addTo(lg);
+        <div style="font-size:11px;color:#6b7280;margin-top:4px">السعر = الوسيط (نصف الصفقات أقل منه ونصفها أعلى). "أرض" تقدير: صفقة سكنية لعقار واحد مساحته أكبر من 200 م².${val == null ? ' عدد الصفقات قليل (أقل من ' + MIN_DEALS + ') فلم يُلوَّن الحي.' : ''}</div>
+      </div>`
+        : `<div dir="rtl" style="font-family:inherit"><b>حي ${esc(name)}</b><br>لا توجد صفقات في ملف وزارة العدل لهذه الفترة.</div>`;
+      const poly = L.polygon(sh.rings.map((ring) => [ring]) as L.LatLngExpression[][][], color
+        ? { color: '#78350f', weight: 0.8, opacity: 0.7, fillColor: color, fillOpacity: 0.6 }
+        : { color: '#9ca3af', weight: 0.8, opacity: 0.9, dashArray: '3 3', fillColor: '#e5e7eb', fillOpacity: 0.08 });
+      poly.bindPopup(html).bindTooltip(`${esc(name)}: ${val == null ? 'لا توجد بيانات كافية' : `${sar(val)} ${metric.unit}`}`, { sticky: true, direction: 'top' });
+      poly.on('mouseover', () => poly.setStyle({ weight: 2.5, opacity: 1 })).on('mouseout', () => poly.setStyle({ weight: 0.8, opacity: color ? 0.7 : 0.9 }));
+      poly.addTo(lg);
     }
-  }, [dealRows, breaks, dealsMode]);
+  }, [shapes, byShape, rated, breaks, metric]);
 
   const toggle = (t: string) => setTypes((s) => { const n = new Set(s); n.has(t) ? n.delete(t) : n.add(t); return n; });
 
@@ -182,33 +211,38 @@ export default function MapView() {
             {propertyLabel(t) === '—' ? 'غير محدد' : propertyLabel(t)} <span className="num opacity-75">{n}</span>
           </button>
         ))}
-        <select className="input w-auto" value={dealsMode} onChange={(e) => setDealsMode(e.target.value as 'off' | 'all' | 'land')} aria-label="طبقة أسعار الصفقات">
-          <option value="off">أسعار الصفقات: إخفاء</option><option value="all">أسعار الصفقات: كل الصفقات</option><option value="land">أسعار الصفقات: الأراضي (تقدير)</option>
+        <select className="input w-auto" value={dealsMode} onChange={(e) => setDealsMode(e.target.value as 'off' | MetricKey)} aria-label="تلوين الأحياء">
+          <option value="off">تلوين الأحياء: إيقاف</option>
+          {(Object.keys(METRICS) as MetricKey[]).map((k) => <option key={k} value={k}>تلوين الأحياء: {METRICS[k].label}</option>)}
         </select>
         {dealsMode !== 'off' && deals && (
           <select className="input w-auto" value={dealsQ} onChange={(e) => setDealsQ(e.target.value)} aria-label="الفترة">
+            <option value="all">{qLabel('all')} ({deals.quarters.reduce((s, q) => s + q.mapped, 0)} صفقة)</option>
             {[...deals.quarters].reverse().map((q) => <option key={q.q} value={q.q}>{qLabel(q.q)} ({q.mapped} صفقة)</option>)}
-            <option value="all">كل الأرباع معاً</option>
           </select>
         )}
         <span className="muted text-sm">{pins ? `${shown.length} أصل على الخريطة` : err ? `تعذر التحميل: ${err}` : 'جاري التحميل…'}</span>
       </div>
       <div ref={el} className="card overflow-hidden" style={{ height: 'min(70vh, 640px)', minHeight: 360 }} />
-      {dealsMode !== 'off' && deals && (
+      {metric && deals && (
         <div className="card space-y-2 p-3 text-xs">
           <div className="flex flex-wrap items-center gap-3">
-            <b>سعر المتر (ريال) — {dealsMode === 'land' ? 'الأراضي (تقدير)' : 'كل الصفقات'} · {qLabel(dealsQ)}:</b>
+            <b>{metric.label} ({metric.unit}) · {qLabel(dealsQ)}:</b>
             {DEAL_COLORS.map((c, i) => (
               <span key={c} className="flex items-center gap-1">
-                <span className="inline-block h-3 w-3 rounded-full border" style={{ background: c }} />
+                <span className="inline-block h-3 w-4 rounded-sm border" style={{ background: c }} />
                 <span className="num" dir="ltr">{i === 0 ? `< ${sar(breaks[0] ?? null)}` : i === DEAL_COLORS.length - 1 ? `${sar(breaks[i - 1] ?? null)}+` : `${sar(breaks[i - 1] ?? null)}–${sar(breaks[i] ?? null)}`}</span>
               </span>
             ))}
-            <span className="muted">· حجم الدائرة = عدد الصفقات · {dealRows.length} حي</span>
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-3 w-4 rounded-sm border border-dashed border-gray-400 bg-gray-100" />
+              لا توجد بيانات كافية (أقل من {MIN_DEALS} صفقات)
+            </span>
+            <span className="muted">· {rated.length} حي ملوّن · 📍 الدبابيس = أصول المزادات</span>
           </div>
-          {dealRows.length === 0 && <div className="text-amber-700">لا توجد صفقات لمدينة الرياض في ملف وزارة العدل لهذه الفترة.</div>}
+          {rated.length === 0 && <div className="text-amber-700">لا توجد صفقات كافية لمدينة الرياض في ملف وزارة العدل لهذه الفترة.</div>}
           <div className="muted">
-            المصدر: وزارة العدل، البيانات المفتوحة (open.data.gov.sa)، صفقات مدينة الرياض فقط. يظهر كل حي في وسطه لأن الملف لا يحتوي على موقع العقار ولا نوعه.
+            المصدر: وزارة العدل، البيانات المفتوحة (open.data.gov.sa)، صفقات مدينة الرياض فقط. حدود الأحياء من خريطة العنوان الوطني (سبل). السعر = الوسيط لكل حي؛ الملف لا يحتوي على موقع العقار داخل الحي ولا نوعه.
             ملفات الوزارة تحتوي على عدد صفقات للرياض أقل بكثير من مؤشرات الهيئة العامة للعقار، وقد انخفض العدد كل ربع
             ({deals.quarters.map((q) => `${qLabel(q.q)}: ${q.riyadhDeals}`).join('، ')}) — لذا اعتبر الأسعار مؤشراً تقريبياً.
           </div>

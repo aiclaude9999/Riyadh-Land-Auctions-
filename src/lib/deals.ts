@@ -37,6 +37,9 @@ export interface DistrictDeals {
   ml: number | null; // median SAR/m² of estimated land deals
   nr: number; // residential
   nc: number; // commercial
+  mr: number | null; // median SAR/m² residential
+  mc: number | null; // median SAR/m² commercial
+  p: string[]; // district boundary names (src/data/riyadh-district-shapes.json) this record covers
 }
 
 export interface DealsData {
@@ -119,16 +122,17 @@ const ALIASES: Record<string, string[]> = {
 
 export function makeLocator(points: DistrictPoint[]) {
   const byKey = new Map(points.map((p) => [districtKey(p.name), p] as const));
-  return (district: string): { name: string; lat: number; lng: number } | null => {
+  return (district: string): { name: string; lat: number; lng: number; polys: string[] } | null => {
     const k = districtKey(district);
     const hit = byKey.get(k);
-    if (hit) return { name: hit.name.replace(/^حي\s+/, ''), lat: hit.lat, lng: hit.lng };
+    if (hit) return { name: hit.name.replace(/^حي\s+/, ''), lat: hit.lat, lng: hit.lng, polys: [hit.name] };
     const alias = ALIASES[k]?.map((a) => byKey.get(districtKey(a))).filter((p): p is DistrictPoint => !!p);
     if (alias?.length) {
       return {
         name: district.trim(),
         lat: alias.reduce((s, p) => s + p.lat, 0) / alias.length,
         lng: alias.reduce((s, p) => s + p.lng, 0) / alias.length,
+        polys: alias.map((p) => p.name),
       };
     }
     return null;
@@ -160,22 +164,22 @@ export function isRiyadhCityRow(r: MojRow): boolean {
 /** Summarise several quarters of MoJ rows into per-district records (plus an "all" period). */
 export function summariseDeals(quarters: { q: string; rows: MojRow[] }[], points: DistrictPoint[], now = new Date()): DealsData {
   const locate = makeLocator(points);
-  type Acc = { d: string; lat: number; lng: number; n: number; v: number; ppm: number[]; nl: number; ppmL: number[]; nr: number; nc: number };
+  type Acc = { d: string; lat: number; lng: number; polys: string[]; n: number; v: number; ppm: number[]; nl: number; ppmL: number[]; nr: number; nc: number; ppmR: number[]; ppmC: number[] };
   const acc = new Map<string, Acc>();
   const unmapped = new Map<string, number>();
   const qInfo: DealsData['quarters'] = [];
 
-  const add = (q: string, loc: { name: string; lat: number; lng: number }, r: MojRow) => {
+  const add = (q: string, loc: { name: string; lat: number; lng: number; polys: string[] }, r: MojRow) => {
     const key = q + '|' + loc.name;
     let a = acc.get(key);
-    if (!a) acc.set(key, (a = { d: loc.name, lat: loc.lat, lng: loc.lng, n: 0, v: 0, ppm: [], nl: 0, ppmL: [], nr: 0, nc: 0 }));
+    if (!a) acc.set(key, (a = { d: loc.name, lat: loc.lat, lng: loc.lng, polys: loc.polys, n: 0, v: 0, ppm: [], nl: 0, ppmL: [], nr: 0, nc: 0, ppmR: [], ppmC: [] }));
     a.n++;
     a.v += r.price ?? 0;
     const ppm = pricePerSqm(r);
     if (ppm != null) a.ppm.push(ppm);
     if (isEstimatedLand(r)) { a.nl++; if (ppm != null) a.ppmL.push(ppm); }
-    if (r.classification === 'سكني') a.nr++;
-    else if (r.classification === 'تجاري') a.nc++;
+    if (r.classification === 'سكني') { a.nr++; if (ppm != null) a.ppmR.push(ppm); }
+    else if (r.classification === 'تجاري') { a.nc++; if (ppm != null) a.ppmC.push(ppm); }
   };
 
   for (const { q, rows } of quarters) {
@@ -198,6 +202,7 @@ export function summariseDeals(quarters: { q: string; rows: MojRow[] }[], points
   const rows: DistrictDeals[] = [...acc.entries()].map(([key, a]) => ({
     q: key.slice(0, key.indexOf('|')), d: a.d, lat: +a.lat.toFixed(5), lng: +a.lng.toFixed(5), n: a.n, v: Math.round(a.v),
     m: round(median(a.ppm)), nl: a.nl, ml: round(median(a.ppmL)), nr: a.nr, nc: a.nc,
+    mr: round(median(a.ppmR)), mc: round(median(a.ppmC)), p: a.polys,
   }));
   rows.sort((x, y) => x.q.localeCompare(y.q) || y.n - x.n);
   return {
@@ -223,4 +228,26 @@ export function ringCentroid(ring: [number, number][]): { lat: number; lng: numb
     return { lat: ring.reduce((s, p) => s + p[0], 0) / n, lng: ring.reduce((s, p) => s + p[1], 0) / n, area: 0 };
   }
   return { lat: cy / (3 * a), lng: cx / (3 * a), area: Math.abs(a / 2) };
+}
+
+/** Douglas–Peucker simplification of a [lat, lng] ring (tolerance in degrees; ~0.0002° ≈ 20 m). */
+export function simplifyRing(ring: [number, number][], tol: number): [number, number][] {
+  if (ring.length <= 4) return ring;
+  const keep = new Uint8Array(ring.length);
+  keep[0] = keep[ring.length - 1] = 1;
+  const stack: [number, number][] = [[0, ring.length - 1]];
+  while (stack.length) {
+    const [a, b] = stack.pop()!;
+    const [ay, ax] = ring[a], [by, bx] = ring[b];
+    const dx = bx - ax, dy = by - ay, len = Math.hypot(dx, dy);
+    let best = -1, bestD = 0;
+    for (let i = a + 1; i < b; i++) {
+      const [py, px] = ring[i];
+      const dist = len === 0 ? Math.hypot(px - ax, py - ay) : Math.abs(dy * px - dx * py + bx * ay - by * ax) / len;
+      if (dist > bestD) { bestD = dist; best = i; }
+    }
+    if (best >= 0 && bestD > tol) { keep[best] = 1; stack.push([a, best], [best, b]); }
+  }
+  const out = ring.filter((_, i) => keep[i]);
+  return out.length >= 4 ? out : ring;
 }

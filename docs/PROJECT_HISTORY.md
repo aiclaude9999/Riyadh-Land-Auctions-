@@ -81,6 +81,7 @@ In this sandbox Node `fetch` needs `NODE_USE_ENV_PROXY=1`. netlify.app / github.
 9. Infath laptop collector re-enabled (works with plain requests). Added `CLAUDE.md` + this file.
 10. Added the **map page** (`/map`). Coordinates come mainly from Mobasher, Saudi Auctions, Mazadat; Soum sometimes; Infath/Qemah none.
 11. (11 Nov) **Deals layer on the map** ("أسعار الصفقات"): Ministry of Justice quarterly sales (open.data.gov.sa, geo-blocked outside KSA — owner downloads the CSVs on the laptop and uploads them). Riyadh-city only, summarised per district (count, value, median SAR/m², estimated land = residential single property > 200 m²), placed at district centroids from Saudi Post boundaries (homaily/Saudi-Arabia-Regions-Cities-and-Districts). Static file `src/data/riyadh-deals.json`, no DB. Quarters 2025-Q4 → 2026-Q3. **Finding:** Riyadh-city deals in the MoJ files fell every quarter (4,828 → 2,889 → 1,676 → **1** in 2026-Q3), so these files no longer cover Riyadh city (likely registered elsewhere, e.g. the Real Estate Registry). REGA's Nafath-protected deals were not scraped (declined).
+12. Owner asked for coloured districts instead of circles: the layer now fills each district boundary (`src/data/riyadh-district-shapes.json`, simplified ≈20 m) by the chosen metric — land (estimate) / all / residential / commercial SAR/m² or deal count; opens on land, all quarters together; districts with < 3 deals are grey dashed. Auction assets became drop-pin icons.
 
 ## 6. Open items / to-do
 

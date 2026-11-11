@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { districtKey, isEstimatedLand, makeLocator, median, parseCsv, parseMojCsv, pricePerSqm, ringCentroid, summariseDeals } from '@/lib/deals';
+import { districtKey, isEstimatedLand, makeLocator, median, parseCsv, parseMojCsv, pricePerSqm, ringCentroid, simplifyRing, summariseDeals } from '@/lib/deals';
 
 // trimmed real rows from the MoJ 2026-Q2 / Q3 sales files (Q3 uses different date-column names)
 const Q2 = `﻿المنطقة,المدينة,المدينة / الحي,الرقم المرجعي للصفقة,التاريخ الميلادي,التاريخ الهجري,تصنيف العقار,عدد العقارات,السعر,المساحة
@@ -56,11 +56,17 @@ describe('MoJ deals', () => {
     const d = summariseDeals([{ q: '2026-Q2', rows: parseMojCsv(Q2) }, { q: '2026-Q3', rows: parseMojCsv(Q3) }], POINTS);
     expect(d.quarters).toEqual([{ q: '2026-Q2', riyadhDeals: 6, mapped: 5 }, { q: '2026-Q3', riyadhDeals: 1, mapped: 0 }]);
     const nimar = d.rows.find((r) => r.q === '2026-Q2' && r.d === 'نمار')!;
-    expect(nimar).toMatchObject({ n: 3, v: 4750000, m: 2500, nl: 2, ml: 2000, nr: 2, nc: 1 });
+    expect(nimar).toMatchObject({ n: 3, v: 4750000, m: 2500, nl: 2, ml: 2000, nr: 2, nc: 1, mr: 2000, mc: 3000, p: ['حي نمار'] });
+    expect(d.rows.find((r) => r.q === '2026-Q2' && r.d === 'النسيم')?.p).toEqual(['حي النسيم الشرقي', 'حي النسيم الغربي']);
     expect(d.rows.find((r) => r.q === 'all' && r.d === 'نمار')?.n).toBe(3);
     expect(d.rows.find((r) => r.d === 'الصفا')).toMatchObject({ nl: 0, m: 3998 });
     expect(d.unmapped).toContainEqual({ q: '2026-Q3', d: 'هيت الجنوبى', n: 1 });
     expect(d.unmapped).toContainEqual({ q: '2026-Q2', d: 'شرق الرياض', n: 1 });
+  });
+
+  it('simplifies rings', () => {
+    const ring: [number, number][] = [[0, 0], [0, 1], [0.00001, 2], [0, 3], [3, 3], [3, 0], [0, 0]];
+    expect(simplifyRing(ring, 0.001)).toEqual([[0, 0], [0, 3], [3, 3], [3, 0], [0, 0]]);
   });
 
   it('polygon centroid', () => {
