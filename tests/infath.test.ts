@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { parseInfathList, parseInfathDetail, parseArabicDate } from '@/connectors/infath';
+import { parseInfathList, parseInfathDetail, parseArabicDate, districtFromText, coordsFromMapsUrl } from '@/connectors/infath';
 import { toListingData } from '@/lib/ingest';
 
 // Real page captured from a Saudi network on 2026-11-10 (infath.gov.sa/ar/auctions/?tab=ongoing)
@@ -40,13 +40,26 @@ describe('infath helpers', () => {
     expect(parseArabicDate('08 نوفمبر 2026   10:00:00')).toEqual({ date: '2026-11-08', time: '10:00:00' });
     expect(parseArabicDate('٠٢ فبراير ٢٠٢٦')).toEqual({ date: '2026-02-02', time: null });
   });
-  it('reads assets from a detail page by their labels', () => {
-    const detail = `<div class="asset"><h4>رقم الأصل</h4><p>1</p><h4>نوع الأصل</h4><p>أرض</p><h4>المساحة</h4><p>2,624.00 م²</p>
-      <h4>المدينة</h4><p>الدمام</p><h4>الحي</h4><p>حي المزروعية</p><h4>سعر البداية</h4><p>1,000,000 ريال</p><a href="https://mobasher.sa/auctions/613">رابط</a></div>
-      <div class="asset"><h4>رقم الأصل</h4><p>2</p><h4>نوع الأصل</h4><p>أرض</p><h4>المساحة</h4><p>1,328.00 م²</p><h4>المدينة</h4><p>الدمام</p></div>`;
-    const as = parseInfathDetail(detail, 'https://infath.gov.sa/ar/auction?AuctionId=613');
-    expect(as).toHaveLength(2);
-    expect(as[0]).toMatchObject({ externalId: '1', propertyType: 'land', areaSqm: 2624, city: 'الدمام', district: 'المزروعية', startPrice: 1000000, url: 'https://mobasher.sa/auctions/613' });
-    expect(as[1].areaSqm).toBe(1328);
+  it('reads assets from a real detail page (AuctionId=595, trimmed)', () => {
+    const html = readFileSync(join(__dirname, 'fixtures/infath-detail.html'), 'utf8');
+    const as = parseInfathDetail(html, 'https://infath.gov.sa/ar/auction/?AuctionId=595');
+    expect(as).toHaveLength(4);
+    expect(as[0]).toMatchObject({
+      externalId: '1605229656900000', propertyType: 'villa', areaSqm: 560, deposit: 50000, city: 'الرياض', district: 'ظهرة لبن',
+      startPrice: null, url: 'https://infath.gov.sa/ar/auction/?AuctionId=595', mapUrl: 'https://maps.app.goo.gl/96rDXdRpeHEhFk5A7',
+    });
+    expect(as[0].title).toMatch(/^فيلا — حي ظهرة لبن \(دور ارضي/);
+    expect(as[2]).toMatchObject({ propertyType: 'land', usage: 'residential', areaSqm: 400, title: 'أرض سكنية — حي ظهرة لبن' });
+    expect(as[3]).toMatchObject({ propertyType: 'land', areaSqm: 450, deposit: 15000, district: 'ضاحية نمار' });
   });
+  it('reads district names and map coordinates', () => {
+    expect(districtFromText('أرض سكنية حي أحد بالرياض')).toBe('أحد');
+    expect(districtFromText('تفاصيل العقار: دور ارضي')).toBeNull();
+    expect(coordsFromMapsUrl('https://www.google.com/maps/place/24.6123,46.7012/@24.6123,46.7012,17z')).toEqual({ lat: 24.6123, lng: 46.7012 });
+    expect(coordsFromMapsUrl('https://www.google.com/maps/place/X/data=!3m1!4b1!4m6!3m5!1s0x0:0x0!8m2!3d24.75!4d46.62')).toEqual({ lat: 24.75, lng: 46.62 });
+    expect(coordsFromMapsUrl('https://maps.google.com/?q=24.5,46.6')).toEqual({ lat: 24.5, lng: 46.6 });
+    expect(coordsFromMapsUrl('https://maps.app.goo.gl/96rDXdRpeHEhFk5A7')).toBeNull();
+    expect(coordsFromMapsUrl('https://www.google.com/maps/@46.6,24.5,17z')).toBeNull(); // swapped → not in KSA
+  });
+
 });

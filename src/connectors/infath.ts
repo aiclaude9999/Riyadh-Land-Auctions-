@@ -8,8 +8,8 @@
  * List pages: /ar/auctions/?tab=ongoing|upcoming|ended  → cards with name, asset count, dates, region,
  *             city, asset type, auction type and a link /ar/auction?AuctionId=N.
  *             Each card has a countdown <div class="timer" data-end="YYYY-MM-DDTHH:MM:SS"> in Riyadh time.
- * Detail page: /ar/auction?AuctionId=N → assets (رقم الأصل, نوع الأصل, المساحة, المدينة, الحي, سعر البداية…)
- *             read by their labels; Infath hands execution to a licensed platform (e.g. mobasher.sa).
+ * Detail page: /ar/auction?AuctionId=N → one card per asset: type, area, entry deposit (مبلغ الدخول),
+ *             description (district), Google Maps short link (coordinates). No per-asset opening price.
  */
 import * as cheerio from 'cheerio';
 import { getText } from '@/lib/http';
@@ -94,48 +94,109 @@ export function parseInfathList(html: string, tab: string): RawAuction[] {
   return out;
 }
 
-// ---- detail page: assets read by their labels --------------------------------------------
-const LABELS: Record<string, keyof RawAsset | 'deed' | 'ignore'> = {
-  'رقم الأصل': 'externalId', 'نوع الأصل': 'propertyType', 'نوع العقار': 'propertyType', 'المساحة': 'areaSqm', 'المدينة': 'city', 'الحي': 'district',
-  'سعر البداية': 'startPrice', 'السعر الافتتاحي': 'startPrice', 'العربون': 'deposit', 'مبلغ التأمين': 'deposit', 'قيمة التأمين': 'deposit', 'الضمان': 'deposit',
-  'رقم الصك': 'deed', 'المنطقة': 'region',
-};
+// ---- detail page: one card per asset ------------------------------------------------------
+// Real layout (Nov 2026): section.auctions-small-cards → .ac-card, each with the asset type in the
+// accordion button, "موقع الأصل" (Google Maps short link), "مبلغ الدخول" (entry deposit), deed number,
+// "المساحة" (p label + h4 value with <sup>2</sup>), "وصف العقار" and "الملاحظات". No per-asset price.
 
-export function parseInfathDetail(html: string, auctionUrl: string): RawAsset[] {
+/** "أرض سكنية حي ظهرة لبن بالرياض" → "ظهرة لبن" */
+export function districtFromText(text?: string | null): string | null {
+  const m = text?.match(/حي\s+([^\n،,.()]+?)\s+(?:ب|في\s+)?(?:مدينة\s+)?ال?رياض/);
+  return m ? cleanText(m[1]) : null;
+}
+
+/** Coordinates from a full Google Maps URL (…/@24.6,46.7,… · ?q=24.6,46.7 · !3d24.6!4d46.7). */
+export function coordsFromMapsUrl(url?: string | null): { lat: number; lng: number } | null {
+  if (!url) return null;
+  const u = decodeURIComponent(url);
+  const m = u.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)
+    ?? u.match(/[?&](?:q|query|ll|destination)=(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/)
+    ?? u.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+    ?? u.match(/\/place\/(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (!m) return null;
+  const lat = Number(m[1]), lng = Number(m[2]);
+  // Saudi Arabia only (guards against swapped / unrelated numbers)
+  return lat > 15 && lat < 33 && lng > 34 && lng < 56 ? { lat, lng } : null;
+}
+
+export interface InfathAsset extends RawAsset { mapUrl: string | null }
+
+export function parseInfathDetail(html: string, auctionUrl: string): InfathAsset[] {
   const $ = cheerio.load(html);
-  $('script, style, select, option, svg').remove();
-  const assets: Record<string, string>[] = [];
-  let cur: Record<string, string> | null = null;
-  // label elements are short headings/spans; their value is the next element's text
-  $('h4, h5, h6, span, dt, th, strong, label, p').each((_, el) => {
-    const label = cleanText($(el).clone().children().remove().end().text())?.replace(/[:：]$/, '');
-    if (!label || label.length > 20) return;
-    const key = Object.keys(LABELS).find((k) => label === k);
-    if (!key) return;
-    const value = cleanText($(el).next().text()) ?? cleanText($(el).parent().next().text());
-    if (!value || value.length > 120) return;
-    if (LABELS[key] === 'externalId') { cur = { externalId: value }; assets.push(cur); return; }
-    const c = cur as Record<string, string> | null;
-    if (c && !(LABELS[key] in c)) c[LABELS[key]] = value;
+  // auction-level facts (header card): <h4>label</h4><p>value</p>
+  const facts: Record<string, string> = {};
+  $('section.ac-big-card').not('.auctions-small-cards').find('.info-item .data').each((_, el) => {
+    const k = cleanText($(el).find('h4').first().text());
+    const v = cleanText($(el).find('p').first().text());
+    if (k && v && !(k in facts)) facts[k] = v;
   });
-  const links = $('a[href]').map((_, a) => $(a).attr('href')).get().filter((h) => /^https?:\/\//.test(h) && !h.includes('infath.gov.sa'));
-  return assets.map((a, i) => {
-    const title = [a.propertyType, a.district, a.city].filter(Boolean).join(' — ') || `أصل ${a.externalId}`;
+  const districtOptions = $('select[name="district"] option').map((_, o) => cleanText($(o).attr('value'))).get().filter(Boolean) as string[];
+  const auctionDistrict = districtOptions.length === 1 ? districtOptions[0] : null;
+  const city = facts['المدينة'] ?? null;
+
+  return $('section.auctions-small-cards .ac-card').map((i, el) => {
+    const card = $(el);
+    const type = cleanText(card.find('.accordion-button').first().text());
+    const deed = cleanText(card.find('.a-deed .data p').first().text());
+    let area: number | null = null;
+    card.find('.info-item .data').each((_, d) => {
+      if (cleanText($(d).find('p').first().text()) !== 'المساحة') return;
+      const h = $(d).find('h4').first().clone();
+      h.find('sup').remove(); // "560 م<sup>2</sup>" — don't read the ² as a digit
+      area = parseArea(h.text());
+    });
+    const sections: Record<string, string> = {};
+    card.find('h3').each((_, h) => {
+      const k = cleanText($(h).text());
+      const v = $(h).nextAll('p').map((_, p) => cleanText($(p).text())).get().filter(Boolean).join('\n');
+      if (k && v && !(k in sections)) sections[k] = v;
+    });
+    const desc = sections['وصف العقار'] ?? null;
+    const district = districtFromText(desc) ?? auctionDistrict;
+    const mapUrl = card.find('a[href*="maps"], a[href*="goo.gl"]').first().attr('href') ?? null;
+    const coords = coordsFromMapsUrl(mapUrl);
+    const detail = desc?.split(/\n|\s+الدور\s/)[0].replace(/^تفاصيل العقار\s*:\s*/, '').trim();
+    const pt = mapPropertyType(type, desc);
+    const title = [type, district && `حي ${district}`].filter(Boolean).join(' — ')
+      + (pt !== 'land' && detail ? ` (${detail.length > 70 ? detail.slice(0, 70) + '…' : detail})` : '');
     return {
-      externalId: String(a.externalId ?? i + 1),
-      title,
-      url: links[0] ?? auctionUrl,
-      city: a.city ?? null,
-      region: a.region ?? null,
-      district: a.district?.replace(/^حي\s+/, '') ?? null,
-      startPrice: parseMoney(a.startPrice),
-      deposit: parseMoney(a.deposit),
-      areaSqm: parseArea(a.areaSqm),
-      propertyType: mapPropertyType(a.propertyType),
-      usage: mapUsage(a.propertyType),
+      externalId: deed ?? String(i + 1),
+      title: title || `أصل ${i + 1}`,
+      url: auctionUrl,
+      city,
+      region: null,
+      district,
+      latitude: coords?.lat ?? null,
+      longitude: coords?.lng ?? null,
+      startPrice: null,
+      deposit: parseMoney(card.find('a.btn-share').first().text()),
+      areaSqm: area,
+      propertyType: pt,
+      usage: mapUsage(type, desc),
       images: [],
-    };
-  });
+      mapUrl,
+    } satisfies InfathAsset;
+  }).get();
+}
+
+/**
+ * Infath links each asset to a Google Maps short link (maps.app.goo.gl/…). Its redirect target is a
+ * normal Google Maps URL that usually contains the coordinates; read them from the Location header
+ * (no page content is downloaded). Best effort: any failure just leaves the asset without a pin.
+ */
+export async function resolveMapsLink(url: string, timeoutMs = 10_000): Promise<{ lat: number; lng: number } | null> {
+  let cur = url;
+  for (let hop = 0; hop < 4; hop++) {
+    const direct = coordsFromMapsUrl(cur);
+    if (direct) return direct;
+    if (!/^https:\/\/(maps\.app\.goo\.gl|goo\.gl|maps\.google\.com|www\.google\.com)\//.test(cur)) return null;
+    const res = await fetch(cur, { method: 'GET', redirect: 'manual', signal: AbortSignal.timeout(timeoutMs) });
+    await res.body?.cancel();
+    const loc = res.headers.get('location');
+    if (!loc) return null;
+    cur = new URL(loc, cur).toString();
+  }
+  return coordsFromMapsUrl(cur);
 }
 
 const MODE_TABS: Record<RefreshMode, string[]> = {
@@ -165,7 +226,16 @@ export const infath: Connector = {
     for (const a of byId.values()) {
       if (a.status === 'ended') continue;
       try {
-        a.assets = parseInfathDetail(await getText(a.url, { timeoutMs: 40_000 }), a.url);
+        const assets = parseInfathDetail(await getText(a.url, { timeoutMs: 40_000 }), a.url);
+        for (const asset of assets) {
+          if (asset.latitude != null || !asset.mapUrl) continue;
+          try {
+            const c = await resolveMapsLink(asset.mapUrl);
+            if (c) { asset.latitude = c.lat; asset.longitude = c.lng; }
+          } catch { /* no pin for this asset */ }
+        }
+        a.assets = assets.map(({ mapUrl: _m, ...rest }) => rest);
+        log.debug({ auction: a.externalId, assets: assets.length, withPin: assets.filter((x) => x.latitude != null).length }, 'infath detail');
         if (a.assets.length && !a.assetCount) a.assetCount = a.assets.length;
         a.cities = uniq<string>([...(a.cities ?? []), ...a.assets.map((x) => x.city)]);
       } catch (e: any) {
