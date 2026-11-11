@@ -80,6 +80,7 @@ In this sandbox Node `fetch` needs `NODE_USE_ENV_PROXY=1`. netlify.app / github.
 8. Added **Soum**. Wasalt bypass requested and declined.
 9. Infath laptop collector re-enabled (works with plain requests). Added `CLAUDE.md` + this file.
 10. Added the **map page** (`/map`). Coordinates come mainly from Mobasher, Saudi Auctions, Mazadat; Soum sometimes; Infath/Qemah none.
+11. (11 Nov) **Deals layer on the map** ("أسعار الصفقات"): Ministry of Justice quarterly sales (open.data.gov.sa, geo-blocked outside KSA — owner downloads the CSVs on the laptop and uploads them). Riyadh-city only, summarised per district (count, value, median SAR/m², estimated land = residential single property > 200 m²), placed at district centroids from Saudi Post boundaries (homaily/Saudi-Arabia-Regions-Cities-and-Districts). Static file `src/data/riyadh-deals.json`, no DB. Quarters 2025-Q4 → 2026-Q3. **Finding:** Riyadh-city deals in the MoJ files fell every quarter (4,828 → 2,889 → 1,676 → **1** in 2026-Q3), so these files no longer cover Riyadh city (likely registered elsewhere, e.g. the Real Estate Registry). REGA's Nafath-protected deals were not scraped (declined).
 
 ## 6. Open items / to-do
 
@@ -89,6 +90,7 @@ In this sandbox Node `fetch` needs `NODE_USE_ENV_PROXY=1`. netlify.app / github.
 - Optional: "تحديث الآن" on Netlify needs `GITHUB_TOKEN` (fine-grained, Actions read/write on this repo) + `GITHUB_REPO=aiclaude9999/Riyadh-Land-Auctions-`.
 - Optional: raise UI refresh to 300 s in Settings to save Netlify credits (300 credits/month free; each deploy = 15 credits; an open tab ≈ 0.7 credits/hour).
 - Watch Neon free usage (collector every 30 min ≈ 6 h active/day).
+- Deals layer: add a new quarter = owner sends the MoJ CSV → `npx tsx scripts/deals/build-deals.ts 2025-Q4=… 2026-Q1=… …` (pass ALL quarters; raw CSVs are not committed — 2025-Q4/2026-Q1 came from github.com/civillizard/Saudi-Real-Estate-Data `moj/sales`). Riyadh city is nearly absent from 2026-Q3, so look for another official, open source for Riyadh deals.
 - Ideas not started: Telegram alerts, emailing Infath/Wasalt for official data access (owner declined for Wasalt).
 
 ## 7. How to operate

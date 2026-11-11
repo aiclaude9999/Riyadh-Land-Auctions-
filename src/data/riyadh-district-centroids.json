@@ -1,0 +1,1136 @@
+[
+ {
+  "name": "المدينة الصناعية الثانية",
+  "nameEn": "2nd Industrial City",
+  "lat": 24.5438,
+  "lng": 46.90017
+ },
+ {
+  "name": "جامعة الامام محمد بن سعود الاسلامية",
+  "nameEn": "Imam Muhammed Bin Saud Islamic University",
+  "lat": 24.81446,
+  "lng": 46.70385
+ },
+ {
+  "name": "جامعة الملك سعود",
+  "nameEn": "King Saud University",
+  "lat": 24.72452,
+  "lng": 46.62433
+ },
+ {
+  "name": "حي احد",
+  "nameEn": "Ohod Dist.",
+  "lat": 24.48983,
+  "lng": 46.63519
+ },
+ {
+  "name": "حي اشبيلية",
+  "nameEn": "Ishbiliyah Dist.",
+  "lat": 24.79236,
+  "lng": 46.79209
+ },
+ {
+  "name": "حي الازدهار",
+  "nameEn": "Al Ezdihar Dist.",
+  "lat": 24.78061,
+  "lng": 46.71748
+ },
+ {
+  "name": "حي الاسكان",
+  "nameEn": "Al Iskan Dist.",
+  "lat": 24.57459,
+  "lng": 46.84846
+ },
+ {
+  "name": "حي الاندلس",
+  "nameEn": "Al Andalus Dist.",
+  "lat": 24.74349,
+  "lng": 46.78862
+ },
+ {
+  "name": "حي البديعة",
+  "nameEn": "Al Badiah Dist.",
+  "lat": 24.6169,
+  "lng": 46.68048
+ },
+ {
+  "name": "حي البرية",
+  "nameEn": "Al Bariyah Dist.",
+  "lat": 24.55773,
+  "lng": 46.95005
+ },
+ {
+  "name": "حي البساتين",
+  "nameEn": "Al Basatin Dist.",
+  "lat": 25.13178,
+  "lng": 47.19258
+ },
+ {
+  "name": "حي البطيحا",
+  "nameEn": "Al Butaiha Dist.",
+  "lat": 24.62172,
+  "lng": 46.72009
+ },
+ {
+  "name": "حي البيان",
+  "nameEn": "Al Bayan Dist.",
+  "lat": 24.87728,
+  "lng": 46.86153
+ },
+ {
+  "name": "حي التضامن",
+  "nameEn": "Al Tadamun Dist.",
+  "lat": 25.1218,
+  "lng": 47.08889
+ },
+ {
+  "name": "حي التعاون",
+  "nameEn": "Al Taawun Dist.",
+  "lat": 24.77304,
+  "lng": 46.69952
+ },
+ {
+  "name": "حي الجرادية",
+  "nameEn": "Al Jarradiyah Dist.",
+  "lat": 24.61703,
+  "lng": 46.69777
+ },
+ {
+  "name": "حي الجزيرة",
+  "nameEn": "Al Jazeerah Dist.",
+  "lat": 24.66512,
+  "lng": 46.79643
+ },
+ {
+  "name": "حي الجنادرية",
+  "nameEn": "Al Janadriyah Dist.",
+  "lat": 24.87442,
+  "lng": 46.91435
+ },
+ {
+  "name": "حي الحائر",
+  "nameEn": "Al Haer Dist.",
+  "lat": 24.42118,
+  "lng": 46.88592
+ },
+ {
+  "name": "حي الحزم",
+  "nameEn": "Al Hazm Dist.",
+  "lat": 24.53845,
+  "lng": 46.64547
+ },
+ {
+  "name": "حي الحمراء",
+  "nameEn": "Al Hamra Dist.",
+  "lat": 24.77549,
+  "lng": 46.75318
+ },
+ {
+  "name": "حي الخالدية",
+  "nameEn": "Al Khalidiyah Dist.",
+  "lat": 24.62452,
+  "lng": 46.75524
+ },
+ {
+  "name": "حي الخزامى",
+  "nameEn": "Al Khuzama Dist.",
+  "lat": 24.70943,
+  "lng": 46.60799
+ },
+ {
+  "name": "حي الخليج",
+  "nameEn": "Al Khaleej Dist.",
+  "lat": 24.77679,
+  "lng": 46.80348
+ },
+ {
+  "name": "حي الخير",
+  "nameEn": "Al Khair Dist.",
+  "lat": 25.05756,
+  "lng": 46.41266
+ },
+ {
+  "name": "حي الدار البيضاء",
+  "nameEn": "Al Dar Al Baida Dist.",
+  "lat": 24.56522,
+  "lng": 46.79152
+ },
+ {
+  "name": "حي الدانة",
+  "nameEn": "Al Danah Dist.",
+  "lat": 25.08323,
+  "lng": 47.22943
+ },
+ {
+  "name": "حي الدحو",
+  "nameEn": "Al Dahou Dist.",
+  "lat": 24.6296,
+  "lng": 46.7143
+ },
+ {
+  "name": "حي الدريهمية",
+  "nameEn": "Al Duraihemiyah Dist.",
+  "lat": 24.58976,
+  "lng": 46.69633
+ },
+ {
+  "name": "حي الدفاع",
+  "nameEn": "Al Difaa Dist.",
+  "lat": 24.58688,
+  "lng": 46.83244
+ },
+ {
+  "name": "حي الدوبية",
+  "nameEn": "Al Dubiyah Dist.",
+  "lat": 24.62117,
+  "lng": 46.71193
+ },
+ {
+  "name": "حي الديرة",
+  "nameEn": "Al Dirah Dist.",
+  "lat": 24.6323,
+  "lng": 46.7101
+ },
+ {
+  "name": "حي الرائد",
+  "nameEn": "Al Raed Dist.",
+  "lat": 24.70696,
+  "lng": 46.63888
+ },
+ {
+  "name": "حي الرابية",
+  "nameEn": "Al Rabiyah Dist.",
+  "lat": 24.97057,
+  "lng": 46.94839
+ },
+ {
+  "name": "حي الراية",
+  "nameEn": "Al Rayah Dist.",
+  "lat": 25.04161,
+  "lng": 47.2037
+ },
+ {
+  "name": "حي الربوة",
+  "nameEn": "Ar Rabwah Dist.",
+  "lat": 24.6933,
+  "lng": 46.75676
+ },
+ {
+  "name": "حي الربيع",
+  "nameEn": "Ar Rabie Dist.",
+  "lat": 24.79547,
+  "lng": 46.66121
+ },
+ {
+  "name": "حي الرحاب",
+  "nameEn": "Al Rehab Dist.",
+  "lat": 25.09499,
+  "lng": 47.26935
+ },
+ {
+  "name": "حي الرحمانية",
+  "nameEn": "Ar Rahmaniyah Dist.",
+  "lat": 24.71613,
+  "lng": 46.65934
+ },
+ {
+  "name": "حي الرسالة",
+  "nameEn": "Al Risalah Dist.",
+  "lat": 25.04839,
+  "lng": 47.23867
+ },
+ {
+  "name": "حي الرفيعة",
+  "nameEn": "Ar Rafiah Dist.",
+  "lat": 24.63983,
+  "lng": 46.66159
+ },
+ {
+  "name": "حي الرمال",
+  "nameEn": "Al Rimal Dist.",
+  "lat": 24.96493,
+  "lng": 46.76538
+ },
+ {
+  "name": "حي الرماية",
+  "nameEn": "Al Rimayah Dist.",
+  "lat": 24.76943,
+  "lng": 46.87381
+ },
+ {
+  "name": "حي الروابي",
+  "nameEn": "Al Rawabi Dist.",
+  "lat": 24.69527,
+  "lng": 46.79034
+ },
+ {
+  "name": "حي الروضة",
+  "nameEn": "Al Rawdah Dist.",
+  "lat": 24.73411,
+  "lng": 46.7671
+ },
+ {
+  "name": "حي الريان",
+  "nameEn": "Al Rayan Dist.",
+  "lat": 24.71226,
+  "lng": 46.77804
+ },
+ {
+  "name": "حي الزاهر",
+  "nameEn": "Al Zaher Dist.",
+  "lat": 25.04764,
+  "lng": 47.06853
+ },
+ {
+  "name": "حي الزهراء",
+  "nameEn": "Al Zahra Dist.",
+  "lat": 24.68636,
+  "lng": 46.73024
+ },
+ {
+  "name": "حي الزهرة",
+  "nameEn": "Al Zahrah Dist.",
+  "lat": 24.57865,
+  "lng": 46.64574
+ },
+ {
+  "name": "حي الزهور",
+  "nameEn": "Al Zahour Dist.",
+  "lat": 25.07782,
+  "lng": 47.1981
+ },
+ {
+  "name": "حي السحاب",
+  "nameEn": "Al Sahab Dist.",
+  "lat": 24.94291,
+  "lng": 46.96874
+ },
+ {
+  "name": "حي السدرة",
+  "nameEn": "Al Sidrah Dist.",
+  "lat": 24.4493,
+  "lng": 46.88042
+ },
+ {
+  "name": "حي السعادة",
+  "nameEn": "Al Saadah Dist.",
+  "lat": 24.69599,
+  "lng": 46.83928
+ },
+ {
+  "name": "حي السفارات",
+  "nameEn": "Assafarat Dist.",
+  "lat": 24.67798,
+  "lng": 46.62112
+ },
+ {
+  "name": "حي السلام",
+  "nameEn": "Al Salam Dist.",
+  "lat": 24.70726,
+  "lng": 46.81093
+ },
+ {
+  "name": "حي السلي",
+  "nameEn": "Al Sulay Dist.",
+  "lat": 24.65232,
+  "lng": 46.84656
+ },
+ {
+  "name": "حي السليمانية",
+  "nameEn": "Al Sulaimaniyah Dist.",
+  "lat": 24.70076,
+  "lng": 46.70234
+ },
+ {
+  "name": "حي السويدي",
+  "nameEn": "Al Suwaidi Dist.",
+  "lat": 24.59205,
+  "lng": 46.67335
+ },
+ {
+  "name": "حي السويدي الغربي",
+  "nameEn": "West Suwaidi Dist.",
+  "lat": 24.57371,
+  "lng": 46.62488
+ },
+ {
+  "name": "حي الشرفية",
+  "nameEn": "Al Sharafiyah Dist.",
+  "lat": 24.65865,
+  "lng": 46.66883
+ },
+ {
+  "name": "حي الشعلة",
+  "nameEn": "Al Sholah Dist.",
+  "lat": 25.07051,
+  "lng": 47.14337
+ },
+ {
+  "name": "حي الشفا",
+  "nameEn": "Al Shifa Dist.",
+  "lat": 24.56494,
+  "lng": 46.69851
+ },
+ {
+  "name": "حي الشميسي",
+  "nameEn": "Al Shumaisi Dist.",
+  "lat": 24.62479,
+  "lng": 46.70031
+ },
+ {
+  "name": "حي الشهداء",
+  "nameEn": "Al Shohda Dist.",
+  "lat": 24.78817,
+  "lng": 46.73543
+ },
+ {
+  "name": "حي الصالحية",
+  "nameEn": "As Salhiyah Dist.",
+  "lat": 24.63402,
+  "lng": 46.73435
+ },
+ {
+  "name": "حي الصحافة",
+  "nameEn": "Al Sahafah Dist.",
+  "lat": 24.79995,
+  "lng": 46.63901
+ },
+ {
+  "name": "حي الصفا",
+  "nameEn": "Al Safa Dist.",
+  "lat": 24.66703,
+  "lng": 46.76562
+ },
+ {
+  "name": "حي الصناعية",
+  "nameEn": "Al Sinaiyah Dist.",
+  "lat": 24.64239,
+  "lng": 46.74722
+ },
+ {
+  "name": "حي الضباط",
+  "nameEn": "Al Dhubbat Dist.",
+  "lat": 24.67837,
+  "lng": 46.7224
+ },
+ {
+  "name": "حي العارض",
+  "nameEn": "Al Arid Dist.",
+  "lat": 24.89791,
+  "lng": 46.60191
+ },
+ {
+  "name": "حي العريجاء",
+  "nameEn": "Al Uraija Dist.",
+  "lat": 24.62495,
+  "lng": 46.65666
+ },
+ {
+  "name": "حي العريجاء الغربي",
+  "nameEn": "West Oraija Dist.",
+  "lat": 24.59817,
+  "lng": 46.59929
+ },
+ {
+  "name": "حي العريجاء الوسطى",
+  "nameEn": "Middle Oraija Dist.",
+  "lat": 24.60792,
+  "lng": 46.63786
+ },
+ {
+  "name": "حي العزيزية",
+  "nameEn": "Al Aziziyah Dist.",
+  "lat": 24.58763,
+  "lng": 46.77012
+ },
+ {
+  "name": "حي العقيق",
+  "nameEn": "Al Aqeeq Dist.",
+  "lat": 24.77362,
+  "lng": 46.62999
+ },
+ {
+  "name": "حي العلا",
+  "nameEn": "Al Ula Dist.",
+  "lat": 25.02334,
+  "lng": 47.13387
+ },
+ {
+  "name": "حي العليا",
+  "nameEn": "Al Olaya Dist.",
+  "lat": 24.6931,
+  "lng": 46.68447
+ },
+ {
+  "name": "حي العماجية",
+  "nameEn": "Al Ammajiyah Dist.",
+  "lat": 24.44119,
+  "lng": 46.97824
+ },
+ {
+  "name": "حي العمل",
+  "nameEn": "Al Amal Dist.",
+  "lat": 24.64592,
+  "lng": 46.72269
+ },
+ {
+  "name": "حي العوالي",
+  "nameEn": "Al Awaly Dist.",
+  "lat": 24.55913,
+  "lng": 46.61262
+ },
+ {
+  "name": "حي العود",
+  "nameEn": "Al Oud Dist.",
+  "lat": 24.62663,
+  "lng": 46.72738
+ },
+ {
+  "name": "حي الغدير",
+  "nameEn": "Al Ghadeer Dist.",
+  "lat": 24.77357,
+  "lng": 46.65399
+ },
+ {
+  "name": "حي الغنامية",
+  "nameEn": "Al Ghannamiyah Dist.",
+  "lat": 24.47839,
+  "lng": 46.81536
+ },
+ {
+  "name": "حي الفاخرية",
+  "nameEn": "Al Fakhiriyah Dist.",
+  "lat": 24.64162,
+  "lng": 46.68283
+ },
+ {
+  "name": "حي الفاروق",
+  "nameEn": "Al Farooq Dist.",
+  "lat": 24.65383,
+  "lng": 46.77314
+ },
+ {
+  "name": "حي الفرسان",
+  "nameEn": "Al Fursan Dist.",
+  "lat": 25.0027,
+  "lng": 47.18764
+ },
+ {
+  "name": "حي الفلاح",
+  "nameEn": "Al Falah Dist.",
+  "lat": 24.79702,
+  "lng": 46.7092
+ },
+ {
+  "name": "حي الفوطة",
+  "nameEn": "Al Futah Dist.",
+  "lat": 24.64165,
+  "lng": 46.7105
+ },
+ {
+  "name": "حي الفيحاء",
+  "nameEn": "Al Fayha Dist.",
+  "lat": 24.68194,
+  "lng": 46.81148
+ },
+ {
+  "name": "حي الفيصلية",
+  "nameEn": "Al Faisaliyah Dist.",
+  "lat": 24.63592,
+  "lng": 46.78077
+ },
+ {
+  "name": "حي القادسية",
+  "nameEn": "Al Qadisiyah Dist.",
+  "lat": 24.82134,
+  "lng": 46.82482
+ },
+ {
+  "name": "حي القدس",
+  "nameEn": "Al Quds Dist.",
+  "lat": 24.7548,
+  "lng": 46.75394
+ },
+ {
+  "name": "حي القرى",
+  "nameEn": "Al Qura Dist.",
+  "lat": 24.62813,
+  "lng": 46.71563
+ },
+ {
+  "name": "حي القيروان",
+  "nameEn": "Al Qairawan Dist.",
+  "lat": 24.87608,
+  "lng": 46.56083
+ },
+ {
+  "name": "حي المؤتمرات",
+  "nameEn": "Al Mutamarat Dist.",
+  "lat": 24.67033,
+  "lng": 46.68662
+ },
+ {
+  "name": "حي المجد",
+  "nameEn": "Al Majd Dist.",
+  "lat": 25.06434,
+  "lng": 47.28063
+ },
+ {
+  "name": "حي المحمدية",
+  "nameEn": "Al Muhammadiyah Dist.",
+  "lat": 24.73258,
+  "lng": 46.65022
+ },
+ {
+  "name": "حي المربع",
+  "nameEn": "Al Murabba Dist.",
+  "lat": 24.66018,
+  "lng": 46.70798
+ },
+ {
+  "name": "حي المرجان",
+  "nameEn": "Al Marjan Dist.",
+  "lat": 24.92959,
+  "lng": 46.87532
+ },
+ {
+  "name": "حي المرسلات",
+  "nameEn": "Al Mursalat Dist.",
+  "lat": 24.74886,
+  "lng": 46.68991
+ },
+ {
+  "name": "حي المرقب",
+  "nameEn": "Al Marqab Dist.",
+  "lat": 24.63576,
+  "lng": 46.72372
+ },
+ {
+  "name": "حي المروة",
+  "nameEn": "Al Marwah Dist.",
+  "lat": 24.54058,
+  "lng": 46.67578
+ },
+ {
+  "name": "حي المروج",
+  "nameEn": "Al Muruj Dist.",
+  "lat": 24.75723,
+  "lng": 46.66197
+ },
+ {
+  "name": "حي المشاعل",
+  "nameEn": "Al Mishael Dist.",
+  "lat": 24.61262,
+  "lng": 46.87347
+ },
+ {
+  "name": "حي المشرق",
+  "nameEn": "Al Mashriq Dist.",
+  "lat": 24.98616,
+  "lng": 47.04694
+ },
+ {
+  "name": "حي المصانع",
+  "nameEn": "Al Masani Dist.",
+  "lat": 24.55809,
+  "lng": 46.74712
+ },
+ {
+  "name": "حي المصفاة",
+  "nameEn": "Al Misfat Dist.",
+  "lat": 24.48149,
+  "lng": 46.91565
+ },
+ {
+  "name": "حي المصيف",
+  "nameEn": "Al Maseef Dist.",
+  "lat": 24.76547,
+  "lng": 46.68153
+ },
+ {
+  "name": "حي المعذر",
+  "nameEn": "Al Mathar Dist.",
+  "lat": 24.66783,
+  "lng": 46.67245
+ },
+ {
+  "name": "حي المعذر الشمالي",
+  "nameEn": "North Mathar Dist.",
+  "lat": 24.69113,
+  "lng": 46.66676
+ },
+ {
+  "name": "حي المعيزلة",
+  "nameEn": "Al Maizalah Dist.",
+  "lat": 24.79351,
+  "lng": 46.83978
+ },
+ {
+  "name": "حي المغرزات",
+  "nameEn": "Al Mughrazat Dist.",
+  "lat": 24.76412,
+  "lng": 46.72575
+ },
+ {
+  "name": "حي الملز",
+  "nameEn": "Al Malaz Dist.",
+  "lat": 24.66291,
+  "lng": 46.73443
+ },
+ {
+  "name": "حي الملقا",
+  "nameEn": "Al Malqa Dist.",
+  "lat": 24.79897,
+  "lng": 46.59755
+ },
+ {
+  "name": "حي الملك عبدالعزيز",
+  "nameEn": "King Abdulaziz Dist.",
+  "lat": 24.71816,
+  "lng": 46.72358
+ },
+ {
+  "name": "حي الملك عبدالله",
+  "nameEn": "King Abdullah Dist.",
+  "lat": 24.73323,
+  "lng": 46.74355
+ },
+ {
+  "name": "حي الملك فهد",
+  "nameEn": "King Fahd Dist.",
+  "lat": 24.74062,
+  "lng": 46.67036
+ },
+ {
+  "name": "حي الملك فيصل",
+  "nameEn": "King Faisal Dist.",
+  "lat": 24.76186,
+  "lng": 46.77507
+ },
+ {
+  "name": "حي المناخ",
+  "nameEn": "Al Manakh Dist.",
+  "lat": 24.60888,
+  "lng": 46.8022
+ },
+ {
+  "name": "حي المنار",
+  "nameEn": "Al Manar Dist.",
+  "lat": 24.72535,
+  "lng": 46.79727
+ },
+ {
+  "name": "حي المنصورة",
+  "nameEn": "Al Mansurah Dist.",
+  "lat": 24.60885,
+  "lng": 46.74509
+ },
+ {
+  "name": "حي المنصورية",
+  "nameEn": "Mansuriyah Dist.",
+  "lat": 24.51866,
+  "lng": 46.79883
+ },
+ {
+  "name": "حي المهدية",
+  "nameEn": "Al Mahdiyah Dist.",
+  "lat": 24.65167,
+  "lng": 46.51542
+ },
+ {
+  "name": "حي المونسية",
+  "nameEn": "Al Munisiyah Dist.",
+  "lat": 24.83215,
+  "lng": 46.7676
+ },
+ {
+  "name": "حي الناصرية",
+  "nameEn": "Al Nasiriyah Dist.",
+  "lat": 24.6509,
+  "lng": 46.6803
+ },
+ {
+  "name": "حي النخبة",
+  "nameEn": "Al Nakhbah Dist.",
+  "lat": 25.02326,
+  "lng": 47.27719
+ },
+ {
+  "name": "حي النخيل",
+  "nameEn": "Al Nakheel Dist.",
+  "lat": 24.74325,
+  "lng": 46.62496
+ },
+ {
+  "name": "حي الندوة",
+  "nameEn": "Al Nadwah Dist.",
+  "lat": 24.79421,
+  "lng": 46.87547
+ },
+ {
+  "name": "حي الندى",
+  "nameEn": "Al Nada Dist.",
+  "lat": 24.80584,
+  "lng": 46.68297
+ },
+ {
+  "name": "حي النرجس",
+  "nameEn": "Al Narjis Dist.",
+  "lat": 24.88684,
+  "lng": 46.64524
+ },
+ {
+  "name": "حي النزهة",
+  "nameEn": "Al Nuzha Dist.",
+  "lat": 24.75643,
+  "lng": 46.70789
+ },
+ {
+  "name": "حي النسيم الشرقي",
+  "nameEn": "East Naseem Dist.",
+  "lat": 24.73866,
+  "lng": 46.84553
+ },
+ {
+  "name": "حي النسيم الغربي",
+  "nameEn": "West Naseem Dist.",
+  "lat": 24.72564,
+  "lng": 46.82399
+ },
+ {
+  "name": "حي النظيم",
+  "nameEn": "Al Nadheem Dist.",
+  "lat": 24.86154,
+  "lng": 46.9725
+ },
+ {
+  "name": "حي النفل",
+  "nameEn": "Al Nafel Dist.",
+  "lat": 24.78188,
+  "lng": 46.67328
+ },
+ {
+  "name": "حي النموذجية",
+  "nameEn": "Al Namudhajiyah Dist.",
+  "lat": 24.65685,
+  "lng": 46.69462
+ },
+ {
+  "name": "حي النهضة",
+  "nameEn": "Al Nahdah Dist.",
+  "lat": 24.76051,
+  "lng": 46.81599
+ },
+ {
+  "name": "حي النور",
+  "nameEn": "Al Noor Dist.",
+  "lat": 24.63109,
+  "lng": 46.81569
+ },
+ {
+  "name": "حي الهدا",
+  "nameEn": "Al Hada Dist.",
+  "lat": 24.66074,
+  "lng": 46.64068
+ },
+ {
+  "name": "حي الواحة",
+  "nameEn": "Al Wahah Dist.",
+  "lat": 24.74109,
+  "lng": 46.71617
+ },
+ {
+  "name": "حي الوادي",
+  "nameEn": "Al Wadi Dist.",
+  "lat": 24.78945,
+  "lng": 46.69123
+ },
+ {
+  "name": "حي الورود",
+  "nameEn": "Al Woroud Dist.",
+  "lat": 24.72445,
+  "lng": 46.6785
+ },
+ {
+  "name": "حي الوزارات",
+  "nameEn": "Al Wizarat Dist.",
+  "lat": 24.67777,
+  "lng": 46.71385
+ },
+ {
+  "name": "حي الوسام",
+  "nameEn": "Al Wasam Dist.",
+  "lat": 24.90679,
+  "lng": 46.89705
+ },
+ {
+  "name": "حي الوسيطاء",
+  "nameEn": "Al Wusayta Dist.",
+  "lat": 24.62427,
+  "lng": 46.71573
+ },
+ {
+  "name": "حي الوشام",
+  "nameEn": "Al Wisham Dist.",
+  "lat": 24.64234,
+  "lng": 46.69832
+ },
+ {
+  "name": "حي الياسمين",
+  "nameEn": "Al Yasmeen Dist.",
+  "lat": 24.82287,
+  "lng": 46.64378
+ },
+ {
+  "name": "حي اليرموك",
+  "nameEn": "Al Yarmuk Dist.",
+  "lat": 24.80806,
+  "lng": 46.78283
+ },
+ {
+  "name": "حي اليمامة",
+  "nameEn": "Al Yamamah Dist.",
+  "lat": 24.59539,
+  "lng": 46.71668
+ },
+ {
+  "name": "حي ام الحمام الشرقي",
+  "nameEn": "East Umm Al Hamam Dist.",
+  "lat": 24.68646,
+  "lng": 46.65804
+ },
+ {
+  "name": "حي ام الحمام الغربي",
+  "nameEn": "West Umm Al Hamam Dist.",
+  "lat": 24.68997,
+  "lng": 46.64453
+ },
+ {
+  "name": "حي ام الشعال",
+  "nameEn": "Umm Al Shaal Dist.",
+  "lat": 24.36367,
+  "lng": 46.96043
+ },
+ {
+  "name": "حي ام سليم",
+  "nameEn": "Umm Saleem Dist.",
+  "lat": 24.63383,
+  "lng": 46.69832
+ },
+ {
+  "name": "حي بدر",
+  "nameEn": "Badr Dist.",
+  "lat": 24.52553,
+  "lng": 46.72608
+ },
+ {
+  "name": "حي بنبان",
+  "nameEn": "Banban Dist.",
+  "lat": 24.99044,
+  "lng": 46.52788
+ },
+ {
+  "name": "حي ثليم",
+  "nameEn": "Thulaim Dist.",
+  "lat": 24.64099,
+  "lng": 46.7277
+ },
+ {
+  "name": "حي جبرة",
+  "nameEn": "Jabrah Dist.",
+  "lat": 24.62508,
+  "lng": 46.71903
+ },
+ {
+  "name": "حي جرير",
+  "nameEn": "Jareer Dist.",
+  "lat": 24.67811,
+  "lng": 46.75077
+ },
+ {
+  "name": "حي حطين",
+  "nameEn": "Hiteen Dist.",
+  "lat": 24.76214,
+  "lng": 46.60067
+ },
+ {
+  "name": "حي ديراب",
+  "nameEn": "Dirab Dist.",
+  "lat": 24.51186,
+  "lng": 46.6188
+ },
+ {
+  "name": "حي سكيرينة",
+  "nameEn": "Skirinah Dist.",
+  "lat": 24.61662,
+  "lng": 46.71747
+ },
+ {
+  "name": "حي سلطانة",
+  "nameEn": "Sultanah Dist.",
+  "lat": 24.6052,
+  "lng": 46.68808
+ },
+ {
+  "name": "حي شبرا",
+  "nameEn": "Shubra Dist.",
+  "lat": 24.57736,
+  "lng": 46.66942
+ },
+ {
+  "name": "حي صلاح الدين",
+  "nameEn": "Salahuddin Dist.",
+  "lat": 24.73338,
+  "lng": 46.69776
+ },
+ {
+  "name": "حي صياح",
+  "nameEn": "Siyah Dist.",
+  "lat": 24.60798,
+  "lng": 46.70232
+ },
+ {
+  "name": "حي ضاحية نمار",
+  "nameEn": "Dahiyat Namar Dist.",
+  "lat": 24.50585,
+  "lng": 46.54044
+ },
+ {
+  "name": "حي طويق",
+  "nameEn": "Tuwaiq Dist.",
+  "lat": 24.56464,
+  "lng": 46.52919
+ },
+ {
+  "name": "حي طيبة",
+  "nameEn": "Taybah Dist.",
+  "lat": 24.54398,
+  "lng": 46.83033
+ },
+ {
+  "name": "حي ظهرة البديعة",
+  "nameEn": "Dhahrat Al Badeah Dist.",
+  "lat": 24.59771,
+  "lng": 46.64951
+ },
+ {
+  "name": "حي ظهرة لبن",
+  "nameEn": "Dhahrat Laban Dist.",
+  "lat": 24.62903,
+  "lng": 46.54169
+ },
+ {
+  "name": "حي عتيقة",
+  "nameEn": "Utayqah Dist.",
+  "lat": 24.59958,
+  "lng": 46.70793
+ },
+ {
+  "name": "حي عريض",
+  "nameEn": "Oraid Dist.",
+  "lat": 24.44901,
+  "lng": 46.72749
+ },
+ {
+  "name": "حي عكاظ",
+  "nameEn": "Okaz Dist.",
+  "lat": 24.51213,
+  "lng": 46.66483
+ },
+ {
+  "name": "حي عليشة",
+  "nameEn": "Olaishah Dist.",
+  "lat": 24.632,
+  "lng": 46.68516
+ },
+ {
+  "name": "حي غبيرة",
+  "nameEn": "Ghobairah Dist.",
+  "lat": 24.62031,
+  "lng": 46.73581
+ },
+ {
+  "name": "حي غرناطة",
+  "nameEn": "Ghirnatah Dist.",
+  "lat": 24.79569,
+  "lng": 46.7533
+ },
+ {
+  "name": "حي قرطبة",
+  "nameEn": "Qurtubah Dist.",
+  "lat": 24.8154,
+  "lng": 46.7338
+ },
+ {
+  "name": "حي لبن",
+  "nameEn": "Laban Dist.",
+  "lat": 24.63143,
+  "lng": 46.61097
+ },
+ {
+  "name": "حي معكال",
+  "nameEn": "Meakal Dist.",
+  "lat": 24.62257,
+  "lng": 46.7145
+ },
+ {
+  "name": "حي منفوحة",
+  "nameEn": "Manfuhah Dist.",
+  "lat": 24.59916,
+  "lng": 46.72779
+ },
+ {
+  "name": "حي منفوحة الجديدة",
+  "nameEn": "Manfuha Al Jadidah Dist.",
+  "lat": 24.61277,
+  "lng": 46.71846
+ },
+ {
+  "name": "حي نمار",
+  "nameEn": "Namar Dist.",
+  "lat": 24.5691,
+  "lng": 46.67788
+ },
+ {
+  "name": "حي هيت",
+  "nameEn": "Hyt Dist.",
+  "lat": 24.48056,
+  "lng": 46.98115
+ },
+ {
+  "name": "حي وادي لبن",
+  "nameEn": "Wady Laban Dist.",
+  "lat": 24.58341,
+  "lng": 46.48701
+ },
+ {
+  "name": "خشم العان",
+  "nameEn": "Khashm Al An",
+  "lat": 24.67894,
+  "lng": 46.90732
+ },
+ {
+  "name": "عرقة",
+  "nameEn": "Irqah",
+  "lat": 24.68984,
+  "lng": 46.58737
+ },
+ {
+  "name": "مدينة الملك عبدالله للطاقة",
+  "nameEn": "King Abdullah City For Energy",
+  "lat": 24.56277,
+  "lng": 46.39825
+ },
+ {
+  "name": "مطار الملك خالد",
+  "nameEn": "King Khalid International Airport",
+  "lat": 24.9223,
+  "lng": 46.70052
+ },
+ {
+  "name": "منتزه سلام",
+  "nameEn": "Salam Park",
+  "lat": 24.62109,
+  "lng": 46.70856
+ }
+]
