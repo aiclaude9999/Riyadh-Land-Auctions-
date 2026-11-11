@@ -86,6 +86,11 @@ In this sandbox Node `fetch` needs `NODE_USE_ENV_PROXY=1`. netlify.app / github.
 
 ## 6. Open items / to-do
 
+### ⏳ Next Netlify deploy — batch (owner wants ONE deploy for all of these, to save credits)
+Code may be written and pushed with `[skip ci]` meanwhile; do the real deploy only when the owner says so.
+- [ ] Infath assets: show the **description (وصف العقار)** and **notes (الملاحظات)** on the Properties page (and map popup). Needs new Asset fields (e.g. `description`, `notes`) + migration, connector to fill them (`parseInfathDetail` already reads both sections), UI.
+- [ ] Optional map auto-refresh (from earlier list).
+
 - 🔐 **Change `APP_PASSWORD`** on Netlify — it is still the weak example password from testing. Then redeploy.
 - 🔐 **Rotate the Neon DB password** — the connection string was exposed (owner's screenshot + PowerShell history; also seen via Netlify tool). After reset, update GitHub secret, Netlify env (+ redeploy). Owner was told to delete PowerShell history: `Remove-Item (Get-PSReadLineOption).HistorySavePath`.
 - ❓ GitHub Pages static page has **no password** — ask owner whether to disable `pages.yml`/Pages.
