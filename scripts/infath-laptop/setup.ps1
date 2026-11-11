@@ -32,7 +32,14 @@ if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
 }
 Say ("Node.js " + (node -v))
 
-# 2) Download the latest code (keeps .env and logs)
+# 2) Stop a collector run that may still be using the files (otherwise Windows locks the Prisma engine)
+Stop-ScheduledTask -TaskName $Task -ErrorAction SilentlyContinue
+Get-CimInstance Win32_Process -Filter "Name='node.exe' OR Name='cmd.exe'" -ErrorAction SilentlyContinue |
+  Where-Object { $_.CommandLine -like '*MazadRadarInfath*' -or $_.CommandLine -like '*scripts?collect.ts*' -or $_.ExecutablePath -like '*MazadRadarInfath*' } |
+  ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+Start-Sleep -Seconds 2
+
+# Download the latest code (keeps .env and logs)
 Say 'Downloading the latest code...'
 New-Item -ItemType Directory -Force -Path $Dir | Out-Null
 $zip = Join-Path $env:TEMP 'mazad-radar.zip'
