@@ -12,6 +12,7 @@
 import { getJson } from '@/lib/http';
 import { cleanText, mapPropertyType, mapUsage, parseArea, parseMoney, uniq, type Status } from '@/lib/normalize';
 import { inRiyadhCityBox, isRiyadhCity, isRiyadhRegionName, isRiyadhRegionTown } from '@/lib/geo';
+import { plotFeatures } from '@/lib/plot';
 import type { Connector, RawAsset, RawAuction, RefreshMode } from './types';
 
 const API = 'https://api.infath.gov.sa/auctions-platform/v1/auctions/api/v1';
@@ -67,18 +68,25 @@ export function isRiyadhItem(x: PlatformItem): boolean {
     || /الرياض/.test(x.itemNameAr ?? '');
 }
 
-export interface ItemDetail { plots: Record<string, string | null>[]; description: string | null }
+export interface ItemDetail { plots: Record<string, string | null>[]; description: string | null; boundaries: Record<string, string | null>[] }
 
 /** Per-deed "Property Information" sections of an item's detail answer. */
 export function parseDetail(d: any): ItemDetail {
   const plots: Record<string, string | null>[] = [];
+  const boundaries: Record<string, string | null>[] = [];
   for (const s of d?.customFieldSections ?? []) {
+    if (s?.sectionName === 'Property Boundaries') {
+      const b: Record<string, string | null> = {};
+      for (const x of s.fields ?? []) if (/LimitName$/.test(x.fieldName)) b[x.fieldName] = cleanText(x.value == null ? null : String(x.value));
+      boundaries.push(b);
+      continue;
+    }
     if (s?.sectionName !== 'Property Information') continue;
     const f: Record<string, string | null> = {};
     for (const x of s.fields ?? []) f[x.fieldName] = cleanText(x.value == null ? null : String(x.value));
     plots.push(f);
   }
-  return { plots, description: cleanText(d?.description) };
+  return { plots, description: cleanText(d?.description), boundaries };
 }
 
 const itemUrl = (id: string) => `${SITE}/auctions/${id}`;
@@ -123,6 +131,7 @@ export function toAsset(x: PlatformItem, detail?: ItemDetail): RawAsset {
     status: x.statusId != null ? STATUS[x.statusId] ?? null : null,
     description: detail?.description ?? null,
     notes: plotNotes(plots),
+    ...(() => { const f = detail?.boundaries[0] ? plotFeatures(detail.boundaries[0]) : null; return f ? { streetSides: f.streetSides, streetWidth: f.streetWidth, corner: f.corner } : {}; })(),
   };
 }
 

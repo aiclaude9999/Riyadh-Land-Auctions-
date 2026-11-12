@@ -107,7 +107,7 @@ export default function PropertiesPage() {
                   <div><div className="muted">العربون</div><div className="font-semibold">{fmtMoney(x.deposit) ?? '—'}</div></div>
                 </div>
                 <AssetNotes description={x.description} notes={x.notes} />
-                <AssetInsights ins={x.insights} area={x.areaSqm} price={x.currentPrice ?? x.startPrice} deposit={x.deposit} />
+                <AssetInsights ins={x.insights} area={x.areaSqm} price={x.currentPrice ?? x.startPrice} deposit={x.deposit} asset={x} />
                 <div className="flex items-center justify-between gap-2">
                   <span className="muted truncate">🔨 {a.title} · <a href={x.listing.url} target="_blank" rel="noreferrer" className="text-brand-600">{x.listing.source.name} ↗</a></span>
                   <span className="flex-none">{a.status === 'live' && a.endAt ? <Countdown to={a.endAt} compact /> : <span className="num muted">{formatRiyadh(a.status === 'upcoming' ? a.startAt : a.endAt)}</span>}</span>

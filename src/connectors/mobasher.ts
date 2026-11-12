@@ -7,6 +7,7 @@
 import { getJson } from '@/lib/http';
 import { mapCategory, mapPropertyType, mapUsage, parseArea, parseMoney, cleanText, uniq, type Status } from '@/lib/normalize';
 import { parseIso } from '@/lib/time';
+import { plotFeatures } from '@/lib/plot';
 import type { Connector, RawAsset, RawAuction, RefreshMode } from './types';
 
 const API = 'https://discovery-api.prod.mobasher.sa/api/v1/discovery/auctions';
@@ -64,7 +65,15 @@ export function parseMobasherProduct(p: any, auctionUrl: string): RawAsset {
     usage: mapUsage(re.usageType, re.usageTypeAr, title),
     areaSqm: parseArea(re.spaceSqm ?? re.listedAreaSqm),
     status: p.productStatus ?? null,
+    ...boundaryFeatures(re.boundaryDetails),
   };
+}
+
+function boundaryFeatures(raw: unknown) {
+  let b: Record<string, string> | null = null;
+  try { b = typeof raw === 'string' ? JSON.parse(raw) : (raw as Record<string, string> | null); } catch { b = null; }
+  const f = b && typeof b === 'object' ? plotFeatures(b) : null;
+  return f ? { streetSides: f.streetSides, streetWidth: f.streetWidth, corner: f.corner } : {};
 }
 
 /** Attach products (assets) to real-estate auctions — one batched request per 25 auctions. */

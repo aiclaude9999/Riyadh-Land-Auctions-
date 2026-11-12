@@ -23,6 +23,10 @@ export interface RawAsset {
   /** source description / remarks, verbatim (trimmed) */
   description?: string | null;
   notes?: string | null;
+  /** from deed boundaries (src/lib/plot.ts) */
+  streetSides?: number | null;
+  streetWidth?: number | null;
+  corner?: boolean | null;
 }
 
 /** What a connector returns for each auction. Leave unknown fields null/undefined — never invent values. */

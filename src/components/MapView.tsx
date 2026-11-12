@@ -175,6 +175,14 @@ export default function MapView() {
   }, [byShape, metric]);
   const breaks = useMemo(() => (metric ? quantileBreaks(rated.map((r) => metric.value(r)!)) : []), [rated, metric]);
 
+  // per-quarter land price of one district (popup)
+  const trendHtml = (shapeName: string) => {
+    if (!deals) return '';
+    const rows = deals.rows.filter((r) => r.q !== 'all' && r.p.includes(shapeName)).sort((a, b) => a.q.localeCompare(b.q));
+    if (rows.length < 2) return '';
+    return `<div style="margin-top:4px"><b>📈 حسب الربع (أراضي · كل الصفقات):</b>${rows.map((r) => `<div>${esc(qLabel(r.q))}: ${r.nl >= MIN_DEALS ? sar(r.ml) : '—'} · ${r.n >= MIN_DEALS ? sar(r.m) : '—'} (${r.n} صفقة)</div>`).join('')}</div>`;
+  };
+
   // colour every district by the chosen metric
   useEffect(() => {
     const lg = dealsLayer.current;
@@ -196,6 +204,7 @@ export default function MapView() {
         <div>السكني: <b>${sar(r.mr)}</b> ريال/م² · ${r.nr} صفقة</div>
         <div>التجاري: <b>${sar(r.mc)}</b> ريال/م² · ${r.nc} صفقة</div>
         <div>إجمالي القيمة: ${esc(fmtMoney(r.v) ?? '—')}</div>
+        ${trendHtml(sh.name)}
         <div style="font-size:11px;color:#6b7280;margin-top:4px">السعر = الوسيط (نصف الصفقات أقل منه ونصفها أعلى). "أرض" تقدير: صفقة سكنية لعقار واحد مساحته أكبر من 200 م².${val == null ? ' عدد الصفقات قليل (أقل من ' + MIN_DEALS + ') فلم يُلوَّن الحي.' : ''}</div>
       </div>`
         : `<div dir="rtl" style="font-family:inherit"><b>حي ${esc(name)}</b><br>لا توجد صفقات في ملف وزارة العدل لهذه الفترة.</div>`;

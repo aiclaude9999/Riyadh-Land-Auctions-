@@ -19,6 +19,15 @@ export const NEAR_BAND = 0.15; // ±15% = "near market"
 export const MIN_DEALS = 3;
 export const WHITE_LAND_MIN_AREA = 5000;
 
+/** Major Riyadh projects (locations from OpenStreetMap, Nov 2026). Expo 2030 site is not mapped yet → left out. */
+export const PROJECTS = [
+  { name: 'حديقة الملك سلمان', lat: 24.7228, lng: 46.7190 },
+  { name: 'مركز الملك عبدالله المالي', lat: 24.7657, lng: 46.6407 },
+  { name: 'الدرعية (حي الطريف)', lat: 24.7330, lng: 46.5734 },
+  { name: 'المربع الجديد', lat: 24.8106, lng: 46.5702 },
+  { name: 'مطار الملك خالد الدولي', lat: 24.9586, lng: 46.7110 },
+];
+
 type Shape = { name: string; rings: [number, number][][] };
 type MetroLine = { ref: string; name: string; colour: string; stations: { name: string; lat: number; lng: number }[] };
 
@@ -28,7 +37,18 @@ const metro = (metroJson as unknown as { lines: MetroLine[] }).lines;
 
 // district boundary name → deals row of the combined period
 const dealsByShape = new Map<string, DistrictDeals>();
-for (const r of deals.rows) if (r.q === 'all') r.p.forEach((n) => dealsByShape.set(n, r));
+const quarterRows = new Map<string, DistrictDeals[]>(); // district boundary name → rows per quarter (oldest first)
+for (const r of deals.rows) {
+  if (r.q === 'all') r.p.forEach((n) => dealsByShape.set(n, r));
+  else r.p.forEach((n) => quarterRows.set(n, [...(quarterRows.get(n) ?? []), r].sort((a, b) => a.q.localeCompare(b.q))));
+}
+
+/** District median per quarter (land estimate or commercial), only quarters with enough deals. */
+export function districtTrend(shapeName: string, kind: 'land' | 'commercial' = 'land'): { q: string; ppm: number; n: number }[] {
+  return (quarterRows.get(shapeName) ?? [])
+    .map((r) => (kind === 'commercial' ? { q: r.q, ppm: r.mc, n: r.nc } : { q: r.q, ppm: r.ml, n: r.nl }))
+    .filter((x): x is { q: string; ppm: number; n: number } => x.ppm != null && x.n >= MIN_DEALS);
+}
 const shapeByKey = new Map(shapes.map((s) => [districtKey(s.name), s] as const));
 const stations = metro.flatMap((l) => l.stations.map((s) => ({ ...s, name: s.name.replace(/^محطة\s+/, ''), line: l.name, colour: l.colour })));
 
@@ -82,6 +102,10 @@ export interface Insights {
   maxBid?: number;
   metro?: { name: string; line: string; colour: string; km: number };
   whiteLand?: boolean;
+  /** the two nearest major projects within 15 km */
+  projects?: { name: string; km: number }[];
+  /** district median by quarter (same kind as the benchmark) */
+  trend?: { q: string; ppm: number; n: number }[];
 }
 
 export function assetInsights(a: InsightInput): Insights | null {
@@ -102,6 +126,8 @@ export function assetInsights(a: InsightInput): Insights | null {
       out.benchPpm = bench.ppm;
       out.benchDeals = bench.n;
       out.benchKind = bench.kind;
+      const t = districtTrend(shape!.name, bench.kind);
+      if (t.length >= 2) out.trend = t;
       if (a.areaSqm && a.areaSqm > 0) {
         out.maxBid = Math.round((bench.ppm * a.areaSqm) / (1 + COST_RATE) / 1000) * 1000;
         const price = a.currentPrice ?? a.startPrice;
@@ -116,6 +142,9 @@ export function assetInsights(a: InsightInput): Insights | null {
   if (a.latitude != null && a.longitude != null) {
     const s = nearestStation(a.latitude, a.longitude);
     if (s && s.km <= 15) out.metro = { ...s, km: Math.round(s.km * 10) / 10 };
+    const near = PROJECTS.map((p) => ({ name: p.name, km: Math.round(haversineKm(a.latitude!, a.longitude!, p.lat, p.lng) * 10) / 10 }))
+      .filter((p) => p.km <= 15).sort((x, y) => x.km - y.km).slice(0, 2);
+    if (near.length) out.projects = near;
   }
   if (isLand && (a.areaSqm ?? 0) >= WHITE_LAND_MIN_AREA) out.whiteLand = true;
   return Object.keys(out).length ? out : null;

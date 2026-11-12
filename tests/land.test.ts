@@ -24,6 +24,9 @@ describe('mobasher products (real fixture)', () => {
     expect(ps[0]).toMatchObject({ propertyType: 'land', usage: 'residential', areaSqm: 755.64, startPrice: 1340000, deposit: 50000, city: 'الخبر' });
     expect(ps[0].latitude).toBeCloseTo(26.188, 2);
   });
+  it('reads street sides, widest street and corner from the deed boundaries', () => {
+    expect(ps.map((p: any) => [p.streetSides, p.streetWidth, p.corner])).toEqual([[2, 20, true], [1, 18, false], [1, 15, false]]);
+  });
 });
 
 describe('saudia products (real fixture)', () => {

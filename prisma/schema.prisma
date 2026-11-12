@@ -162,6 +162,10 @@ model Asset {
   description  String?
   /// source remarks (e.g. Infath "الملاحظات": unpaved street, deed differences…)
   notes        String?
+  /// from the deed boundaries: sides facing a street, widest street (m), corner plot
+  streetSides  Int?
+  streetWidth  Float?
+  corner       Boolean?
   updatedAt    DateTime @updatedAt
 
   @@unique([listingId, externalId])

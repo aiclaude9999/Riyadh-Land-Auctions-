@@ -229,7 +229,15 @@ export const infath: Connector = {
       // 9 cards per page; pages are ?tab=…&pageNo=N (seen on the real site, Nov 2026)
       let last = 1;
       for (let page = 1; page <= Math.min(last, tab === 'ended' ? 1 : MAX_PAGES); page++) {
-        const html = await getText(`${BASE}/ar/auctions/?tab=${tab}${page > 1 ? `&pageNo=${page}` : ''}`, { timeoutMs: 25_000, retries: 1 });
+        let html: string;
+        try {
+          html = await getText(`${BASE}/ar/auctions/?tab=${tab}${page > 1 ? `&pageNo=${page}` : ''}`, { timeoutMs: 25_000, retries: 1 });
+        } catch (e: any) {
+          if (page === 1) throw e; // nothing read for this tab yet → report the failure
+          // Infath sometimes answers 500 on later pages: keep the pages already read, try again next run
+          log.warn({ tab, page, err: e.message }, 'infath list page failed — keeping earlier pages');
+          break;
+        }
         if (page === 1) last = lastPageNumber(html);
         const items = parseInfathList(html, tab);
         const fresh = items.filter((a) => !byId.has(a.externalId));

@@ -56,7 +56,7 @@ export default function GoodDealsPage() {
                 <div><div className="muted">{x.currentPrice ? 'آخر سعر' : 'الافتتاح'}</div><b>{fmtMoney(x.currentPrice ?? x.startPrice) ?? '—'}</b></div>
                 <div><div className="muted">العربون</div><b>{fmtMoney(x.deposit) ?? '—'}</b></div>
               </div>
-              <AssetInsights ins={x.insights} area={x.areaSqm} price={x.currentPrice ?? x.startPrice} deposit={x.deposit} />
+              <AssetInsights ins={x.insights} area={x.areaSqm} price={x.currentPrice ?? x.startPrice} deposit={x.deposit} asset={x} />
               <AssetNotes description={x.description} notes={x.notes} />
               <div className="muted flex items-center justify-between text-xs">
                 <a href={x.listing.url} target="_blank" rel="noreferrer" className="text-brand-600">صفحة المزاد ↗</a>
