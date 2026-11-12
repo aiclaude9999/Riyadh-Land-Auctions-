@@ -65,22 +65,31 @@ if ($homeHtml) {
   # Save them all in ONE file (platform-chunks.js) so it can be sent in one go.
   $mainText = ''
   Get-ChildItem $out -Filter 'platform-script-*.js' | ForEach-Object { $mainText += (Get-Content $_.FullName -Raw -Encoding UTF8) }
-  $chunks = Uniq ([regex]::Matches($mainText, 'chunk-[A-Za-z0-9]+\.js') | ForEach-Object { $_.Value }) 300
-  W ("chunks: " + @($chunks).Count)
+  # follow chunk references recursively (chunks load other chunks)
+  $queue = New-Object System.Collections.Queue
+  $seen = @{}
+  [regex]::Matches($mainText, 'chunk-[A-Za-z0-9]+\.js') | ForEach-Object { if (-not $seen.ContainsKey($_.Value)) { $seen[$_.Value] = 1; $queue.Enqueue($_.Value) } }
   $sb = New-Object System.Text.StringBuilder
   $tmp = Join-Path $out 'tmp-chunk.js'
-  foreach ($c in $chunks) {
+  $n = 0
+  while ($queue.Count -gt 0 -and $n -lt 400) {
+    $c = $queue.Dequeue(); $n++
     try {
       Invoke-WebRequest -UseBasicParsing -Uri "$base/$c" -OutFile $tmp -TimeoutSec 60
+      $text = Get-Content $tmp -Raw -Encoding UTF8
       [void]$sb.AppendLine("/* ===== $c ===== */")
-      [void]$sb.AppendLine((Get-Content $tmp -Raw -Encoding UTF8))
+      [void]$sb.AppendLine($text)
+      [regex]::Matches($text, 'chunk-[A-Za-z0-9]+\.js') | ForEach-Object { if (-not $seen.ContainsKey($_.Value)) { $seen[$_.Value] = 1; $queue.Enqueue($_.Value) } }
     } catch { W ("FAIL $c : " + $_.Exception.Message) }
-    Start-Sleep -Milliseconds 200
+    Start-Sleep -Milliseconds 150
   }
+  W ("chunks downloaded: $n")
   Remove-Item $tmp -ErrorAction SilentlyContinue
   [IO.File]::WriteAllText((Join-Path $out 'platform-chunks.js'), $sb.ToString(), (New-Object Text.UTF8Encoding $false))
   W ("platform-chunks.js: {0} bytes" -f $sb.Length)
   $null = Get-Page "$base/sitemap.xml" 'platform-sitemap.xml'
+  # public pages rendered on the server: their embedded data shows which data addresses the site calls
+  $null = Get-Page "$base/auctions" 'platform-auctions.html'
   W "--- addresses found in the scripts (data/API candidates) ---"
   Uniq ($found | Where-Object { $_ -notmatch '(?i)\.(png|jpe?g|svg|gif|woff2?|ttf|css)$|w3\.org|schema\.org|googleapis|gstatic|facebook|twitter|instagram|youtube|linkedin|apple\.com|google\.com/maps' }) 200 |
     ForEach-Object { W ("   " + $_) }
@@ -91,4 +100,5 @@ Write-Host "`n>> Done. Send these to Claude:" -ForegroundColor Green
 Write-Host "   $report" -ForegroundColor Green
 Write-Host "   $(Join-Path $out 'platform-chunks.js')" -ForegroundColor Green
 Write-Host "   $(Join-Path $out 'platform-sitemap.xml')" -ForegroundColor Green
+Write-Host "   $(Join-Path $out 'platform-auctions.html')" -ForegroundColor Green
 Start-Process explorer.exe $out
