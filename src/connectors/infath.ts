@@ -108,7 +108,8 @@ export function districtFromText(text?: string | null): string | null {
 /** Coordinates from a full Google Maps URL (…/@24.6,46.7,… · ?q=24.6,46.7 · !3d24.6!4d46.7). */
 export function coordsFromMapsUrl(url?: string | null): { lat: number; lng: number } | null {
   if (!url) return null;
-  const u = decodeURIComponent(url);
+  let u = url;
+  try { u = decodeURIComponent(url); } catch { /* malformed %-escape: use the link as is */ }
   const m = u.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)
     ?? u.match(/[?&](?:q|query|ll|destination)=(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/)
     ?? u.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)

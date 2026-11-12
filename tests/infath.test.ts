@@ -71,3 +71,9 @@ describe('infath list pagination', () => {
     expect(lastPageNumber('<html>no pagination</html>')).toBe(1);
   });
 });
+
+describe('infath map links', () => {
+  it('does not throw on a malformed link', () => {
+    expect(coordsFromMapsUrl('https://www.google.com/maps/place/%E0%A4%A/@24.6,46.7,17z')).toEqual({ lat: 24.6, lng: 46.7 });
+  });
+});
