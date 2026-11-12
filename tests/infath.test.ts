@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { parseInfathList, parseInfathDetail, parseArabicDate, districtFromText, coordsFromMapsUrl } from '@/connectors/infath';
+import { parseInfathList, parseInfathDetail, parseArabicDate, districtFromText, coordsFromMapsUrl, lastPageNumber } from '@/connectors/infath';
 import { toListingData } from '@/lib/ingest';
 
 // Real page captured from a Saudi network on 2026-11-10 (infath.gov.sa/ar/auctions/?tab=ongoing)
@@ -62,4 +62,12 @@ describe('infath helpers', () => {
     expect(coordsFromMapsUrl('https://www.google.com/maps/@46.6,24.5,17z')).toBeNull(); // swapped → not in KSA
   });
 
+});
+
+describe('infath list pagination', () => {
+  it('reads the last page number from the real pagination (upcoming tab, 4 pages)', () => {
+    const page = readFileSync(join(__dirname, 'fixtures', 'infath-upcoming-pagination.html'), 'utf8');
+    expect(lastPageNumber(page)).toBe(4);
+    expect(lastPageNumber('<html>no pagination</html>')).toBe(1);
+  });
 });

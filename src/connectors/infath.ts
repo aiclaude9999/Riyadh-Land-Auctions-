@@ -5,7 +5,7 @@
  * connector is marked `saudiOnly`: it runs on a computer inside Saudi Arabia (see scripts/infath-laptop/),
  * not on GitHub Actions or Netlify.
  *
- * List pages: /ar/auctions/?tab=ongoing|upcoming|ended  → cards with name, asset count, dates, region,
+ * List pages: /ar/auctions/?tab=ongoing|upcoming|ended[&pageNo=N] (9 per page) → cards with name, asset count, dates, region,
  *             city, asset type, auction type and a link /ar/auction?AuctionId=N.
  *             Each card has a countdown <div class="timer" data-end="YYYY-MM-DDTHH:MM:SS"> in Riyadh time.
  * Detail page: /ar/auction?AuctionId=N → one card per asset: type, area, entry deposit (مبلغ الدخول),
@@ -199,6 +199,14 @@ export async function resolveMapsLink(url: string, timeoutMs = 10_000): Promise<
   return coordsFromMapsUrl(cur);
 }
 
+const MAX_PAGES = 15;
+
+/** Highest page number in the list's pagination (links like "?tab=ongoing&pageNo=4"); 1 when there is none. */
+export function lastPageNumber(html: string): number {
+  const nums = [...html.matchAll(/(?:[?&;]|&amp;)pageNo=(\d+)/g)].map((m) => Number(m[1]));
+  return Math.max(1, ...nums);
+}
+
 const MODE_TABS: Record<RefreshMode, string[]> = {
   discovery: ['ongoing', 'upcoming'], manual: ['ongoing', 'upcoming'], live: ['ongoing'], closing: ['ongoing'], upcoming: ['upcoming'], ended: ['ended'],
 };
@@ -213,13 +221,16 @@ export const infath: Connector = {
   async fetchAuctions({ mode, log }) {
     const byId = new Map<string, RawAuction>();
     for (const tab of MODE_TABS[mode]) {
-      for (let page = 1; page <= 5; page++) {
-        const html = await getText(`${BASE}/ar/auctions/?tab=${tab}${page > 1 ? `&page=${page}` : ''}`, { timeoutMs: 40_000 });
+      // 9 cards per page; pages are ?tab=…&pageNo=N (seen on the real site, Nov 2026)
+      let last = 1;
+      for (let page = 1; page <= Math.min(last, tab === 'ended' ? 1 : MAX_PAGES); page++) {
+        const html = await getText(`${BASE}/ar/auctions/?tab=${tab}${page > 1 ? `&pageNo=${page}` : ''}`, { timeoutMs: 40_000 });
+        if (page === 1) last = lastPageNumber(html);
         const items = parseInfathList(html, tab);
         const fresh = items.filter((a) => !byId.has(a.externalId));
         fresh.forEach((a) => byId.set(a.externalId, a));
-        log.debug({ tab, page, n: items.length, fresh: fresh.length }, 'infath page');
-        if (!fresh.length || tab === 'ended') break; // no pagination / page param ignored
+        log.debug({ tab, page, last, n: items.length, fresh: fresh.length }, 'infath page');
+        if (!fresh.length) break; // page ignored / nothing new
       }
     }
     // assets for active auctions (one request each)

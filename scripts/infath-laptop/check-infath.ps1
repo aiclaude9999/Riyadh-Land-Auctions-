@@ -61,6 +61,26 @@ if ($homeHtml) {
     $found += [regex]::Matches($js, 'https?://[A-Za-z0-9.\-]+(?:/[A-Za-z0-9_\-./{}]*)?') | ForEach-Object { $_.Value }
     $found += [regex]::Matches($js, '["''`](/?(?:api|graphql|v\d)[A-Za-z0-9_\-./{}]*)["''`]') | ForEach-Object { $_.Groups[1].Value }
   }
+  # the app loads its pages in small parts ("chunk-XXXX.js"); the data addresses are inside them.
+  # Save them all in ONE file (platform-chunks.js) so it can be sent in one go.
+  $mainText = ''
+  Get-ChildItem $out -Filter 'platform-script-*.js' | ForEach-Object { $mainText += (Get-Content $_.FullName -Raw -Encoding UTF8) }
+  $chunks = Uniq ([regex]::Matches($mainText, 'chunk-[A-Za-z0-9]+\.js') | ForEach-Object { $_.Value }) 300
+  W ("chunks: " + @($chunks).Count)
+  $sb = New-Object System.Text.StringBuilder
+  $tmp = Join-Path $out 'tmp-chunk.js'
+  foreach ($c in $chunks) {
+    try {
+      Invoke-WebRequest -UseBasicParsing -Uri "$base/$c" -OutFile $tmp -TimeoutSec 60
+      [void]$sb.AppendLine("/* ===== $c ===== */")
+      [void]$sb.AppendLine((Get-Content $tmp -Raw -Encoding UTF8))
+    } catch { W ("FAIL $c : " + $_.Exception.Message) }
+    Start-Sleep -Milliseconds 200
+  }
+  Remove-Item $tmp -ErrorAction SilentlyContinue
+  [IO.File]::WriteAllText((Join-Path $out 'platform-chunks.js'), $sb.ToString(), (New-Object Text.UTF8Encoding $false))
+  W ("platform-chunks.js: {0} bytes" -f $sb.Length)
+  $null = Get-Page "$base/sitemap.xml" 'platform-sitemap.xml'
   W "--- addresses found in the scripts (data/API candidates) ---"
   Uniq ($found | Where-Object { $_ -notmatch '(?i)\.(png|jpe?g|svg|gif|woff2?|ttf|css)$|w3\.org|schema\.org|googleapis|gstatic|facebook|twitter|instagram|youtube|linkedin|apple\.com|google\.com/maps' }) 200 |
     ForEach-Object { W ("   " + $_) }
@@ -69,5 +89,6 @@ if ($homeHtml) {
 W "`nDone."
 Write-Host "`n>> Done. Send these to Claude:" -ForegroundColor Green
 Write-Host "   $report" -ForegroundColor Green
-Write-Host "   $(Join-Path $out 'infath-ongoing.html')" -ForegroundColor Green
+Write-Host "   $(Join-Path $out 'platform-chunks.js')" -ForegroundColor Green
+Write-Host "   $(Join-Path $out 'platform-sitemap.xml')" -ForegroundColor Green
 Start-Process explorer.exe $out
