@@ -101,6 +101,51 @@ Code may be written and pushed with `[skip ci]` meanwhile; do the real deploy on
 - Deals layer: add a new quarter = owner sends the MoJ CSV → `npx tsx scripts/deals/build-deals.ts 2025-Q4=… 2026-Q1=… …` (pass ALL quarters; raw CSVs are not committed — 2025-Q4/2026-Q1 came from github.com/civillizard/Saudi-Real-Estate-Data `moj/sales`). Riyadh city is nearly absent from 2026-Q3, so look for another official, open source for Riyadh deals.
 - Ideas not started: Telegram alerts, emailing Infath/Wasalt for official data access (owner declined for Wasalt).
 
+### 💡 Ideas backlog (owner likes all of them — NOT approved to build yet; ask before starting any)
+Saved 12 Nov 2026. Keep everything free. Website changes go into the single batched deploy above.
+
+**Bidding with deal prices (top idea)**
+- Price check per land plot: plot SAR/m² (opening price ÷ area) vs the district's median land price (MoJ deals layer) → 🟢 below / 🟡 near / 🔴 above market, with % difference.
+- Suggested maximum bid = district SAR/m² × area − costs (commission often 2.5% + VAT, 5% RETT, issues in the notes). Infath has no per-asset price → show only the suggested max bid there.
+- "Good deals" page: plots sorted by biggest discount vs district price.
+- Caveats to show: district medians, MoJ files cover fewer Riyadh deals each quarter (2026-Q3 empty) → a guide, not a valuation.
+
+**Security (owner can do anytime, free)**
+- Change `APP_PASSWORD` (still weak test password); rotate the Neon DB password (exposed earlier).
+
+**Complete the data**
+- Infath list page 2+ (we read only page 1 → 9 ongoing + 9 upcoming); needs a saved page from the laptop showing pagination.
+- auctions.infath.gov.sa (Infath's own bidding platform, real estate + vehicles + movables) — investigate from the laptop first (read-only check).
+- Show Infath description + notes (already in the deploy batch).
+
+**Judging a plot**
+- Distance to nearest Riyadh Metro station per plot (data in `src/data/riyadh-metro.json`); later: does metro proximity raise prices?
+- Distance to major projects (King Salman Park, Diriyah, KAFD, Expo 2030 site, New Murabba).
+- Nearby services from OpenStreetMap (schools, mosques, hospitals, malls, main roads).
+- Plot features where platforms give them (street width, number of facades/واجهات, corner) → adjust the price check.
+- District price trend chart over quarters.
+- White-land fee warning — only if an official open map of fee zones exists.
+
+**Bidding tools**
+- Bid calculator (commission, VAT, RETT, deposit, total cash needed); financing calculator.
+- Watchlist with personal notes and own max bid; compare plots side by side.
+- Auction calendar (month view of open/close dates); before-you-bid checklist per plot (deed, site visit, plan no., notes).
+
+**Market knowledge**
+- Record final winning prices of ended auctions where platforms publish them → own Riyadh price history.
+- Track unsold / re-listed auctions.
+- Platform statistics (who lists most Riyadh land, at what prices).
+- Rental return for villas/buildings, if official open rent data (e.g. Ejar) exists.
+
+**Notifications**
+- Telegram (free): new Riyadh land below market, saved auction closing soon, weekly summary.
+- Saved searches ("plot in النرجس under 1.5M").
+- Source health alert (platform broken / laptop collector idle > 1 day).
+
+**Ease of use / cost**
+- Installable phone app (PWA), share-to-WhatsApp button, Arabic/English switch.
+- Lighter pages + caching to save Netlify credits; "Infath data is older than 6 h" note on the Sources page.
+
 ## 7. How to operate
 
 - Run collector now: GitHub → Actions → "Collect auctions" → Run workflow (or API `POST /repos/aiclaude9999/Riyadh-Land-Auctions-/actions/workflows/collect.yml/dispatches` with `{"ref":"ccr-684fffdf-bi3tdz"}`).
