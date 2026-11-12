@@ -1,5 +1,6 @@
 'use client';
 import AssetInsights, { AssetNotes } from '@/components/AssetInsights';
+import MyPlan from '@/components/MyPlan';
 import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Countdown } from '@/components/Countdown';
@@ -47,7 +48,7 @@ export default function AuctionPage({ params }: { params: Promise<{ id: string }
     <div className="space-y-4">
       <Link href="/" className="muted text-sm">→ العودة للمزادات</Link>
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
+        <div className="min-w-0 space-y-4 lg:col-span-2">
           <div className="card overflow-hidden">
             {a.images[0] ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -101,7 +102,8 @@ export default function AuctionPage({ params }: { params: Promise<{ id: string }
             </div>
           )}
         </div>
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
+          <MyPlan auctionId={a.id} saved={a.saved} onSaved={load} />
           <div className="card p-4">
             <h2 className="mb-3 font-semibold">ظهر في المنصات ({a.listings.length})</h2>
             <ul className="space-y-2 text-sm">

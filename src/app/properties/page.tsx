@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { CompareBar, useCompare } from '@/components/compare';
 import { Countdown } from '@/components/Countdown';
 import AssetInsights, { AssetNotes } from '@/components/AssetInsights';
 import { STATUS_STYLE, fmtArea, fmtMoney, formatRiyadh, propertyLabel, statusLabel, usageLabel } from '@/components/format';
@@ -12,6 +13,7 @@ const SORTS = [{ v: 'ending', l: 'الأقرب انتهاءً' }, { v: 'newest',
 const EMPTY = { q: '', usage: '', status: '', district: '', minArea: '', maxArea: '', minPrice: '', maxPrice: '' };
 
 export default function PropertiesPage() {
+  const cmp = useCompare();
   const [geo, setGeo] = useState('riyadh_city');
   const [type, setType] = useState('');
   const [sort, setSort] = useState('ending');
@@ -106,6 +108,7 @@ export default function PropertiesPage() {
                   <div><div className="muted">{x.currentPrice ? 'آخر سعر' : 'الافتتاح'}</div><div className="font-semibold">{fmtMoney(x.currentPrice ?? x.startPrice) ?? '—'}</div></div>
                   <div><div className="muted">العربون</div><div className="font-semibold">{fmtMoney(x.deposit) ?? '—'}</div></div>
                 </div>
+                <label className="flex w-fit cursor-pointer items-center gap-1 text-xs"><input type="checkbox" checked={cmp.has(x.id)} onChange={() => cmp.toggle(x.id)} /> قارن</label>
                 <AssetNotes description={x.description} notes={x.notes} />
                 <AssetInsights ins={x.insights} area={x.areaSqm} price={x.currentPrice ?? x.startPrice} deposit={x.deposit} asset={x} />
                 <div className="flex items-center justify-between gap-2">
@@ -125,6 +128,7 @@ export default function PropertiesPage() {
           <button className="btn" disabled={page >= pages} onClick={() => setPage((p) => p + 1)}>التالي</button>
         </div>
       )}
+      <CompareBar ids={cmp.ids} clear={cmp.clear} />
     </div>
   );
 }

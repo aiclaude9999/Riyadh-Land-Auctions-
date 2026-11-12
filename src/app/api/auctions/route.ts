@@ -11,7 +11,7 @@ export const GET = handle(async (req: Request) => {
     prisma.auction.count({ where }),
     prisma.auction.findMany({
       where, orderBy: buildOrder(q.sort), skip: (q.page! - 1) * q.pageSize!, take: q.pageSize,
-      include: { listings: { select: { sourceId: true, url: true } }, saved: { select: { id: true } } },
+      include: { listings: { select: { sourceId: true, url: true } }, saved: { select: { id: true, note: true, maxBid: true, checklist: true } } },
     }),
   ]);
   return json({ total, page: q.page, pageSize: q.pageSize, items });

@@ -19,6 +19,9 @@ function Calculator() {
   const [rett, setRett] = useState('5');
   const [bench, setBench] = useState(sp.get('bench') ?? '');
   const [whiteLand, setWhiteLand] = useState('0');
+  const [downPct, setDownPct] = useState('30');
+  const [rate, setRate] = useState('5.5');
+  const [years, setYears] = useState('20');
 
   const r = useMemo(() => {
     const p = numOf(price), a = numOf(area), d = numOf(deposit), b = numOf(bench);
@@ -30,6 +33,17 @@ function Calculator() {
     return { p, a, d, com, comVat, tax, total, rest: total - d, ppm: a ? p / a : NaN, totalPpm: a ? total / a : NaN, b, yearlyFee,
       maxBid: a && b ? (a * b) / (1 + (numOf(commission) / 100) * (1 + numOf(vat) / 100) + numOf(rett) / 100) : NaN };
   }, [price, area, deposit, commission, vat, rett, bench, whiteLand]);
+
+  // financing: the bank pays (price − down payment); costs are paid in cash
+  const fin = useMemo(() => {
+    const p = numOf(price);
+    const down = (p * numOf(downPct)) / 100;
+    const loan = Math.max(0, p - down);
+    const i = numOf(rate) / 100 / 12;
+    const n = Math.round(numOf(years) * 12);
+    const monthly = !n ? NaN : i ? (loan * i) / (1 - (1 + i) ** -n) : loan / n;
+    return { down, loan, monthly, totalPaid: monthly * n, interest: monthly * n - loan, cashNeeded: down + (r.total - p) };
+  }, [price, downPct, rate, years, r.total]);
 
   const field = (id: string, label: string, v: string, set: (s: string) => void, suffix: string, hint?: string) => (
     <label htmlFor={id} className="flex flex-col gap-1 text-sm">
@@ -78,6 +92,20 @@ function Calculator() {
               <div className="muted text-xs">= سعر متر الحي × المساحة ÷ (1 + التكاليف). سعر ترسية أعلى منه يعني دفع أكثر من وسيط الحي.</div>
             </div>
           )}
+          <div className="mt-4 space-y-2 border-t border-[var(--border)] pt-3">
+            <b>التمويل (اختياري)</b>
+            <div className="grid grid-cols-3 gap-2">
+              {field('fin-down', 'الدفعة الأولى', downPct, setDownPct, '%')}
+              {field('fin-rate', 'نسبة الربح السنوية', rate, setRate, '%')}
+              {field('fin-years', 'المدة', years, setYears, 'سنة')}
+            </div>
+            {row('الدفعة الأولى', sar(fin.down))}
+            {row('مبلغ التمويل', sar(fin.loan))}
+            {row('القسط الشهري التقريبي', sar(fin.monthly), true)}
+            {row('إجمالي الأرباح على المدة', sar(fin.interest))}
+            {row('النقد المطلوب عند الترسية (الدفعة + التكاليف)', sar(fin.cashNeeded), true)}
+            <p className="muted text-xs">حساب تقريبي بقسط ثابت (طريقة التمويل العقاري الشائعة). العرض الفعلي يحدده البنك.</p>
+          </div>
           <p className="muted pt-2 text-xs">الأرقام تقديرية. تحقق من النسب في كراسة الشروط، ومن رسوم الأراضي البيضاء عبر idlelands.momah.gov.sa أو 920022440.</p>
         </div>
       </div>

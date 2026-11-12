@@ -21,6 +21,14 @@ export const GET = handle(async (req: Request) => {
   const auctionGeo = geo === 'riyadh_region' ? { hasRiyadhRegion: true } : { hasRiyadhCity: true };
   const statuses = list('status')?.includes('all') ? undefined : list('status') ?? ['live', 'upcoming'];
 
+  const ids = list('ids');
+  if (ids?.length) {
+    const items = await prisma.asset.findMany({
+      where: { id: { in: ids.slice(0, 6) } },
+      include: { listing: { select: { sourceId: true, url: true, source: { select: { name: true } }, auction: { select: { id: true, title: true, status: true, startAt: true, endAt: true, organizer: true } } } } },
+    });
+    return json({ total: items.length, page: 1, pageSize: items.length, byType: {}, items: items.map((x) => ({ ...x, insights: assetInsights({ ...x, startPrice: dnum(x.startPrice), currentPrice: dnum(x.currentPrice) }) })) });
+  }
   const and: Prisma.AssetWhereInput[] = [
     { listing: { auction: { category: 'real_estate', ...(statuses && { status: { in: statuses } }) } } },
   ];

@@ -110,14 +110,24 @@ export default function MapView() {
     return () => { map.current?.remove(); map.current = null; };
   }, []);
 
-  // load pins
+  // load pins (and refresh them every 5 minutes while the page is visible, without moving the map)
+  const [tick, setTick] = useState(0);
+  const fitNext = useRef(true);
   useEffect(() => {
-    setPins(null); setErr(null);
-    const qs = new URLSearchParams({ geo, category, ...(status ? { status } : {}) });
-    fetch(`/api/map?${qs}`).then((r) => r.json()).then((d) => (Array.isArray(d) ? setPins(d) : setErr(d.error ?? 'خطأ'))).catch((e) => setErr(String(e)));
+    const t = setInterval(() => { if (document.visibilityState === 'visible') setTick((x) => x + 1); }, 5 * 60_000);
+    return () => clearInterval(t);
+  }, []);
+  useEffect(() => {
+    fitNext.current = true;
     const g = GEO.find((x) => x.v === geo)!;
     map.current?.setView(g.center, g.zoom);
+    setPins(null);
   }, [geo, category, status]);
+  useEffect(() => {
+    setErr(null);
+    const qs = new URLSearchParams({ geo, category, ...(status ? { status } : {}) });
+    fetch(`/api/map?${qs}`).then((r) => r.json()).then((d) => (Array.isArray(d) ? setPins(d) : setErr(d.error ?? 'خطأ'))).catch((e) => setErr(String(e)));
+  }, [geo, category, status, tick]);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
@@ -147,7 +157,8 @@ export default function MapView() {
       </div>`;
       L.marker([p.lat, p.lng], { icon: pinIcon(color), riseOnHover: true }).bindPopup(html).addTo(lg);
     }
-    if (shown.length && map.current) {
+    if (shown.length && map.current && fitNext.current) {
+      fitNext.current = false; // only after a filter change, not on the 5-minute refresh
       const b = L.latLngBounds(shown.map((p) => [p.lat, p.lng] as [number, number]));
       if (b.isValid()) map.current.fitBounds(b.pad(0.15), { maxZoom: 14 });
     }

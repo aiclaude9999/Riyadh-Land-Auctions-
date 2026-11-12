@@ -194,6 +194,11 @@ model SavedAuction {
   auctionId String   @unique
   auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+  /// owner's own note and maximum bid for this auction
+  note      String?
+  maxBid    Decimal? @db.Decimal(16, 2)
+  /// ticked before-you-bid checklist items (keys)
+  checklist String[] @default([])
 }
 
 /// type: new_riyadh | new_category | ending_saved | date_changed | price_changed

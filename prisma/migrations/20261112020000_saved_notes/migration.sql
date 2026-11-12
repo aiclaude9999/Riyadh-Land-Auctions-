@@ -1,0 +1,1 @@
+ALTER TABLE "SavedAuction" ADD COLUMN "note" TEXT, ADD COLUMN "maxBid" DECIMAL(16,2), ADD COLUMN "checklist" TEXT[] DEFAULT ARRAY[]::TEXT[];

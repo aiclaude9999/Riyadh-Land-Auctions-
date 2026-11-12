@@ -9,7 +9,7 @@ export interface AuctionItem {
   hasLand: boolean; landCount: number | null; landAreaSqm: number | null; propertyTypes: string[]; usages: string[];
   assetCount: number | null; startPrice: number | null; currentPrice: number | null; deposit: number | null;
   images: string[]; organizer: string | null; firstSeenAt: string; locationText: string | null;
-  listings: { sourceId: string; url: string }[]; saved: { id: string } | null;
+  listings: { sourceId: string; url: string }[]; saved: { id: string; note?: string | null; maxBid?: number | string | null; checklist?: string[] } | null;
 }
 
 export function AuctionCard({ a, sourceNames, onToggleSave }: { a: AuctionItem; sourceNames: Record<string, string>; onToggleSave?: (a: AuctionItem) => void }) {
@@ -53,6 +53,13 @@ export function AuctionCard({ a, sourceNames, onToggleSave }: { a: AuctionItem; 
           </div>
         )}
         {a.organizer && <div className="muted truncate text-xs">🏢 {a.organizer}</div>}
+        {a.saved && (a.saved.note || a.saved.maxBid != null) && (
+          <div className="rounded-md bg-brand-50 px-2 py-1 text-xs dark:bg-brand-900/40">
+            {a.saved.maxBid != null && <div>🎯 حدي الأعلى: <b className="num">{fmtMoney(Number(a.saved.maxBid))}</b></div>}
+            {a.saved.note && <div className="line-clamp-2">📝 {a.saved.note}</div>}
+            {a.saved.checklist && a.saved.checklist.length > 0 && <div className="muted num">✔ {a.saved.checklist.length} من قائمة التحقق</div>}
+          </div>
+        )}
         <div className="mt-auto space-y-1 border-t border-[var(--border)] pt-2 text-xs">
           {a.status === 'live' && a.endAt ? (
             <div className="flex items-center justify-between"><span className="muted">يغلق خلال</span><Countdown to={a.endAt} compact /></div>
