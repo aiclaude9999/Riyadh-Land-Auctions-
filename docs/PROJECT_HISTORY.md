@@ -101,7 +101,13 @@ Code may be written and pushed with `[skip ci]` meanwhile; do the real deploy on
 - Deals layer: add a new quarter = owner sends the MoJ CSV → `npx tsx scripts/deals/build-deals.ts 2025-Q4=… 2026-Q1=… …` (pass ALL quarters; raw CSVs are not committed — 2025-Q4/2026-Q1 came from github.com/civillizard/Saudi-Real-Estate-Data `moj/sales`). Riyadh city is nearly absent from 2026-Q3, so look for another official, open source for Riyadh deals.
 - Ideas not started: Telegram alerts, emailing Infath/Wasalt for official data access (owner declined for Wasalt).
 
-### 💡 Ideas backlog (owner likes all of them — NOT approved to build yet; ask before starting any)
+### ✅ Owner decisions (12 Nov 2026) — numbered list agreed in chat
+- **First:** #6 Infath page 2+ and #7 auctions.infath.gov.sa check (laptop, free). Read-only check script: `scripts/infath-laptop/check-infath.ps1` (writes Desktop\infath-check\report.txt + saved pages).
+- **Approved for the batched deploy:** #1 metro (done), #2 Infath description/notes, #3 map auto-refresh, #8 price check, #9 suggested max bid, #10 good-deals page, #11 metro distance, #12 big-project distance, #13 nearby services, #14 plot features, #15 district price trend, #16 white-land fee warning, #17 bid calculator, #18 financing calculator, #19 watchlist with notes, #20 compare plots, #21 auction calendar, #22 before-you-bid checklist, #23 final winning prices, #24 unsold/re-listed, #25 platform statistics, #26 rental return (only if official open rent data exists).
+- **Not decided yet:** #4–#5 security (password changes), #27–#30 Telegram notifications, #31–#35 ease of use / cost.
+- Still ONE Netlify deploy for all approved website items unless the owner says otherwise.
+
+### 💡 Ideas backlog (owner likes all of them — details; approval status is in "Owner decisions" above)
 Saved 12 Nov 2026. Keep everything free. Website changes go into the single batched deploy above.
 
 **Bidding with deal prices (top idea)**
