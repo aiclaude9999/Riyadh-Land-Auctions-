@@ -33,6 +33,7 @@ const METRICS: Record<MetricKey, { label: string; unit: string; value: (r: Distr
   count: { label: 'عدد الصفقات', unit: 'صفقة', value: (r) => r.n, count: (r) => r.n },
 };
 interface Shape { name: string; rings: [number, number][][] }
+interface MetroLine { ref: string; name: string; nameEn: string; colour: string; paths: [number, number][][]; stations: { name: string; lat: number; lng: number }[] }
 /** Drop-pin icon for auction assets (so they don't look like the coloured districts). */
 const pinIcon = (color: string) => L.divIcon({
   className: '', iconSize: [22, 30], iconAnchor: [11, 29], popupAnchor: [0, -26],
@@ -55,6 +56,9 @@ export default function MapView() {
   const [dealsQ, setDealsQ] = useState('all');
   const [deals, setDeals] = useState<DealsData | null>(null);
   const [shapes, setShapes] = useState<Shape[] | null>(null);
+  const metroLayer = useRef<L.LayerGroup | null>(null);
+  const [showMetro, setShowMetro] = useState(true);
+  const [metro, setMetro] = useState<MetroLine[] | null>(null);
   const [geo, setGeo] = useState('riyadh_city');
   const [category, setCategory] = useState('real_estate');
   const [status, setStatus] = useState('');
@@ -84,6 +88,10 @@ export default function MapView() {
     L.control.layers(bases, undefined, { position: 'topright', collapsed: false }).addTo(map.current);
     map.current.on('baselayerchange', (e: L.LayersControlEvent) => { try { localStorage.setItem('mapBase', e.name); } catch { /* ignore */ } });
     dealsLayer.current = L.layerGroup().addTo(map.current); // coloured districts (pins are markers, always on top)
+    // metro lines above the coloured districts, below the auction pins
+    map.current.createPane('metro').style.zIndex = '450';
+    metroLayer.current = L.layerGroup().addTo(map.current);
+    try { if (localStorage.getItem('mapMetro') === '0') setShowMetro(false); } catch { /* ignore */ }
     layer.current = L.layerGroup().addTo(map.current);
     return () => { map.current?.remove(); map.current = null; };
   }, []);
@@ -184,6 +192,31 @@ export default function MapView() {
     }
   }, [shapes, byShape, rated, breaks, metric]);
 
+  // Riyadh Metro (OpenStreetMap data), loaded on first use
+  useEffect(() => {
+    if (!showMetro || metro) return;
+    import('@/data/riyadh-metro.json').then((m) => setMetro(((m.default ?? m) as unknown as { lines: MetroLine[] }).lines)).catch((e) => setErr(String(e)));
+  }, [showMetro, metro]);
+  useEffect(() => {
+    const lg = metroLayer.current;
+    if (!lg) return;
+    lg.clearLayers();
+    if (!showMetro || !metro) return;
+    const renderer = L.svg({ pane: 'metro' });
+    for (const line of metro) {
+      const label = `🚇 ${line.name} (${line.ref})`;
+      L.polyline(line.paths, { pane: 'metro', renderer, color: '#ffffff', weight: 7, opacity: 0.9, interactive: false }).addTo(lg);
+      L.polyline(line.paths, { pane: 'metro', renderer, color: line.colour, weight: 4, opacity: 1 }).bindTooltip(label, { sticky: true }).addTo(lg);
+    }
+    for (const line of metro) {
+      for (const st of line.stations) {
+        L.circleMarker([st.lat, st.lng], { pane: 'metro', renderer, radius: 4, color: line.colour, weight: 2, fillColor: '#ffffff', fillOpacity: 1 })
+          .bindTooltip(`🚇 محطة ${st.name} — ${line.name}`, { direction: 'top' }).addTo(lg);
+      }
+    }
+  }, [showMetro, metro]);
+  const toggleMetro = () => setShowMetro((v) => { try { localStorage.setItem('mapMetro', v ? '0' : '1'); } catch { /* ignore */ } return !v; });
+
   const toggle = (t: string) => setTypes((s) => { const n = new Set(s); n.has(t) ? n.delete(t) : n.add(t); return n; });
 
   return (
@@ -221,6 +254,9 @@ export default function MapView() {
             {[...deals.quarters].reverse().map((q) => <option key={q.q} value={q.q}>{qLabel(q.q)} ({q.mapped} صفقة)</option>)}
           </select>
         )}
+        <button onClick={toggleMetro} className={`chip border px-3 py-1.5 text-sm ${showMetro ? 'border-sky-600 bg-sky-600 text-white' : ''}`} aria-pressed={showMetro}>
+          🚇 مترو الرياض
+        </button>
         <span className="muted text-sm">{pins ? `${shown.length} أصل على الخريطة` : err ? `تعذر التحميل: ${err}` : 'جاري التحميل…'}</span>
       </div>
       <div ref={el} className="card overflow-hidden" style={{ height: 'min(70vh, 640px)', minHeight: 360 }} />
@@ -246,6 +282,15 @@ export default function MapView() {
             ملفات الوزارة تحتوي على عدد صفقات للرياض أقل بكثير من مؤشرات الهيئة العامة للعقار، وقد انخفض العدد كل ربع
             ({deals.quarters.map((q) => `${qLabel(q.q)}: ${q.riyadhDeals}`).join('، ')}) — لذا اعتبر الأسعار مؤشراً تقريبياً.
           </div>
+        </div>
+      )}
+      {showMetro && metro && (
+        <div className="muted flex flex-wrap items-center gap-3 text-xs">
+          <b>🚇 مترو الرياض:</b>
+          {metro.map((l) => (
+            <span key={l.ref} className="flex items-center gap-1"><span className="inline-block h-1.5 w-5 rounded" style={{ background: l.colour }} />{l.name}</span>
+          ))}
+          <span>· الدوائر البيضاء = المحطات · البيانات © مساهمو OpenStreetMap</span>
         </div>
       )}
       <p className="muted text-xs">لا تظهر هنا الأصول التي لا يذكر مصدرها موقعاً دقيقاً (مثل بعض أصول إنفاذ وسومتك) — تجدها في صفحة العقارات.</p>

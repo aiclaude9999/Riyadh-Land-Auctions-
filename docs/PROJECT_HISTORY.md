@@ -89,6 +89,7 @@ In this sandbox Node `fetch` needs `NODE_USE_ENV_PROXY=1`. netlify.app / github.
 ### ⏳ Next Netlify deploy — batch (owner wants ONE deploy for all of these, to save credits)
 Code may be written and pushed with `[skip ci]` meanwhile; do the real deploy only when the owner says so.
 - [ ] Infath assets: show the **description (وصف العقار)** and **notes (الملاحظات)** on the Properties page (and map popup). Needs new Asset fields (e.g. `description`, `notes`) + migration, connector to fill them (`parseInfathDetail` already reads both sections), UI.
+- [x] (code pushed, not deployed) **Riyadh Metro on the map**: 6 lines + stations from OpenStreetMap (`src/data/riyadh-metro.json`, built by `scripts/metro/build-metro.ts` via the OSM API; ODbL attribution shown). Toggle "🚇 مترو الرياض" (on by default, remembered), drawn above coloured districts, below auction pins.
 - [ ] Optional map auto-refresh (from earlier list).
 
 - 🔐 **Change `APP_PASSWORD`** on Netlify — it is still the weak example password from testing. Then redeploy.
