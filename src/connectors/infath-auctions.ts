@@ -171,7 +171,7 @@ export const infathAuctions: Connector = {
   async fetchAuctions({ mode, log }) {
     const items: PlatformItem[] = [];
     for (let page = 1; page <= MAX_PAGES; page++) {
-      const d: any = await getJson(`${API}/auction-items?pageIndex=${page}&pageSize=${PAGE_SIZE}&categoryId=${REAL_ESTATE}&statusIds=${MODE_STATUSES[mode]}`, { headers: HEADERS, timeoutMs: 40_000 });
+      const d: any = await getJson(`${API}/auction-items?pageIndex=${page}&pageSize=${PAGE_SIZE}&categoryId=${REAL_ESTATE}&statusIds=${MODE_STATUSES[mode]}`, { headers: HEADERS, timeoutMs: 25_000, retries: 1 });
       const rows: PlatformItem[] = d?.data?.items ?? [];
       items.push(...rows);
       log.debug({ page, n: rows.length, total: d?.data?.totalCount }, 'infath-auctions page');
@@ -180,11 +180,19 @@ export const infathAuctions: Connector = {
     }
     // details (area, usage, district, deeds) only for Riyadh items, one at a time
     const details = new Map<string, ItemDetail>();
+    const deadline = Date.now() + 6 * 60_000;
+    let failures = 0;
     for (const x of items.filter(isRiyadhItem)) {
+      if (Date.now() > deadline || failures >= 5) {
+        log.warn({ done: details.size, failures }, 'infath-auctions details stopped early (time budget / repeated failures)');
+        break;
+      }
       try {
-        const d: any = await getJson(`${API}/auction-items/${encodeURIComponent(x.id)}`, { headers: HEADERS, timeoutMs: 40_000 });
+        const d: any = await getJson(`${API}/auction-items/${encodeURIComponent(x.id)}`, { headers: HEADERS, timeoutMs: 20_000, retries: 1 });
         details.set(x.id, parseDetail(d?.data));
+        failures = 0;
       } catch (e: any) {
+        failures++;
         log.warn({ item: x.id, err: e.message }, 'infath-auctions detail failed — list data kept');
       }
       await pause(300);

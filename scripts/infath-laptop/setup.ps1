@@ -81,7 +81,7 @@ npx.cmd prisma generate | Out-Null
 Pop-Location
 
 # 5) First run now
-Say 'Test run: collecting Infath auctions now...'
+Say 'Test run: collecting Infath auctions now (can take up to 15 minutes, nothing shows until it ends)...'
 & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Dir 'scripts\infath-laptop\run-infath.ps1') -Show
 
 # 6) Schedule: every 2 hours + at logon; runs missed runs when the laptop wakes up

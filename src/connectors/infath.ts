@@ -200,6 +200,8 @@ export async function resolveMapsLink(url: string, timeoutMs = 10_000): Promise<
 }
 
 const MAX_PAGES = 15;
+const DETAIL_BUDGET_MS = 6 * 60_000; // all detail pages + map links of one run
+const MAX_MAP_LOOKUPS = 150;
 
 /** Highest page number in the list's pagination (links like "?tab=ongoing&pageNo=4"); 1 when there is none. */
 export function lastPageNumber(html: string): number {
@@ -224,7 +226,7 @@ export const infath: Connector = {
       // 9 cards per page; pages are ?tab=…&pageNo=N (seen on the real site, Nov 2026)
       let last = 1;
       for (let page = 1; page <= Math.min(last, tab === 'ended' ? 1 : MAX_PAGES); page++) {
-        const html = await getText(`${BASE}/ar/auctions/?tab=${tab}${page > 1 ? `&pageNo=${page}` : ''}`, { timeoutMs: 40_000 });
+        const html = await getText(`${BASE}/ar/auctions/?tab=${tab}${page > 1 ? `&pageNo=${page}` : ''}`, { timeoutMs: 25_000, retries: 1 });
         if (page === 1) last = lastPageNumber(html);
         const items = parseInfathList(html, tab);
         const fresh = items.filter((a) => !byId.has(a.externalId));
@@ -234,14 +236,23 @@ export const infath: Connector = {
       }
     }
     // assets for active auctions (one request each)
+    // Time budget: Infath is sometimes slow or answers 503; never let one run hang for long.
+    const deadline = Date.now() + DETAIL_BUDGET_MS;
+    let failures = 0, mapLookups = 0;
     for (const a of byId.values()) {
       if (a.status === 'ended') continue;
+      if (Date.now() > deadline || failures >= 3) {
+        log.warn({ failures }, 'infath details stopped early (time budget / repeated failures) — next run continues');
+        break;
+      }
       try {
-        const assets = parseInfathDetail(await getText(a.url, { timeoutMs: 40_000 }), a.url);
+        const assets = parseInfathDetail(await getText(a.url, { timeoutMs: 20_000, retries: 1 }), a.url);
+        failures = 0;
         for (const asset of assets) {
-          if (asset.latitude != null || !asset.mapUrl) continue;
+          if (asset.latitude != null || !asset.mapUrl || mapLookups >= MAX_MAP_LOOKUPS || Date.now() > deadline) continue;
+          mapLookups++;
           try {
-            const c = await resolveMapsLink(asset.mapUrl);
+            const c = await resolveMapsLink(asset.mapUrl, 5_000);
             if (c) { asset.latitude = c.lat; asset.longitude = c.lng; }
           } catch { /* no pin for this asset */ }
         }
@@ -250,6 +261,7 @@ export const infath: Connector = {
         if (a.assets.length && !a.assetCount) a.assetCount = a.assets.length;
         a.cities = uniq<string>([...(a.cities ?? []), ...a.assets.map((x) => x.city)]);
       } catch (e: any) {
+        failures++;
         log.warn({ auction: a.externalId, err: e.message }, 'infath detail failed — auction kept without assets');
       }
     }
