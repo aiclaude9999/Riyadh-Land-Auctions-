@@ -124,7 +124,12 @@ Saved 12 Nov 2026. Keep everything free. Website changes go into the single batc
 - Nearby services from OpenStreetMap (schools, mosques, hospitals, malls, main roads).
 - Plot features where platforms give them (street width, number of facades/واجهات, corner) → adjust the price check.
 - District price trend chart over quarters.
-- White-land fee warning — only if an official open map of fee zones exists.
+- White-land fee warning (رسوم الأراضي البيضاء). Rules after the 2025 amendment (Royal Decree م/244, regulation Aug 2025; official site idlelands.momah.gov.sa, call centre 920022440): annual fee up to 10% of land value, tiers 10% → 2.5% by development priority; applies to buildable vacant land inside the urban area, only in zones announced by the Ministry of Municipalities and Housing, when the plot OR the owner's total land in that city is ≥ 5,000 m²; Riyadh first (bills issued Jan 2026). Auction data never says whether a plot is subject → show an ESTIMATE only:
+  - ⚠️ "possible white-land fee" for empty land ≥ 5,000 m² in Riyadh city;
+  - note on every land plot: owner's total Riyadh land ≥ 5,000 m² may bring even a small plot under the fee;
+  - zone/rate only if the ministry publishes an open zone map/list we may use (check first, never guess);
+  - optional yearly-cost example in the bid calculator (e.g. 6,000 m² worth 12M in a 10% zone ≈ 1.2M/year);
+  - "how to verify" box: official site, 920022440, the auction terms booklet, ask the auction company about fees due; use the deed number.
 
 **Bidding tools**
 - Bid calculator (commission, VAT, RETT, deposit, total cash needed); financing calculator.
