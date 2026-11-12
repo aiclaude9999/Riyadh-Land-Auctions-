@@ -14,7 +14,7 @@ interface Pin {
 const TYPE_COLORS: Record<string, string> = {
   land: '#b45309', villa: '#2563eb', building: '#7c3aed', apartment: '#0891b2', rest_house: '#16a34a', farm: '#65a30d', commercial: '#db2777', other: '#6b7280',
 };
-const SOURCE: Record<string, string> = { mobasher: 'مباشر', 'saudia-auctions': 'السعودية للمزادات', mazadat: 'مزادات', tarsyah: 'ترسية', qemah: 'قمة', soum: 'سومتك', infath: 'إنفاذ' };
+const SOURCE: Record<string, string> = { mobasher: 'مباشر', 'saudia-auctions': 'السعودية للمزادات', mazadat: 'مزادات', tarsyah: 'ترسية', qemah: 'قمة', soum: 'سومتك', infath: 'إنفاذ', 'infath-auctions': 'إنفاذ للمزادات' };
 const GEO = [
   { v: 'riyadh_city', l: 'مدينة الرياض', center: [24.7136, 46.6753] as [number, number], zoom: 10 },
   { v: 'riyadh_region', l: 'منطقة الرياض', center: [24.5, 46.0] as [number, number], zoom: 7 },

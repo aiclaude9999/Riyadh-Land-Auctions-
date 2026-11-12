@@ -66,6 +66,7 @@ flowchart TD
 | `src/connectors/types.ts` | `Connector`, `RawAuction`, `RawAsset`, `BlockedError`, `saudiOnly` flag. |
 | `src/connectors/{mobasher,saudia-auctions,soum,tarsyah,mazadat,qemah}.ts` | Working sources (JSON APIs / SvelteKit data / HTML-JSON). |
 | `src/connectors/infath.ts` | Infath HTML (Cheerio), `saudiOnly`. |
+| `src/connectors/infath-auctions.ts` | Infath's own platform (auctions.infath.gov.sa) public JSON API, `saudiOnly`. |
 | `src/connectors/{protected,browser,heuristic}.ts` | Playwright-based connectors for Wasalt/Athmann — they only detect the Cloudflare challenge and report "blocked". |
 | `src/lib/ingest.ts` | Core pipeline: listings → canonical auctions, assets, land summary, change history, events. Parallel (`INGEST_CONCURRENCY`). |
 | `src/lib/normalize.ts` | Arabic text normalisation, categories, statuses, money, property types (`land`, `villa`…), usages. |

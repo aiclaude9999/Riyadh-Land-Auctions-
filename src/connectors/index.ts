@@ -11,8 +11,9 @@ import { qemah } from './qemah';
 import { wasalt, athmann } from './protected';
 import { infath } from './infath';
 import { soum } from './soum';
+import { infathAuctions } from './infath-auctions';
 
-export const connectors: Connector[] = [mobasher, saudiaAuctions, mazadat, tarsyah, qemah, soum, infath, wasalt, athmann];
+export const connectors: Connector[] = [mobasher, saudiaAuctions, mazadat, tarsyah, qemah, soum, infath, infathAuctions, wasalt, athmann];
 
 export function getConnector(id: string): Connector | undefined {
   return connectors.find((c) => c.id === id);
