@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { handle, json } from '../_util';
+import { assetInsights } from '@/lib/insights';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,7 +29,7 @@ export const GET = handle(async (req: Request) => {
     where, take: 3000,
     select: {
       id: true, title: true, propertyType: true, usage: true, areaSqm: true, startPrice: true, currentPrice: true, deposit: true,
-      city: true, district: true, latitude: true, longitude: true,
+      city: true, district: true, latitude: true, longitude: true, geoScope: true, notes: true,
       listing: { select: { sourceId: true, url: true, auction: { select: { id: true, title: true, status: true, startAt: true, endAt: true } } } },
     },
   });
@@ -36,6 +37,7 @@ export const GET = handle(async (req: Request) => {
   return json(rows.map((r) => ({
     id: r.id, lat: r.latitude, lng: r.longitude, t: r.title, pt: r.propertyType, u: r.usage, ar: r.areaSqm,
     p: r.currentPrice ?? r.startPrice, cur: r.currentPrice != null, dp: r.deposit, ci: r.city, d: r.district,
-    src: r.listing.sourceId, url: r.listing.url, a: r.listing.auction,
+    src: r.listing.sourceId, url: r.listing.url, a: r.listing.auction, nt: r.notes,
+    ins: assetInsights({ ...r, startPrice: r.startPrice == null ? null : Number(r.startPrice), currentPrice: r.currentPrice == null ? null : Number(r.currentPrice) }),
   })));
 });

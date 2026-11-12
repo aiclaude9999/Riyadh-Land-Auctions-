@@ -1,8 +1,10 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { handle, json } from '../_util';
+import { assetInsights } from '@/lib/insights';
 
 export const dynamic = 'force-dynamic';
+const dnum = (v: unknown) => (v == null ? null : Number(v));
 
 /**
  * Individual real-estate assets (land plots, villas, buildings…) across all auctions.
@@ -59,5 +61,6 @@ export const GET = handle(async (req: Request) => {
     }),
     prisma.asset.groupBy({ by: ['propertyType'], where, _count: true }),
   ]);
-  return json({ total, page, pageSize, items, byType: Object.fromEntries(byType.map((b) => [b.propertyType ?? 'unknown', b._count])) });
+  const withInsights = items.map((x) => ({ ...x, insights: assetInsights({ ...x, startPrice: dnum(x.startPrice), currentPrice: dnum(x.currentPrice) }) }));
+  return json({ total, page, pageSize, items: withInsights, byType: Object.fromEntries(byType.map((b) => [b.propertyType ?? 'unknown', b._count])) });
 });

@@ -7,6 +7,8 @@ const LINKS = [
   { href: '/', label: 'المزادات' },
   { href: '/properties', label: 'العقارات' },
   { href: '/map', label: 'الخريطة' },
+  { href: '/good-deals', label: 'فرص أقل من السوق' },
+  { href: '/calculator', label: 'الحاسبة' },
   { href: '/saved', label: 'المحفوظة' },
   { href: '/sources', label: 'المصادر' },
   { href: '/notifications', label: 'الإشعارات' },

@@ -51,6 +51,9 @@ describe('infath helpers', () => {
     expect(as[0].title).toMatch(/^فيلا — حي ظهرة لبن \(دور ارضي/);
     expect(as[2]).toMatchObject({ propertyType: 'land', usage: 'residential', areaSqm: 400, title: 'أرض سكنية — حي ظهرة لبن' });
     expect(as[3]).toMatchObject({ propertyType: 'land', areaSqm: 450, deposit: 15000, district: 'ضاحية نمار' });
+    expect(as[0].description).toMatch(/^تفاصيل العقار: دور ارضي/);
+    expect(as[0].notes).toBeNull();
+    expect(as[3].notes).toBe('توجد بعض الصخور الحجرية على العقار');
   });
   it('reads district names and map coordinates', () => {
     expect(districtFromText('أرض سكنية حي أحد بالرياض')).toBe('أحد');

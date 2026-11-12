@@ -67,7 +67,7 @@ export function isRiyadhItem(x: PlatformItem): boolean {
     || /الرياض/.test(x.itemNameAr ?? '');
 }
 
-export interface ItemDetail { plots: Record<string, string | null>[] }
+export interface ItemDetail { plots: Record<string, string | null>[]; description: string | null }
 
 /** Per-deed "Property Information" sections of an item's detail answer. */
 export function parseDetail(d: any): ItemDetail {
@@ -78,10 +78,22 @@ export function parseDetail(d: any): ItemDetail {
     for (const x of s.fields ?? []) f[x.fieldName] = cleanText(x.value == null ? null : String(x.value));
     plots.push(f);
   }
-  return { plots };
+  return { plots, description: cleanText(d?.description) };
 }
 
 const itemUrl = (id: string) => `${SITE}/auctions/${id}`;
+
+/** "صك 8332…: نوع فيلا سكني · بلوك 17 · 500 م²" per deed (only fields the source fills) */
+export function plotNotes(plots: Record<string, string | null>[]): string | null {
+  const lines = plots.map((p) => [
+    p.DeedNumber && `صك ${p.DeedNumber}`,
+    p.PropertyType && `النوع: ${p.PropertyType}`,
+    p.PlanNumber && `مخطط ${p.PlanNumber}`,
+    p.BlockNumber && `بلوك ${p.BlockNumber}`,
+    p.Area && `${p.Area} م²`,
+  ].filter(Boolean).join(' · ')).filter(Boolean);
+  return lines.length ? lines.join('\n') : null;
+}
 
 export function toAsset(x: PlatformItem, detail?: ItemDetail): RawAsset {
   const name = cleanText(x.itemNameAr ?? x.itemName) ?? `أصل ${x.id}`;
@@ -109,6 +121,8 @@ export function toAsset(x: PlatformItem, detail?: ItemDetail): RawAsset {
     usage: mapUsage(first.TypeOfPropertyDeed, first.PropertyType, name),
     areaSqm: area,
     status: x.statusId != null ? STATUS[x.statusId] ?? null : null,
+    description: detail?.description ?? null,
+    notes: plotNotes(plots),
   };
 }
 

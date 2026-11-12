@@ -1,4 +1,5 @@
 'use client';
+import AssetInsights, { AssetNotes } from '@/components/AssetInsights';
 import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Countdown } from '@/components/Countdown';
@@ -84,7 +85,7 @@ export default function AuctionPage({ params }: { params: Promise<{ id: string }
                   <tbody>
                     {[...assets].sort((x: any, y: any) => (x.propertyType === 'land' ? 0 : 1) - (y.propertyType === 'land' ? 0 : 1)).map((x: any) => (
                       <tr key={x.id} className={`border-t border-[var(--border)] align-top ${x.propertyType === 'land' ? 'bg-amber-50/60 dark:bg-amber-950/20' : ''}`}>
-                        <td className="py-2 pl-2">{x.title ?? x.externalId}</td>
+                        <td className="py-2 pl-2"><div className="flex min-w-[220px] flex-col gap-1">{x.title ?? x.externalId}<AssetNotes description={x.description} notes={x.notes} clamp={false} /><AssetInsights ins={x.insights} area={x.areaSqm} price={x.currentPrice ?? x.startPrice} deposit={x.deposit} /></div></td>
                         <td className="whitespace-nowrap">{propertyLabel(x.propertyType)}</td>
                         <td className="whitespace-nowrap">{x.usage ? usageLabel(x.usage) : '—'}</td>
                         <td className="num whitespace-nowrap">{fmtArea(x.areaSqm) ?? '—'}</td>

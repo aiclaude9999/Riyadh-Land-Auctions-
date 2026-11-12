@@ -41,6 +41,8 @@ describe('infath auctions platform', () => {
     const b = toAsset(list[1], twoPlots);
     expect(b).toMatchObject({ propertyType: 'land', usage: 'commercial', areaSqm: 6668.9, district: 'الصناعية', deposit: 300000 });
     expect(b.title).toContain('(2 صكوك)');
+    expect(b.notes).toBe('صك 8979313901700000 · النوع: ارض مسورة تجاري · بلوك 2520 · 3500 م²\nصك 8935876849100000 · النوع: ارض مسورة تجاري · بلوك 2520 · 3168.9 م²');
+    expect(b.description).toBeNull();
     const dammam = toAsset(list[4]); // no detail request outside Riyadh
     expect(dammam).toMatchObject({ propertyType: 'apartment', areaSqm: 226.92, startPrice: 412000, city: 'الدمام', region: 'المنطقة الشرقية' });
   });

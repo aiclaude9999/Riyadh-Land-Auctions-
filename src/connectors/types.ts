@@ -20,6 +20,9 @@ export interface RawAsset {
   usage?: Usage | null;
   areaSqm?: number | null;
   status?: string | null;
+  /** source description / remarks, verbatim (trimmed) */
+  description?: string | null;
+  notes?: string | null;
 }
 
 /** What a connector returns for each auction. Leave unknown fields null/undefined — never invent values. */

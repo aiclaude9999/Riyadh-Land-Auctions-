@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { Countdown } from '@/components/Countdown';
+import AssetInsights, { AssetNotes } from '@/components/AssetInsights';
 import { STATUS_STYLE, fmtArea, fmtMoney, formatRiyadh, propertyLabel, statusLabel, usageLabel } from '@/components/format';
 import { PROPERTY_LABELS, USAGE_LABELS } from '@/lib/normalize';
 
@@ -105,6 +106,8 @@ export default function PropertiesPage() {
                   <div><div className="muted">{x.currentPrice ? 'آخر سعر' : 'الافتتاح'}</div><div className="font-semibold">{fmtMoney(x.currentPrice ?? x.startPrice) ?? '—'}</div></div>
                   <div><div className="muted">العربون</div><div className="font-semibold">{fmtMoney(x.deposit) ?? '—'}</div></div>
                 </div>
+                <AssetNotes description={x.description} notes={x.notes} />
+                <AssetInsights ins={x.insights} area={x.areaSqm} price={x.currentPrice ?? x.startPrice} deposit={x.deposit} />
                 <div className="flex items-center justify-between gap-2">
                   <span className="muted truncate">🔨 {a.title} · <a href={x.listing.url} target="_blank" rel="noreferrer" className="text-brand-600">{x.listing.source.name} ↗</a></span>
                   <span className="flex-none">{a.status === 'live' && a.endAt ? <Countdown to={a.endAt} compact /> : <span className="num muted">{formatRiyadh(a.status === 'upcoming' ? a.startAt : a.endAt)}</span>}</span>

@@ -158,6 +158,10 @@ model Asset {
   currentPrice Decimal? @db.Decimal(16, 2)
   deposit      Decimal? @db.Decimal(16, 2)
   images       String[]
+  /// free text from the source (e.g. Infath "وصف العقار"), not invented
+  description  String?
+  /// source remarks (e.g. Infath "الملاحظات": unpaved street, deed differences…)
+  notes        String?
   updatedAt    DateTime @updatedAt
 
   @@unique([listingId, externalId])

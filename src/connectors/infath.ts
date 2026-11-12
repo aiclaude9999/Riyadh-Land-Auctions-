@@ -175,6 +175,8 @@ export function parseInfathDetail(html: string, auctionUrl: string): InfathAsset
       propertyType: pt,
       usage: mapUsage(type, desc),
       images: [],
+      description: desc,
+      notes: sections['الملاحظات'] ?? null,
       mapUrl,
     } satisfies InfathAsset;
   }).get();

@@ -4,11 +4,14 @@ import L from 'leaflet';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { fmtArea, fmtMoney, formatRiyadh, propertyLabel, statusLabel, usageLabel } from './format';
 import type { DealsData, DistrictDeals } from '@/lib/deals';
+import type { Insights } from '@/lib/insights';
 
 interface Pin {
   id: string; lat: number; lng: number; t: string | null; pt: string | null; u: string | null; ar: number | null;
   p: number | null; cur: boolean; dp: number | null; ci: string | null; d: string | null; src: string; url: string;
   a: { id: string; title: string; status: string; startAt: string | null; endAt: string | null };
+  nt?: string | null;
+  ins?: Insights | null;
 }
 
 const TYPE_COLORS: Record<string, string> = {
@@ -44,6 +47,17 @@ function quantileBreaks(values: number[], k = DEAL_COLORS.length): number[] {
   const s = [...values].sort((a, b) => a - b);
   if (!s.length) return [];
   return Array.from({ length: k - 1 }, (_, i) => s[Math.min(s.length - 1, Math.floor(((i + 1) * s.length) / k))]);
+}
+const V: Record<string, [string, string]> = { below: ['🟢', 'أقل من سعر الحي'], near: ['🟡', 'قريب من سعر الحي'], above: ['🔴', 'أعلى من سعر الحي'] };
+function insightHtml(i?: Insights | null): string {
+  if (!i) return '';
+  const n = (x?: number) => (x == null ? '—' : Math.round(x).toLocaleString('en-US'));
+  const out: string[] = [];
+  if (i.verdict && i.diffPct != null) out.push(`<div><b>${V[i.verdict][0]} ${V[i.verdict][1]}${i.verdict !== 'near' ? ' بـ ' + Math.abs(Math.round(i.diffPct * 100)) + '%' : ''}</b> · ${n(i.plotPpm)} مقابل ${n(i.benchPpm)} ريال/م²</div>`);
+  if (i.maxBid != null) out.push(`<div>💡 حد أعلى مقترح: <b>${n(i.maxBid)}</b> ريال</div>`);
+  if (i.metro) out.push(`<div>🚇 ${i.metro.km} كم — محطة ${i.metro.name}</div>`);
+  if (i.whiteLand) out.push('<div style="color:#b45309">⚠️ قد تخضع لرسوم الأراضي البيضاء</div>');
+  return out.join('');
 }
 const esc = (s: unknown) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 
@@ -127,6 +141,8 @@ export default function MapView() {
         <div>المساحة: <b>${esc(fmtArea(p.ar) ?? '—')}</b></div>
         <div>${p.cur ? 'آخر سعر' : 'الافتتاح'}: <b>${esc(fmtMoney(p.p) ?? '—')}</b> · العربون: ${esc(fmtMoney(p.dp) ?? '—')}</div>
         <div>${esc(closing)}</div>
+        ${insightHtml(p.ins)}
+        ${p.nt ? `<div style="color:#92400e;font-size:12px;max-height:3.4em;overflow:hidden">📌 ${esc(p.nt)}</div>` : ''}
         <div style="margin-top:4px">🔨 <a href="/auctions/${esc(p.a.id)}">${esc(p.a.title)}</a> · <a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(SOURCE[p.src] ?? p.src)} ↗</a></div>
       </div>`;
       L.marker([p.lat, p.lng], { icon: pinIcon(color), riseOnHover: true }).bindPopup(html).addTo(lg);
