@@ -177,6 +177,7 @@ export function parseInfathDetail(html: string, auctionUrl: string): InfathAsset
       images: [],
       description: desc,
       notes: sections['الملاحظات'] ?? null,
+      deedNumber: deed && /^\d{8,}$/.test(deed) ? deed : null,
       mapUrl,
     } satisfies InfathAsset;
   }).get();

@@ -166,9 +166,14 @@ model Asset {
   streetSides  Int?
   streetWidth  Float?
   corner       Boolean?
+  /// final price when the source publishes it (e.g. Infath platform soldPrice)
+  soldPrice    Decimal? @db.Decimal(16, 2)
+  /// title deed number (رقم الصك) when the source shows it — finds re-listed properties
+  deedNumber   String?
   updatedAt    DateTime @updatedAt
 
   @@unique([listingId, externalId])
+  @@index([deedNumber])
 }
 
 /// History of meaningful changes (dates / prices / status) used for notifications.

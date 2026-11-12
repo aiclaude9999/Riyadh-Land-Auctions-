@@ -104,6 +104,7 @@ export async function ingest(sourceId: string, raws: RawAuction[], now = new Dat
         propertyType: a.propertyType ?? null, usage: a.usage ?? null, areaSqm: a.areaSqm ?? null, status: a.status ?? null,
         description: a.description?.slice(0, 2000) ?? null, notes: a.notes?.slice(0, 2000) ?? null,
         streetSides: a.streetSides ?? null, streetWidth: a.streetWidth ?? null, corner: a.corner ?? null,
+        soldPrice: dec(a.soldPrice), deedNumber: a.deedNumber?.replace(/\D/g, '') || null,
       };
       await prisma.asset.upsert({ where: { listingId_externalId: { listingId, externalId: a.externalId } }, create: { listingId, externalId: a.externalId, ...fields }, update: fields });
     });

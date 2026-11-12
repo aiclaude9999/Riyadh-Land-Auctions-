@@ -27,6 +27,8 @@ export interface RawAsset {
   streetSides?: number | null;
   streetWidth?: number | null;
   corner?: boolean | null;
+  soldPrice?: number | null;
+  deedNumber?: string | null;
 }
 
 /** What a connector returns for each auction. Leave unknown fields null/undefined — never invent values. */

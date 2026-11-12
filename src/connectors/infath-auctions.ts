@@ -21,7 +21,16 @@ const REAL_ESTATE = '11111111-1111-1111-1111-111111111111';
 const HEADERS = { 'Accept-Language': 'ar', 'x-platform-id': 'web' };
 const PAGE_SIZE = 20; // same as the website
 const MAX_PAGES = 60;
-const STATUS: Record<number, Status> = { 2: 'upcoming', 3: 'live', 4: 'ended', 5: 'ended' };
+const STATUS: Record<number, Status> = { 2: 'upcoming', 3: 'live' };
+/** statusId 2/3 are confirmed by the site; anything else is read from statusName (Ended, Closed, Sold, Awarded…). */
+export function itemStatus(x: { statusId?: number | null; statusName?: string | null }): Status | null {
+  if (x.statusId != null && STATUS[x.statusId]) return STATUS[x.statusId];
+  const n = (x.statusName ?? '').toLowerCase();
+  if (/schedul|upcoming|pending/.test(n)) return 'upcoming';
+  if (/active|live|ongoing|running/.test(n)) return 'live';
+  if (/end|clos|sold|award|complet|finish|cancel|expir/.test(n)) return 'ended';
+  return null;
+}
 
 export interface PlatformItem {
   id: string; auctionId?: string; statusId?: number; itemNameAr?: string | null; itemName?: string | null;
@@ -29,7 +38,7 @@ export interface PlatformItem {
   startTime?: string | null; endTime?: string | null; latitude?: number | null; longitude?: number | null;
   currentBid?: number | null; startingPrice?: number | null; isStartingPriceDetermined?: boolean; soldPrice?: number | null;
   depositAmount?: number | null; cityNameAr?: string | null; regionNameAr?: string | null; referenceId?: string | null;
-  bidCount?: number | null; participantsCount?: number | null;
+  bidCount?: number | null; participantsCount?: number | null; statusName?: string | null;
 }
 
 /** "2026-12-03T05:00:00" (UTC without zone) → Date */
@@ -128,7 +137,9 @@ export function toAsset(x: PlatformItem, detail?: ItemDetail): RawAsset {
     propertyType: mapPropertyType(first.PropertyType, name),
     usage: mapUsage(first.TypeOfPropertyDeed, first.PropertyType, name),
     areaSqm: area,
-    status: x.statusId != null ? STATUS[x.statusId] ?? null : null,
+    status: itemStatus(x),
+    soldPrice: parseMoney(x.soldPrice),
+    deedNumber: first.DeedNumber ?? null,
     description: detail?.description ?? null,
     notes: plotNotes(plots),
     ...(() => { const f = detail?.boundaries[0] ? plotFeatures(detail.boundaries[0]) : null; return f ? { streetSides: f.streetSides, streetWidth: f.streetWidth, corner: f.corner } : {}; })(),
@@ -179,8 +190,9 @@ export function groupItems(items: PlatformItem[], details: Map<string, ItemDetai
   return out;
 }
 
+// ended ids are not documented on the site: ask for 4–6 once a day and trust statusName for the label
 const MODE_STATUSES: Record<RefreshMode, string> = {
-  discovery: '2,3', manual: '2,3', live: '3', closing: '3', upcoming: '2', ended: '2,3',
+  discovery: '2,3', manual: '2,3', live: '3', closing: '3', upcoming: '2', ended: '4,5,6',
 };
 const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -190,10 +202,11 @@ export const infathAuctions: Connector = {
   baseUrl: SITE,
   method: 'api',
   saudiOnly: true,
-  modes: ['discovery', 'manual', 'live', 'closing', 'upcoming'],
+  modes: ['discovery', 'manual', 'live', 'closing', 'upcoming', 'ended'],
   async fetchAuctions({ mode, log }) {
     const items: PlatformItem[] = [];
-    for (let page = 1; page <= MAX_PAGES; page++) {
+    const maxPages = mode === 'ended' ? 5 : MAX_PAGES; // ended: recent results only
+    for (let page = 1; page <= maxPages; page++) {
       const d: any = await getJson(`${API}/auction-items?pageIndex=${page}&pageSize=${PAGE_SIZE}&categoryId=${REAL_ESTATE}&statusIds=${MODE_STATUSES[mode]}`, { headers: HEADERS, timeoutMs: 25_000, retries: 1 });
       const rows: PlatformItem[] = d?.data?.items ?? [];
       items.push(...rows);
@@ -205,7 +218,7 @@ export const infathAuctions: Connector = {
     const details = new Map<string, ItemDetail>();
     const deadline = Date.now() + 6 * 60_000;
     let failures = 0;
-    for (const x of items.filter(isRiyadhItem)) {
+    for (const x of mode === 'ended' ? [] : items.filter(isRiyadhItem)) {
       if (Date.now() > deadline || failures >= 5) {
         log.warn({ done: details.size, failures }, 'infath-auctions details stopped early (time budget / repeated failures)');
         break;

@@ -92,9 +92,9 @@ In this sandbox Node `fetch` needs `NODE_USE_ENV_PROXY=1`. netlify.app / github.
 
 ### ⏳ Next Netlify deploy — batch (owner wants ONE deploy for all of these, to save credits)
 Code may be written and pushed with `[skip ci]` meanwhile; do the real deploy only when the owner says so.
-- [ ] Infath assets: show the **description (وصف العقار)** and **notes (الملاحظات)** on the Properties page (and map popup). Needs new Asset fields (e.g. `description`, `notes`) + migration, connector to fill them (`parseInfathDetail` already reads both sections), UI.
+- [x] (built, not deployed) Infath assets: show the **description (وصف العقار)** and **notes (الملاحظات)** on the Properties page (and map popup). Needs new Asset fields (e.g. `description`, `notes`) + migration, connector to fill them (`parseInfathDetail` already reads both sections), UI.
 - [x] (code pushed, not deployed) **Riyadh Metro on the map**: 6 lines + stations from OpenStreetMap (`src/data/riyadh-metro.json`, built by `scripts/metro/build-metro.ts` via the OSM API; ODbL attribution shown). Toggle "🚇 مترو الرياض" (on by default, remembered), drawn above coloured districts, below auction pins.
-- [ ] Optional map auto-refresh (from earlier list).
+- [x] (built, not deployed) Map auto-refresh (5 min).
 
 - 🔐 **Change `APP_PASSWORD`** on Netlify — it is still the weak example password from testing. Then redeploy.
 - 🔐 **Rotate the Neon DB password** — the connection string was exposed (owner's screenshot + PowerShell history; also seen via Netlify tool). After reset, update GitHub secret, Netlify env (+ redeploy). Owner was told to delete PowerShell history: `Remove-Item (Get-PSReadLineOption).HistorySavePath`.
@@ -104,6 +104,13 @@ Code may be written and pushed with `[skip ci]` meanwhile; do the real deploy on
 - Watch Neon free usage (collector every 30 min ≈ 6 h active/day).
 - Deals layer: add a new quarter = owner sends the MoJ CSV → `npx tsx scripts/deals/build-deals.ts 2025-Q4=… 2026-Q1=… …` (pass ALL quarters; raw CSVs are not committed — 2025-Q4/2026-Q1 came from github.com/civillizard/Saudi-Real-Estate-Data `moj/sales`). Riyadh city is nearly absent from 2026-Q3, so look for another official, open source for Riyadh deals.
 - Ideas not started: Telegram alerts, emailing Infath/Wasalt for official data access (owner declined for Wasalt).
+
+### 🚀 Rounds 1–3 built (12 Nov) — NOT deployed; owner checks first, then ONE deploy
+- Round 1: asset description/notes · price check vs district (land; commercial land vs commercial deals) · suggested max bid (district × area ÷ 1.07875) · /good-deals · /calculator · nearest metro · white-land warning. Logic: `src/lib/insights.ts`, UI `src/components/AssetInsights.tsx`.
+- Round 2: plot features from deed boundaries (`src/lib/plot.ts`: street sides, widest street, corner; Mobasher + Infath platform) · distance to big projects · Google Maps "nearby" links (OSM lists too few schools) · district price trend by quarter · my plan per saved auction (note, max bid, checklist; `src/components/MyPlan.tsx`) · /compare (up to 4) · /calendar · financing in calculator · map pins refresh every 5 min.
+- Round 3: /market — results of ended auctions (sold price when published, else last shown price), re-listed properties (same deed in ≥2 auctions; deed numbers stored from now on), platform statistics. Infath platform `ended` mode asks statusIds 4,5,6 and labels by statusName (ids undocumented).
+- #26 rental return: SKIPPED — no official open rent dataset for Riyadh districts found (only land grants etc.).
+- New migrations (applied automatically by the GitHub collector, `prisma migrate deploy`): 20261112000000_asset_description_notes, 20261112010000_plot_features, 20261112020000_saved_notes, 20261112030000_sold_price_deed. The laptop must not run the new code before these are applied.
 
 ### ✅ Owner decisions (12 Nov 2026) — numbered list agreed in chat
 - **First:** #6 Infath page 2+ and #7 auctions.infath.gov.sa check (laptop, free). Read-only check script: `scripts/infath-laptop/check-infath.ps1` (writes Desktop\infath-check\report.txt + saved pages).

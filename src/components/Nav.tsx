@@ -11,6 +11,7 @@ const LINKS = [
   { href: '/calculator', label: 'الحاسبة' },
   { href: '/calendar', label: 'التقويم' },
   { href: '/compare', label: 'المقارنة' },
+  { href: '/market', label: 'السوق' },
   { href: '/saved', label: 'المحفوظة' },
   { href: '/sources', label: 'المصادر' },
   { href: '/notifications', label: 'الإشعارات' },

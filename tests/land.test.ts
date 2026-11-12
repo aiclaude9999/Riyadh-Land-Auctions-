@@ -26,6 +26,7 @@ describe('mobasher products (real fixture)', () => {
   });
   it('reads street sides, widest street and corner from the deed boundaries', () => {
     expect(ps.map((p: any) => [p.streetSides, p.streetWidth, p.corner])).toEqual([[2, 20, true], [1, 18, false], [1, 15, false]]);
+    expect(ps[0].deedNumber).toBe('730217002601');
   });
 });
 

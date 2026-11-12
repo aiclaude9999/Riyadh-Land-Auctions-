@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { areaFromName, districtFromName, groupItems, isRiyadhItem, parseDetail, toAsset, utc } from '@/connectors/infath-auctions';
+import { areaFromName, districtFromName, groupItems, isRiyadhItem, itemStatus, parseDetail, toAsset, utc } from '@/connectors/infath-auctions';
 import { toListingData } from '@/lib/ingest';
 
 // Real answers from api.infath.gov.sa (auctions platform), captured from a Saudi network on 2026-11-12, trimmed
@@ -43,6 +43,10 @@ describe('infath auctions platform', () => {
     expect(b.title).toContain('(2 صكوك)');
     expect(b.notes).toBe('صك 8979313901700000 · النوع: ارض مسورة تجاري · بلوك 2520 · 3500 م²\nصك 8935876849100000 · النوع: ارض مسورة تجاري · بلوك 2520 · 3168.9 م²');
     expect(b.description).toBeNull();
+    expect(b.deedNumber).toBe('8979313901700000');
+    expect(toAsset({ ...list[4], soldPrice: 450000, statusId: 7, statusName: 'Ended' })).toMatchObject({ soldPrice: 450000, status: 'ended' });
+    expect(itemStatus({ statusId: 2 })).toBe('upcoming');
+    expect(itemStatus({ statusName: 'Cancelled' })).toBe('ended');
     expect(b).toMatchObject({ streetSides: 2, streetWidth: null, corner: false });
     expect(toAsset(list[0], villa)).toMatchObject({ streetSides: 0, corner: false });
     const dammam = toAsset(list[4]); // no detail request outside Riyadh

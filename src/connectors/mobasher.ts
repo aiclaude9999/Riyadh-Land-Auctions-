@@ -65,6 +65,7 @@ export function parseMobasherProduct(p: any, auctionUrl: string): RawAsset {
     usage: mapUsage(re.usageType, re.usageTypeAr, title),
     areaSqm: parseArea(re.spaceSqm ?? re.listedAreaSqm),
     status: p.productStatus ?? null,
+    deedNumber: cleanText(re.sakNumber),
     ...boundaryFeatures(re.boundaryDetails),
   };
 }

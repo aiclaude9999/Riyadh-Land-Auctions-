@@ -81,6 +81,7 @@ flowchart TD
 | `src/worker/index.ts` | Long-running BullMQ worker + scheduler (only for Docker/paid hosting; not used on the free setup). |
 | `src/app/` | Next.js App Router: pages and `api/` routes (below). |
 | `src/components/` | `Dashboard`, `AuctionCard`, `Countdown`, `MapView` (Leaflet), `Nav`, `format`. |
+| `src/lib/insights.ts`, `src/lib/plot.ts` | Bidding insights per Riyadh asset (price check, max bid, metro, projects, trend, white-land) and plot features from deed boundaries. |
 | `src/lib/deals.ts`, `src/data/`, `scripts/deals/` | Ministry of Justice sales → per-district Riyadh summaries for the map (`build-deals.ts`), district centroids + simplified boundaries (`district-centroids.ts`). |
 | `prisma/` | `schema.prisma` + migrations. |
 | `scripts/` | `collect.ts` (GitHub collector), `scrape-once.ts` (local test), `build-static.ts` (GitHub Pages page), `start-all.sh` (Render), `infath-laptop/` (Windows setup + runner). |
@@ -115,6 +116,7 @@ erDiagram
 |---|---|---|
 | `/` dashboard (land focus by default) | `components/Dashboard.tsx` | `/api/auctions`, `/api/stats`, `/api/facets`, `/api/refresh` |
 | `/properties` every asset | `app/properties/page.tsx` | `/api/assets` |
+| `/good-deals`, `/calculator`, `/compare`, `/calendar`, `/market` | `app/<page>/page.tsx` | `/api/good-deals`, `/api/assets?ids=`, `/api/calendar`, `/api/market` |
 | `/map` map of assets + MoJ deals layer | `components/MapView.tsx` | `/api/map`, `src/data/riyadh-deals.json` (static) |
 | `/auctions/[id]` details + plots + history | `app/auctions/[id]/page.tsx` | `/api/auctions/[id]`, `/api/saved/[id]` |
 | `/saved` | `components/Dashboard.tsx` (savedOnly) | same as dashboard |
