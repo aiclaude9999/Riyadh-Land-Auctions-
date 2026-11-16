@@ -115,7 +115,8 @@ Code may be written and pushed with `[skip ci]` meanwhile; do the real deploy on
 ### ✅ Owner decisions (12 Nov 2026) — numbered list agreed in chat
 - **First:** #6 Infath page 2+ and #7 auctions.infath.gov.sa check (laptop, free). Read-only check script: `scripts/infath-laptop/check-infath.ps1` (writes Desktop\infath-check\report.txt + saved pages).
 - **Approved for the batched deploy:** #1 metro (done), #2 Infath description/notes, #3 map auto-refresh, #8 price check, #9 suggested max bid, #10 good-deals page, #11 metro distance, #12 big-project distance, #13 nearby services, #14 plot features, #15 district price trend, #16 white-land fee warning, #17 bid calculator, #18 financing calculator, #19 watchlist with notes, #20 compare plots, #21 auction calendar, #22 before-you-bid checklist, #23 final winning prices, #24 unsold/re-listed, #25 platform statistics, #26 rental return (only if official open rent data exists).
-- **Not decided yet:** #4–#5 security (password changes), #27–#30 Telegram notifications, #31–#35 ease of use / cost.
+- **Not decided yet:** #4–#5 security (password changes), #31–#35 ease of use / cost.
+- **16 Nov 2026:** notifications channel chosen = **Telegram** (WhatsApp declined: official API not free, CallMeBot third-party, unofficial tools risk a ban). Several people = one Telegram **group** with the bot in it (one chat ID, no code change). Code already sends via `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` GitHub secrets from `collect.yml`; laptop Infath runs have no token yet. #27–#30 alert rules still need building after approval.
 - Still ONE Netlify deploy for all approved website items unless the owner says otherwise.
 
 ### 💡 Ideas backlog (owner likes all of them — details; approval status is in "Owner decisions" above)
