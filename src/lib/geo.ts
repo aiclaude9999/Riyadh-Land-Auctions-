@@ -104,6 +104,25 @@ export function inSaudi(lat?: number | null, lng?: number | null): boolean {
   return lat != null && lng != null && lat >= 16 && lat <= 32.5 && lng >= 34.5 && lng <= 55.7;
 }
 
+/**
+ * Rough outline of Riyadh Province [lat, lng] (hand-drawn from town positions: includes الزلفي, المجمعة, الدوادمي,
+ * عفيف, وادي الدواسر, السليل, الخرج; excludes بريدة/عنيزة/الرس, الدمام/الأحساء, نجران, بيشة, جدة/مكة, الجوف).
+ * Only used to tell "Riyadh region" from "elsewhere" when a pin is outside Riyadh city.
+ */
+const RIYADH_PROVINCE: [number, number][] = [
+  [27.0, 45.0], [27.0, 46.0], [26.0, 47.3], [24.6, 47.9], [22.5, 48.5], [19.0, 48.5], [18.6, 45.5],
+  [19.8, 44.3], [21.5, 43.6], [23.0, 42.3], [24.6, 42.0], [25.3, 43.2], [25.6, 44.0], [26.5, 44.5],
+];
+export function inRiyadhProvince(lat?: number | null, lng?: number | null): boolean {
+  if (lat == null || lng == null) return false;
+  let inside = false;
+  for (let i = 0, j = RIYADH_PROVINCE.length - 1; i < RIYADH_PROVINCE.length; j = i++) {
+    const [yi, xi] = RIYADH_PROVINCE[i], [yj, xj] = RIYADH_PROVINCE[j];
+    if (yi > lat !== yj > lat && lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
 export interface GeoResult {
   scope: GeoScope;
   hasRiyadhCity: boolean;
@@ -134,7 +153,11 @@ export function classifyGeo(inp: GeoInput): GeoResult {
 
   // The pin wins over the text fields: sources sometimes put "الرياض" (the region) in the city field for
   // plots in وادي الدواسر, ليلى, … — a pin outside Riyadh city means it is not in Riyadh city.
-  if (city && inSaudi(inp.lat, inp.lng) && !inRiyadhCityBox(inp.lat, inp.lng)) city = false;
+  if (inSaudi(inp.lat, inp.lng) && !inRiyadhCityBox(inp.lat, inp.lng)) {
+    city = false;
+    // and a pin outside the province (جدة، جيزان، نجران… also tagged "الرياض" by Infath) is not Riyadh region either
+    if (!inRiyadhProvince(inp.lat, inp.lng)) region = false;
+  }
   // No usable pin: a title naming a Riyadh-province town (and no Riyadh-city district) overrides "الرياض".
   if (city && !inSaudi(inp.lat, inp.lng) && inp.text) {
     const towns = citiesInText(inp.text).filter((c) => isRiyadhRegionTown(c) && !isRiyadhDistrict(c));

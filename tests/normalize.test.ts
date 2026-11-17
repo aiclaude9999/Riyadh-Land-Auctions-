@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { normalizeArabic, normalizeTitle, mapCategory, parseMoney, statusFromDates } from '@/lib/normalize';
-import { classifyGeo, citiesInText, placeKey } from '@/lib/geo';
+import { classifyGeo, citiesInText, inRiyadhProvince, placeKey } from '@/lib/geo';
 import { parseRiyadhLocal, parseUtcNaive, riyadhDayBounds } from '@/lib/time';
 
 describe('arabic normalisation', () => {
@@ -74,6 +74,16 @@ describe('geo classification', () => {
     const g = classifyGeo({ cities: ['الرياض'], regions: ['الرياض'], districts: ['العقيق'], lat: 20.47, lng: 44.79 });
     expect(g.scope).toBe('riyadh_region');
     expect(g.hasRiyadhCity).toBe(false);
+  });
+  it('pin in another province is "other" even when tagged الرياض', () => {
+    for (const [lat, lng] of [[21.54, 39.17], [16.89, 42.55], [17.49, 44.13], [29.97, 40.2], [21.42, 39.83]]) // جدة جيزان نجران الجوف مكة
+      expect(classifyGeo({ cities: ['الرياض'], regions: ['الرياض'], lat, lng }).scope).toBe('other');
+  });
+  it('province outline', () => {
+    for (const [lat, lng] of [[20.47, 44.79], [20.46, 45.57], [24.15, 47.31], [26.3, 44.8], [25.9, 45.35], [24.5, 44.4], [23.9, 42.9], [22.29, 46.73]]) // وادي الدواسر السليل الخرج الزلفي المجمعة الدوادمي عفيف الأفلاج
+      expect(inRiyadhProvince(lat, lng)).toBe(true);
+    for (const [lat, lng] of [[26.33, 43.97], [26.08, 43.99], [26.43, 50.1], [25.38, 49.58], [17.49, 44.13], [20.0, 42.6], [21.54, 39.17]]) // بريدة عنيزة الدمام الأحساء نجران بيشة جدة
+      expect(inRiyadhProvince(lat, lng)).toBe(false);
   });
   it('pin inside Riyadh keeps Riyadh city', () => expect(classifyGeo({ cities: ['الرياض'], lat: 24.8, lng: 46.6 }).scope).toBe('riyadh_city'));
   it('bad pin (0,0) is ignored', () => expect(classifyGeo({ cities: ['الرياض'], lat: 0, lng: 0 }).scope).toBe('riyadh_city'));

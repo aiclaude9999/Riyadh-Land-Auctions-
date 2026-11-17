@@ -1,4 +1,5 @@
-# READ-ONLY: count plots wrongly shown in Riyadh city (pin elsewhere). Changes nothing.
+# Count plots whose stored location (Riyadh city / region) is wrong. Read-only unless run with:  -Fix
+param([switch]$Fix)
 $Dir = Join-Path $env:LOCALAPPDATA 'MazadRadarInfath'
 Set-Location $Dir
 Get-Content (Join-Path $Dir '.env') | ForEach-Object {
@@ -7,7 +8,8 @@ Get-Content (Join-Path $Dir '.env') | ForEach-Object {
 $env:NODE_NO_WARNINGS = '1'
 try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch { }
 $base = 'https://raw.githubusercontent.com/aiclaude9999/Riyadh-Land-Auctions-/ccr-684fffdf-bi3tdz'
-foreach ($f in 'scripts/geo-impact.ts', 'src/lib/geo.ts') {
+foreach ($f in 'scripts/geo-impact.ts', 'src/lib/geo.ts', 'src/lib/ingest.ts') {
   Invoke-WebRequest -UseBasicParsing "$base/$f" -OutFile (Join-Path $Dir ($f -replace '/', '\'))
 }
-& cmd.exe /c "npx.cmd tsx scripts/geo-impact.ts 2>&1"
+$arg = if ($Fix) { '--fix' } else { '' }
+& cmd.exe /c "npx.cmd tsx scripts/geo-impact.ts $arg 2>&1"
