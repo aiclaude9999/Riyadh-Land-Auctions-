@@ -71,4 +71,12 @@ describe('merge of listings into one auction', () => {
     expect(m.organizer).toBe('جهة');
     expect(Number(m.currentPrice)).toBe(1000);
   });
+  it('auction located by its assets\' pins, not the "الرياض" city name', () => {
+    const base = { title: 'x', normalizedTitle: 'x', category: 'real_estate', status: 'upcoming', startAt: null, endAt: null, region: 'الرياض', city: 'الرياض', district: null, locationText: null, assetCount: null, startPrice: null, currentPrice: null, deposit: null, organizer: null, normalizedOrganizer: null, images: [] };
+    const m = auctionFieldsFrom([{ ...base, cities: ['الرياض'], assetCities: ['الرياض'], geoScopes: ['riyadh_region', 'riyadh_region'] }]);
+    expect(m.hasRiyadhCity).toBe(false);
+    expect(m.geoScope).toBe('riyadh_region');
+    const n = auctionFieldsFrom([{ ...base, cities: ['الرياض'], geoScopes: ['riyadh_region', 'riyadh_city'] }]);
+    expect(n.geoScope).toBe('riyadh_city');
+  });
 });

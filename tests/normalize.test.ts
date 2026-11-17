@@ -70,6 +70,17 @@ describe('geo classification', () => {
   });
   it('district-only listings in Riyadh region', () => expect(classifyGeo({ regions: ['منطقة الرياض'], districts: ['حي الملقا'] }).scope).toBe('riyadh_city'));
   it('coordinates in Riyadh', () => expect(classifyGeo({ lat: 24.71, lng: 46.67 }).scope).toBe('riyadh_city'));
+  it('pin outside Riyadh beats a wrong "الرياض" city (Infath, وادي الدواسر)', () => {
+    const g = classifyGeo({ cities: ['الرياض'], regions: ['الرياض'], districts: ['العقيق'], lat: 20.47, lng: 44.79 });
+    expect(g.scope).toBe('riyadh_region');
+    expect(g.hasRiyadhCity).toBe(false);
+  });
+  it('pin inside Riyadh keeps Riyadh city', () => expect(classifyGeo({ cities: ['الرياض'], lat: 24.8, lng: 46.6 }).scope).toBe('riyadh_city'));
+  it('bad pin (0,0) is ignored', () => expect(classifyGeo({ cities: ['الرياض'], lat: 0, lng: 0 }).scope).toBe('riyadh_city'));
+  it('title naming a province town overrides "الرياض" when there is no pin', () => {
+    expect(classifyGeo({ cities: ['الرياض'], text: 'نخبة الوادي - أرض زراعية شمال غرب ليلى' }).scope).toBe('riyadh_region');
+    expect(classifyGeo({ cities: ['الرياض'], text: 'أرض سكنية في حي الملقا' }).scope).toBe('riyadh_city');
+  });
   it('finds cities in free text', () => {
     expect(citiesInText('مزاد سكراب كابلات مطار جده بالظرف المغلق')).toContain('جده');
     expect(citiesInText('البديعة والملقا، الرياض')).toContain('الرياض');

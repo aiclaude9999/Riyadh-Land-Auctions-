@@ -97,7 +97,7 @@ export async function ingest(sourceId: string, raws: RawAuction[], now = new Dat
     }
 
     await mapLimit(r.assets ?? [], 8, async (a) => {
-      const ag = classifyGeo({ cities: [a.city], regions: [a.region], districts: [a.district], lat: a.latitude, lng: a.longitude });
+      const ag = classifyGeo({ cities: [a.city], regions: [a.region], districts: [a.district], lat: a.latitude, lng: a.longitude, text: a.title });
       const fields = {
         title: a.title ?? null, url: a.url ?? null, region: a.region ?? null, city: a.city ?? null, district: a.district ?? null, geoScope: ag.scope,
         latitude: a.latitude ?? null, longitude: a.longitude ?? null, startPrice: dec(a.startPrice), currentPrice: dec(a.currentPrice), deposit: dec(a.deposit), images: a.images ?? [],
@@ -196,9 +196,15 @@ export function auctionFieldsFrom(ls: MergeInput[]) {
   const regions = uniq<string>(ls.flatMap((l) => [l.region, ...(l.regions ?? [])]));
   const districts = uniq<string>(ls.flatMap((l) => [l.district, ...(l.districts ?? [])]));
   const geo = classifyGeo({ cities, regions, districts });
-  const scopes = ls.flatMap((l) => l.geoScopes ?? []);
-  const hasRiyadhCity = geo.hasRiyadhCity || scopes.includes('riyadh_city');
-  const hasRiyadhRegion = geo.hasRiyadhRegion || hasRiyadhCity || scopes.includes('riyadh_region');
+  // A listing with classified assets is located by its assets (they use pins); the rest by their own names.
+  const perListing = ls.map((l) => {
+    const known = (l.geoScopes ?? []).filter((s) => s !== 'unknown');
+    if (known.length) return { city: known.includes('riyadh_city'), region: known.includes('riyadh_city') || known.includes('riyadh_region') };
+    const g = classifyGeo({ cities: l.cities, regions: [l.region, ...(l.regions ?? [])], districts: [l.district, ...(l.districts ?? [])] });
+    return { city: g.hasRiyadhCity, region: g.hasRiyadhRegion };
+  });
+  const hasRiyadhCity = perListing.some((x) => x.city);
+  const hasRiyadhRegion = hasRiyadhCity || perListing.some((x) => x.region);
   const scope: GeoScope = hasRiyadhCity ? 'riyadh_city' : hasRiyadhRegion ? 'riyadh_region' : geo.scope;
   const props = propertySummary(first('category') as string, first('title') as string, ls.flatMap((l) => l.assetInfo ?? []));
   const statuses = ls.map((l) => l.status);

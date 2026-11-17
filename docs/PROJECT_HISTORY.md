@@ -118,6 +118,7 @@ Code may be written and pushed with `[skip ci]` meanwhile; do the real deploy on
 - **Not decided yet:** #4–#5 security (password changes), #31–#35 ease of use / cost.
 - **16 Nov 2026:** notifications channel chosen = **Telegram** (WhatsApp declined: official API not free, CallMeBot third-party, unofficial tools risk a ban). Several people = one Telegram **group** with the bot in it (one chat ID, no code change). Code already sends via `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` GitHub secrets from `collect.yml`; laptop Infath runs have no token yet. #27–#30 alert rules still need building after approval.
 - Still ONE Netlify deploy for all approved website items unless the owner says otherwise.
+- **17 Nov 2026 fix (collector only, no Netlify deploy):** Infath data puts City="الرياض" on plots in وادي الدواسر/ليلى (e.g. auction "نخبة الوادي", district العقيق) → they showed as Riyadh city with wrong district price checks. `classifyGeo` now trusts the pin (inside Saudi but outside the Riyadh-city box ⇒ not Riyadh city) and, without a pin, a title naming a province town; auctions are located by their assets' scopes. Laptop must re-run `setup.ps1` to get it; GitHub sources fix themselves on the next run.
 
 ### 💡 Ideas backlog (owner likes all of them — details; approval status is in "Owner decisions" above)
 Saved 12 Nov 2026. Keep everything free. Website changes go into the single batched deploy above.

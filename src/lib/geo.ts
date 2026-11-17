@@ -95,6 +95,13 @@ export interface GeoInput {
   districts?: (string | null | undefined)[];
   lat?: number | null;
   lng?: number | null;
+  /** Asset/listing title: "أرض زراعية شمال غرب ليلى" names the real town when the city field is wrong. */
+  text?: string | null;
+}
+
+/** Plausible coordinates inside Saudi Arabia (rejects 0,0 and swapped lat/lng). */
+export function inSaudi(lat?: number | null, lng?: number | null): boolean {
+  return lat != null && lng != null && lat >= 16 && lat <= 32.5 && lng >= 34.5 && lng <= 55.7;
 }
 
 export interface GeoResult {
@@ -124,6 +131,15 @@ export function classifyGeo(inp: GeoInput): GeoResult {
   if (!city && cities.length === 0 && districts.some(isRiyadhDistrict) && !regions.length) city = true;
   if (!city && cities.length === 0 && inRiyadhCityBox(inp.lat, inp.lng)) city = true;
   region = region || city || regionIsRiyadh;
+
+  // The pin wins over the text fields: sources sometimes put "الرياض" (the region) in the city field for
+  // plots in وادي الدواسر, ليلى, … — a pin outside Riyadh city means it is not in Riyadh city.
+  if (city && inSaudi(inp.lat, inp.lng) && !inRiyadhCityBox(inp.lat, inp.lng)) city = false;
+  // No usable pin: a title naming a Riyadh-province town (and no Riyadh-city district) overrides "الرياض".
+  if (city && !inSaudi(inp.lat, inp.lng) && inp.text) {
+    const towns = citiesInText(inp.text).filter((c) => isRiyadhRegionTown(c) && !isRiyadhDistrict(c));
+    if (towns.length && !citiesInText(inp.text).some(isRiyadhCity) && !districtsInText(inp.text).some((d) => normalizeArabic(inp.text).includes('حي ' + normalizeArabic(d)))) city = false;
+  }
 
   const cityKeys = new Set(cities.map(placeKey));
   const isMultiLocation = cityKeys.size > 1;
