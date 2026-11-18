@@ -6,7 +6,7 @@
  */
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { classifyGeo, type GeoScope } from '@/lib/geo';
+import { classifyGeo, inRiyadhCityBox, inSaudi, type GeoScope } from '@/lib/geo';
 import { auctionFieldsFrom } from '@/lib/ingest';
 import { uniq } from '@/lib/normalize';
 
@@ -31,6 +31,21 @@ const numOrNull = (d: Prisma.Decimal | null) => (d == null ? null : Number(d));
   const auctionIds = uniq(changed.map((c) => c.a.listing.auction.id));
   console.log(`Auctions involved (مزادات): ${auctionIds.length}`);
   for (const id of auctionIds) { const au = changed.find((c) => c.a.listing.auction.id === id)!.a.listing.auction; console.log(`  - ${au.title}  [${au.status}, now: ${au.geoScope}]`); }
+
+  // WHY: auctions still marked Riyadh city although at least one of their plots has a pin outside the city
+  const outIds = uniq(assets.filter((a) => inSaudi(a.latitude, a.longitude) && !inRiyadhCityBox(a.latitude, a.longitude) && a.listing.auction.geoScope === 'riyadh_city').map((a) => a.listing.auction.id));
+  if (outIds.length) {
+    console.log(`\nWHY still Riyadh city (لماذا ما زالت "مدينة الرياض"): ${outIds.length} auctions`);
+    for (const id of outIds) {
+      const au = await prisma.auction.findUnique({ where: { id }, select: { title: true, listings: { select: { sourceId: true, city: true, cities: true, region: true, assets: { select: { title: true, city: true, district: true, latitude: true, longitude: true, geoScope: true } } } } } });
+      console.log(`  ■ ${au?.title}`);
+      for (const l of au?.listings ?? []) {
+        console.log(`     · ${l.sourceId}: city=${l.city ?? '-'} cities=[${l.cities.join(', ')}] region=${l.region ?? '-'} assets=${l.assets.length}`, count(l.assets, (x) => x.geoScope));
+        for (const x of l.assets.filter((x) => x.geoScope === 'riyadh_city').slice(0, 3))
+          console.log(`        riyadh_city plot: ${x.title} | city=${x.city ?? '-'} district=${x.district ?? '-'} pin=${x.latitude != null ? `${x.latitude.toFixed(3)},${x.longitude?.toFixed(3)}` : 'none'}`);
+      }
+    }
+  }
 
   if (!FIX) { console.log('\nRead-only. Nothing was changed.\n'); await prisma.$disconnect(); return; }
 
