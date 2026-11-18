@@ -50,8 +50,11 @@ const numOrNull = (d: Prisma.Decimal | null) => (d == null ? null : Number(d));
   if (!FIX) { console.log('\nRead-only. Nothing was changed.\n'); await prisma.$disconnect(); return; }
 
   for (const { a, to } of changed) await prisma.asset.update({ where: { id: a.id }, data: { geoScope: to } });
+  // also re-check every auction that has a plot pinned outside Riyadh city (catches labels left by older rules)
+  const recheck = uniq([...auctionIds, ...assets.filter((a) => inSaudi(a.latitude, a.longitude) && !inRiyadhCityBox(a.latitude, a.longitude)).map((a) => a.listing.auction.id)]);
   const after: Record<string, number> = {};
-  for (const id of auctionIds) {
+  let auctionsChanged = 0;
+  for (const id of recheck) {
     const listings = await prisma.listing.findMany({ where: { auctionId: id }, orderBy: { lastSuccessAt: 'desc' }, include: { assets: { select: { city: true, geoScope: true, propertyType: true, usage: true, areaSqm: true, startPrice: true, deposit: true } } } });
     if (!listings.length) continue;
     const m = auctionFieldsFrom(listings.map((l) => ({
@@ -59,9 +62,12 @@ const numOrNull = (d: Prisma.Decimal | null) => (d == null ? null : Number(d));
       assetCities: uniq<string>(l.assets.map((x) => x.city)), geoScopes: l.assets.map((x) => x.geoScope as GeoScope),
       assetInfo: l.assets.map((x) => ({ propertyType: x.propertyType, usage: x.usage, areaSqm: x.areaSqm, startPrice: numOrNull(x.startPrice), deposit: numOrNull(x.deposit) })),
     })));
+    const cur = await prisma.auction.findUnique({ where: { id }, select: { geoScope: true, hasRiyadhCity: true, hasRiyadhRegion: true } });
+    if (cur && cur.geoScope === m.geoScope && cur.hasRiyadhCity === m.hasRiyadhCity && cur.hasRiyadhRegion === m.hasRiyadhRegion) continue;
     await prisma.auction.update({ where: { id }, data: { geoScope: m.geoScope, hasRiyadhCity: m.hasRiyadhCity, hasRiyadhRegion: m.hasRiyadhRegion } });
     after[m.geoScope] = (after[m.geoScope] ?? 0) + 1;
+    auctionsChanged++;
   }
-  console.log(`\nFIXED (تم التصحيح): ${changed.length} assets, ${auctionIds.length} auctions → now`, after, '\n');
+  console.log(`\nFIXED (تم التصحيح): ${changed.length} assets, ${auctionsChanged} auctions → now`, after, '\n');
   await prisma.$disconnect();
 })();

@@ -78,5 +78,8 @@ describe('merge of listings into one auction', () => {
     expect(m.geoScope).toBe('riyadh_region');
     const n = auctionFieldsFrom([{ ...base, cities: ['الرياض'], geoScopes: ['riyadh_region', 'riyadh_city'] }]);
     expect(n.geoScope).toBe('riyadh_city');
+    const o = auctionFieldsFrom([{ ...base, cities: ['الرياض'], assetCities: ['الرياض'], geoScopes: ['other', 'other'] }]);
+    expect(o.geoScope).toBe('other');
+    expect(o.hasRiyadhCity).toBe(false);
   });
 });

@@ -199,13 +199,14 @@ export function auctionFieldsFrom(ls: MergeInput[]) {
   // A listing with classified assets is located by its assets (they use pins); the rest by their own names.
   const perListing = ls.map((l) => {
     const known = (l.geoScopes ?? []).filter((s) => s !== 'unknown');
-    if (known.length) return { city: known.includes('riyadh_city'), region: known.includes('riyadh_city') || known.includes('riyadh_region') };
+    if (known.length) return { city: known.includes('riyadh_city'), region: known.includes('riyadh_city') || known.includes('riyadh_region'), other: known.includes('other') };
     const g = classifyGeo({ cities: l.cities, regions: [l.region, ...(l.regions ?? [])], districts: [l.district, ...(l.districts ?? [])] });
-    return { city: g.hasRiyadhCity, region: g.hasRiyadhRegion };
+    return { city: g.hasRiyadhCity, region: g.hasRiyadhRegion, other: g.scope === 'other' };
   });
   const hasRiyadhCity = perListing.some((x) => x.city);
   const hasRiyadhRegion = hasRiyadhCity || perListing.some((x) => x.region);
-  const scope: GeoScope = hasRiyadhCity ? 'riyadh_city' : hasRiyadhRegion ? 'riyadh_region' : geo.scope;
+  // not Riyadh: "other" when anything is located; never fall back to the (possibly wrong) "الرياض" name
+  const scope: GeoScope = hasRiyadhCity ? 'riyadh_city' : hasRiyadhRegion ? 'riyadh_region' : perListing.some((x) => x.other) ? 'other' : 'unknown';
   const props = propertySummary(first('category') as string, first('title') as string, ls.flatMap((l) => l.assetInfo ?? []));
   const statuses = ls.map((l) => l.status);
   const status = statuses.includes('live') ? 'live' : (first('status') as string) ?? 'upcoming';
