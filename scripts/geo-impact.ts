@@ -9,6 +9,7 @@ import { prisma } from '@/lib/db';
 import { classifyGeo, inRiyadhCityBox, inSaudi, type GeoScope } from '@/lib/geo';
 import { auctionFieldsFrom } from '@/lib/ingest';
 import { uniq } from '@/lib/normalize';
+import { unreliableCity } from '@/connectors/infath';
 
 const FIX = process.argv.includes('--fix');
 const numOrNull = (d: Prisma.Decimal | null) => (d == null ? null : Number(d));
@@ -19,7 +20,11 @@ const numOrNull = (d: Prisma.Decimal | null) => (d == null ? null : Number(d));
       listing: { select: { sourceId: true, auction: { select: { id: true, title: true, geoScope: true, status: true } } } } },
   });
   const changed = assets
-    .map((a) => ({ a, to: classifyGeo({ cities: [a.city], regions: [a.region], districts: [a.district], lat: a.latitude, lng: a.longitude, text: a.title }).scope }))
+    .map((a) => {
+      // same rule as the infath connector now applies when collecting: a copied "الرياض" without pin/district is ignored
+      const city = a.listing.sourceId === 'infath' && unreliableCity(a) ? null : a.city;
+      return { a, to: classifyGeo({ cities: [city], regions: [a.region], districts: [a.district], lat: a.latitude, lng: a.longitude, text: a.title }).scope };
+    })
     .filter(({ a, to }) => to !== a.geoScope);
   const count = <T,>(xs: T[], f: (x: T) => string) => xs.reduce<Record<string, number>>((m, x) => ((m[f(x)] = (m[f(x)] ?? 0) + 1), m), {});
 
@@ -33,7 +38,9 @@ const numOrNull = (d: Prisma.Decimal | null) => (d == null ? null : Number(d));
   for (const id of auctionIds) { const au = changed.find((c) => c.a.listing.auction.id === id)!.a.listing.auction; console.log(`  - ${au.title}  [${au.status}, now: ${au.geoScope}]`); }
 
   // WHY: auctions still marked Riyadh city although at least one of their plots has a pin outside the city
-  const outIds = uniq(assets.filter((a) => inSaudi(a.latitude, a.longitude) && !inRiyadhCityBox(a.latitude, a.longitude) && a.listing.auction.geoScope === 'riyadh_city').map((a) => a.listing.auction.id));
+  // (auctions with a plot pinned outside the city, marked Riyadh city, but with NO plot pinned inside the city)
+  const pinnedIn = new Set(assets.filter((a) => inRiyadhCityBox(a.latitude, a.longitude)).map((a) => a.listing.auction.id));
+  const outIds = uniq(assets.filter((a) => inSaudi(a.latitude, a.longitude) && !inRiyadhCityBox(a.latitude, a.longitude) && a.listing.auction.geoScope === 'riyadh_city' && !pinnedIn.has(a.listing.auction.id)).map((a) => a.listing.auction.id));
   if (outIds.length) {
     console.log(`\nWHY still Riyadh city (لماذا ما زالت "مدينة الرياض"): ${outIds.length} auctions`);
     for (const id of outIds) {

@@ -80,3 +80,13 @@ describe('infath map links', () => {
     expect(coordsFromMapsUrl('https://www.google.com/maps/place/%E0%A4%A/@24.6,46.7,17z')).toEqual({ lat: 24.6, lng: 46.7 });
   });
 });
+
+describe('old-site city copied from the auction card', async () => {
+  const { unreliableCity } = await import('@/connectors/infath');
+  it('ignores "الرياض" only without pin and district', () => {
+    expect(unreliableCity({ city: 'الرياض', district: null, latitude: null })).toBe(true);
+    expect(unreliableCity({ city: 'الرياض', district: 'الملقا', latitude: null })).toBe(false);
+    expect(unreliableCity({ city: 'الرياض', district: null, latitude: 24.7 })).toBe(false);
+    expect(unreliableCity({ city: 'الدمام', district: null, latitude: null })).toBe(false);
+  });
+});

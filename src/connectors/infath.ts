@@ -12,6 +12,7 @@
  *             description (district), Google Maps short link (coordinates). No per-asset opening price.
  */
 import * as cheerio from 'cheerio';
+import { isRiyadhCity } from '@/lib/geo';
 import { getText } from '@/lib/http';
 import { cleanText, mapCategory, mapPropertyType, mapUsage, parseArea, parseMoney, uniq, type Status } from '@/lib/normalize';
 import { parseRiyadhLocal } from '@/lib/time';
@@ -121,6 +122,11 @@ export function coordsFromMapsUrl(url?: string | null): { lat: number; lng: numb
 }
 
 export interface InfathAsset extends RawAsset { mapUrl: string | null }
+
+/** "الرياض" on an old-site plot with no pin and no district (copied from the auction card, often wrong). */
+export function unreliableCity(a: Pick<RawAsset, 'city' | 'district' | 'latitude'>): boolean {
+  return a.latitude == null && !a.district && isRiyadhCity(a.city);
+}
 
 export function parseInfathDetail(html: string, auctionUrl: string): InfathAsset[] {
   const $ = cheerio.load(html);
@@ -268,7 +274,9 @@ export const infath: Connector = {
             if (c) { asset.latitude = c.lat; asset.longitude = c.lng; }
           } catch { /* no pin for this asset */ }
         }
-        a.assets = assets.map(({ mapUrl: _m, ...rest }) => rest);
+        // The old site repeats the auction card's city ("الرياض") on every plot, even for الجوف/نجران auctions.
+        // Without a pin or a district that name is not evidence of where the plot is → leave the plot unlocated.
+        a.assets = assets.map(({ mapUrl: _m, ...rest }) => (unreliableCity(rest) ? { ...rest, city: null } : rest));
         log.debug({ auction: a.externalId, assets: assets.length, withPin: assets.filter((x) => x.latitude != null).length }, 'infath detail');
         if (a.assets.length && !a.assetCount) a.assetCount = a.assets.length;
         a.cities = uniq<string>([...(a.cities ?? []), ...a.assets.map((x) => x.city)]);
