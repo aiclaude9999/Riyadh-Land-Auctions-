@@ -1,5 +1,7 @@
 # Mazad Radar (رادار المزادات) — notes for Claude
 
+> Separate prototype in `meetup-point/` (Riyadh Meetup Point): its own spec in `meetup-point/CLAUDE.md`; not part of this app or its deploy.
+
 **Read `docs/PROJECT_HISTORY.md` first** — full history, decisions, live setup and open to-dos. Code map with diagrams: `docs/ARCHITECTURE.md`.
 
 ## Essentials
