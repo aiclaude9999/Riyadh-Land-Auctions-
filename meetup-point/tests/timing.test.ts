@@ -25,6 +25,9 @@ describe('metroRunning', () => {
   it('runs during the day, not at 3 am, and starts late on Friday', () => {
     expect(metroRunning(r('2026-11-18T09:00:00'))).toBe(true);
     expect(metroRunning(r('2026-11-18T03:00:00'))).toBe(false);
+    expect(metroRunning(r('2026-11-18T05:20:00'))).toBe(false);
+    expect(metroRunning(r('2026-11-18T05:40:00'))).toBe(true); // opens 5:30 Sat–Thu
+    expect(metroRunning(r('2026-11-18T23:50:00'))).toBe(true);
     expect(metroRunning(r('2026-11-20T08:00:00'))).toBe(false); // Friday before 10:00
     expect(metroRunning(r('2026-11-20T11:00:00'))).toBe(true);
   });

@@ -4,8 +4,8 @@
  * - Typical traffic (free mode only; Google mode uses live traffic): car times without traffic are
  *   multiplied by a factor per hour. Based on TomTom Traffic Index 2025 for Riyadh: a 10 km drive
  *   takes ~12 min at night, ~18 min around 8 am and ~24 min around 4–5 pm on working days.
- * - Metro hours: common published timings (Sat–Thu ~6:00–24:00, Fri from 10:00). Not confirmed with
- *   the operator; Ramadan and holidays differ. Configurable below.
+ * - Metro hours: as announced by Riyadh Public Transport (@RiyadhTransport, the operator): Sat–Thu
+ *   5:30–24:00, Fri 10:00–24:00. Ramadan and holidays differ (not handled). Configurable below.
  * - Prayer: times from the `adhan` library (Umm al-Qura method). Shops may legally stay open since 2021,
  *   but some cafés/restaurants still pause service around prayer, so this is a gentle warning only.
  */
@@ -45,7 +45,7 @@ export function trafficFactor(at: Date): number {
 
 export const METRO_HOURS = {
   /** Sat–Thu */
-  normal: { open: 6 * 60, close: 24 * 60 },
+  normal: { open: 5 * 60 + 30, close: 24 * 60 },
   /** Friday */
   friday: { open: 10 * 60, close: 24 * 60 },
 };

@@ -82,7 +82,7 @@ export const en = {
   typicalTraffic: 'typical traffic',
   trafficNote: (when: string, factor: string) => `Car times include typical Riyadh traffic for ${when} (×${factor} vs an empty road, from TomTom 2025 averages), not live traffic.`,
   prayerWarn: (name: string, time: string) => `You'd arrive around ${name} prayer (${time}). Some places pause service for about 20–30 min.`,
-  metroWarn: (names: string) => `Metro may not be running for ${names} at this time (usually Sat–Thu 6:00–24:00, Fri from 10:00; Ramadan differs). Check the Darb app.`,
+  metroWarn: (names: string) => `Metro may not be running for ${names} at this time (Sat–Thu 5:30–24:00, Fri 10:00–24:00; Ramadan differs). Check the Darb app.`,
   zoneToggle: 'Show where everyone is within',
   zoneLegend: 'Green area: nobody travels longer than this (approximate).',
   prayers: { Fajr: 'Fajr', Dhuhr: 'Dhuhr', Asr: 'Asr', Maghrib: 'Maghrib', Isha: 'Isha' } as Record<string, string>,
