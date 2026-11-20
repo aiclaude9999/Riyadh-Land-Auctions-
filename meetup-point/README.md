@@ -7,6 +7,10 @@ Spec and build order: [`CLAUDE.md`](./CLAUDE.md). This folder is a separate app;
 
 ## Run it on your computer
 
+**Windows, easiest:** open the `meetup-point` folder and double-click `start-windows.bat`. Keep the black window open; the browser opens at http://localhost:3000.
+
+Manual steps:
+
 1. Install Node.js 22 (nodejs.org → "LTS").
 2. In a terminal: `cd meetup-point` → `npm install`.
 3. Copy `.env.example` to `.env.local` and fill in the keys (see below).
