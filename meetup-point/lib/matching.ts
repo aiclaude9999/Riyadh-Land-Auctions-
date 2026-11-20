@@ -24,6 +24,8 @@ export interface Match {
   against: number;
   people: number;
   score: number;
+  /** every metro user gets there without changing lines and with a short last walk */
+  metroFriendly?: boolean;
 }
 
 export function tasteMatch(v: Venue, tastes: Taste[], metroMeters: number | null, prefs: Preferences): Match {

@@ -15,8 +15,10 @@ export interface RecommendRequest {
   venueIds?: string[];
   /** fairness over time: >1 for people who travelled more last times (their minutes count more) */
   weights?: number[];
-  /** walking multiplier for metro users (heat); default from scoring params */
+  /** walking multiplier for metro users (heat); default: from the weather at that time */
   heatFactor?: number;
+  /** Ramadan mode: Ramadan traffic pattern, metro hours and iftar warnings */
+  ramadan?: boolean;
 }
 
 export interface Filters {
@@ -33,6 +35,8 @@ export interface VenueWarnings {
   metroClosed?: number[];
   /** people (index) who would walk > 20 min to the first station: suggest car/taxi */
   longWalk?: number[];
+  /** Ramadan: arriving in the hour around iftar */
+  iftar?: boolean;
 }
 
 export type ResultVenue = ScoredVenue & { warnings: VenueWarnings; match: import('./matching').Match; openAtArrival?: boolean | null };
@@ -66,6 +70,13 @@ export interface RecommendResponse {
     metroWaitMin?: number;
     /** learned correction factors from real trip reports */
     calibration?: { car: number; metro: number };
+    /** temperature used for heat-aware walking */
+    heat?: import('./weather').Heat;
+    ramadan?: boolean;
+    /** a departure time that would make the fairest place's longest trip clearly shorter */
+    betterTime?: { departAt: string; maxEta: number; saves: number };
+    /** longest trip of the fairest place for other departure times (for the "best time" strip) */
+    timeOptions?: { departAt: string; maxEta: number; blocked?: 'metro' | 'prayer' }[];
     candidates: number;
     notes: string[];
   };

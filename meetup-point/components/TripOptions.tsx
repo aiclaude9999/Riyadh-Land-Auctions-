@@ -14,6 +14,7 @@ export interface TripState {
   departMinutes: number;
   nearMetro: boolean;
   food: CuisineGroup | null;
+  ramadan?: boolean;
 }
 
 export function initialTrip(now = new Date()): TripState {
@@ -95,6 +96,14 @@ export default function TripOptions({ trip, onChange }: { trip: TripState; onCha
           </span>
         </div>
       )}
+
+      <div className="flex items-center gap-2">
+        <span className="w-16 shrink-0 text-xs font-medium text-slate-500">{t.ramadanLabel}</span>
+        <label className="flex cursor-pointer items-center gap-1.5 text-sm">
+          <input type="checkbox" checked={!!trip.ramadan} onChange={(e) => onChange({ ...trip, ramadan: e.target.checked })} className="accent-brand" />
+          🌙 {t.ramadanMode}
+        </label>
+      </div>
 
       <div className="flex items-center gap-2">
         <span className="w-16 shrink-0 text-xs font-medium text-slate-500">{t.filtersLabel}</span>

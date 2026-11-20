@@ -13,7 +13,8 @@ import { venueGroups, CUISINE_GROUPS, type CuisineGroup } from './cuisine';
 import { haversineMeters } from './geo';
 import { nearestStations } from './metro';
 import type { Filters, RecommendRequest, RecommendResponse, ResultVenue, Zone } from './recommendTypes';
-import { directionFactor, metroRunning, metroWaitMin, prayerOverlap, riyadhClock, trafficFactor } from './timing';
+import { directionFactor, metroRunning, metroRunningRamadan, metroWaitMin, nearIftar, prayerOverlap, ramadanTrafficFactor, riyadhClock, trafficFactor } from './timing';
+import type { Heat } from './weather';
 import { rankStyles, tasteMatch, type Match } from './matching';
 import { isOpen } from './openingHours';
 import { DEFAULT_SCORING, pickCandidates, scoreVenues, searchArea, type Eta, type ScoredVenue, type ScoringParams } from './scoring';
@@ -36,6 +37,8 @@ export interface RecommendDeps {
   footMinutes?: (from: LatLng, to: LatLng) => Promise<number>;
   /** learned corrections from people's real trip times (lib/calibration.server.ts) */
   calibration?: { car: number; metro: number };
+  /** temperature → walking heat factor at a time (weather forecast or typical) */
+  heat?: (at: Date) => Promise<Heat>;
 }
 
 export const NEAR_METRO_M = 600;
@@ -83,8 +86,9 @@ export function parseRequest(body: unknown): RecommendRequest {
   const weights = Array.isArray(b.weights) && b.weights.length === people.length ? b.weights.map((w) => Math.min(1.3, Math.max(0.8, Number(w) || 1))) : undefined;
   const heat = Number(b.heatFactor);
   const heatFactor = Number.isFinite(heat) ? Math.min(2.5, Math.max(1, heat)) : undefined;
+  const ramadan = b.ramadan === true;
   const venueIds = Array.isArray(b.venueIds) ? b.venueIds.filter((x): x is string => typeof x === 'string' && x.length < 80).slice(0, 3) : [];
-  return { people, venueType, ...(departAt ? { departAt } : {}), prefs, filters, ...(venueIds.length ? { venueIds } : {}), ...(weights ? { weights } : {}), ...(heatFactor ? { heatFactor } : {}) };
+  return { people, venueType, ...(departAt ? { departAt } : {}), prefs, filters, ...(venueIds.length ? { venueIds } : {}), ...(weights ? { weights } : {}), ...(heatFactor ? { heatFactor } : {}), ...(ramadan ? { ramadan } : {}) };
 }
 
 /** OSRM's public table accepts ~100 points per call: split the destinations into batches. */
@@ -159,7 +163,9 @@ export async function recommend(req: RecommendRequest, deps: RecommendDeps): Pro
   const arriveClock = riyadhClock(new Date(leaveAt.getTime() + 30 * 60_000));
   const allowed = (v: Venue) => allowedByPrefs(v, prefs) && passesFilters(v, filters, deps.stations) && isOpen(v.openingHours, arriveClock.day, arriveClock.minutes) !== false;
   // free mode has no live traffic: scale road times by the typical slowdown at that hour
-  const factor = deps.google ? 1 : trafficFactor(leaveAt);
+  const trafficAt = (t: Date) => (req.ramadan ? ramadanTrafficFactor(t) : trafficFactor(t));
+  const metroOpen = (t: Date) => (req.ramadan ? metroRunningRamadan(t) : metroRunning(t));
+  const factor = deps.google ? 1 : trafficAt(leaveAt);
   const calib = deps.calibration ?? { car: 1, metro: 1 };
   const wait = metroWaitMin(leaveAt);
   const metroOpts = (i: number) => ({ waitMin: wait, transferMin: 2 + wait, access: req.people[i].access ?? 'walk', carMinutes: (a: LatLng, b: LatLng) => estimateCarMinutes(a, b) * factor });
@@ -200,6 +206,7 @@ export async function recommend(req: RecommendRequest, deps: RecommendDeps): Pro
     candidates: venues.length,
     metroWaitMin: wait,
     calibration: calib,
+    ...(req.ramadan ? { ramadan: true } : {}),
     notes,
   };
   if (!venues.length) return { results: [], styles: { fair: [], quick: [], best: [] }, meta, zone };
@@ -210,6 +217,7 @@ export async function recommend(req: RecommendRequest, deps: RecommendDeps): Pro
   const carIdx = req.people.flatMap((x, i) => (x.mode === 'car' ? [i] : []));
   const metroIdx = req.people.flatMap((x, i) => (x.mode === 'metro' ? [i] : []));
 
+  const carRaw = new Map<string, number>(); // `${venueId}|${person}` → minutes on an empty road
   if (carIdx.length) {
     let minutes: (number | null)[][] | null = null;
     try {
@@ -226,6 +234,7 @@ export async function recommend(req: RecommendRequest, deps: RecommendDeps): Pro
       const from = req.people[pi].location;
       venues.forEach((v, vi) => {
         const m = minutes?.[row]?.[vi];
+        carRaw.set(`${v.id}|${pi}`, m ?? estimateCarMinutes(from, v.location));
         // typical traffic × direction (into the centre in the morning / out in the afternoon) × learned correction
         const adj = deps.google ? calib.car : factor * directionFactor(from, v.location, leaveAt) * calib.car;
         etas[vi][pi] = m != null ? { minutes: m * adj, source: 'api', walkMinutes: 0 } : { minutes: estimateCarMinutes(from, v.location) * adj, source: 'estimated', walkMinutes: 0 };
@@ -262,7 +271,10 @@ export async function recommend(req: RecommendRequest, deps: RecommendDeps): Pro
   }
 
   // Stage 4: score; then make the best few exact with real walking routes and score them again
-  const heat = req.heatFactor ?? p.heatFactor;
+  // heat-aware walking: forecast (or typical) temperature at that time
+  const weather = deps.heat ? await deps.heat(leaveAt).catch(() => null) : null;
+  if (weather) meta.heat = weather;
+  const heat = req.heatFactor ?? weather?.factor ?? p.heatFactor;
   const params = { ...p, heatFactor: heat, topN: Math.max(p.topN, 10) };
   let scored = scoreVenues(venues, travellers, etas, deps.stations, params, (v) => prefBonus(v, prefs));
   if (deps.footMinutes && metroIdx.length) {
@@ -278,7 +290,15 @@ export async function recommend(req: RecommendRequest, deps: RecommendDeps): Pro
   }
   // phase 2: how well each place suits the group, and three rankings (fair / quick / best match)
   const tastes = req.people.map((x) => ({ likes: x.likes, avoids: x.avoids }));
-  const withMatch = scored.map((r) => ({ ...r, match: tasteMatch(r.venue, tastes, req.people.some((x) => x.mode === 'metro') ? (r.nearStation?.meters ?? 2000) : null, prefs) }));
+  const withMatch = scored.map((r) => {
+    const match = tasteMatch(r.venue, tastes, req.people.some((x) => x.mode === 'metro') ? (r.nearStation?.meters ?? 2000) : null, prefs);
+    // metro-friendly: every metro user rides without changing lines and walks ≤ 6 min at the end
+    const metroUsers = r.etas.filter((e) => e.mode === 'metro');
+    const friendly =
+      metroUsers.length > 0 &&
+      metroUsers.every((e) => !e.detail?.walkOnly && (e.detail?.transfers ?? 1) === 0 && (e.detail?.legs?.at(-1)?.minutes ?? 99) <= 6);
+    return { ...r, match: friendly ? { ...match, metroFriendly: true, score: Math.min(100, match.score + 5) } : match };
+  });
   const styles = rankStyles(withMatch, p.topN);
   const keep = new Set([...styles.fair, ...styles.quick, ...styles.best]);
   scored = withMatch.filter((r) => keep.has(r.venue.id));
@@ -289,17 +309,71 @@ export async function recommend(req: RecommendRequest, deps: RecommendDeps): Pro
     const mins = r.etas.map((e) => e.minutes);
     const prayer = prayerOverlap(at(Math.min(...mins)), at(Math.max(...mins)));
     const metroClosed = r.etas
-      .filter((e) => e.mode === 'metro' && !e.detail?.walkOnly && (!metroRunning(leaveAt) || !metroRunning(at(e.minutes))))
+      .filter((e) => e.mode === 'metro' && !e.detail?.walkOnly && (!metroOpen(leaveAt) || !metroOpen(at(e.minutes))))
       .map((e) => e.person);
     const longWalk = r.etas.filter((e) => e.mode === 'metro' && e.detail?.legs?.[0]?.kind === 'walk' && !e.detail.walkOnly && e.detail.legs[0].minutes > 20).map((e) => e.person);
     const arrive = riyadhClock(at(Math.max(...mins)));
     return {
       ...r,
       openAtArrival: isOpen(r.venue.openingHours, arrive.day, arrive.minutes),
-      warnings: { ...(prayer ? { prayer } : {}), ...(metroClosed.length ? { metroClosed } : {}), ...(longWalk.length ? { longWalk } : {}) },
+      warnings: {
+        ...(prayer ? { prayer } : {}),
+        ...(metroClosed.length ? { metroClosed } : {}),
+        ...(longWalk.length ? { longWalk } : {}),
+        ...(req.ramadan && nearIftar(at(Math.max(...mins))) ? { iftar: true } : {}),
+      },
     };
   });
+  // phase 3: would another departure time be clearly better for the fairest place?
+  const top = results.find((r) => r.venue.id === styles.fair[0]);
+  if (top && !deps.google) {
+    const opts = timeOptions(top, req, deps, leaveAt, trafficAt, metroOpen, calib, carRaw);
+    meta.timeOptions = opts;
+    const best = opts.filter((o) => !o.blocked).sort((a, b) => a.maxEta - b.maxEta)[0];
+    if (best && top.maxEta - best.maxEta >= 5) meta.betterTime = { departAt: best.departAt, maxEta: best.maxEta, saves: Math.round(top.maxEta - best.maxEta) };
+  }
   return { results, styles, meta, zone };
+}
+
+/**
+ * Longest trip of one place for departures from 1 h earlier to 3 h later (every 30 min, future only):
+ * car = empty-road minutes × traffic at that time × direction × learned correction; metro = network
+ * estimate with that time's waits. Times when the metro is closed or the arrival hits a prayer pause
+ * are marked.
+ */
+function timeOptions(
+  top: ResultVenue,
+  req: RecommendRequest,
+  deps: RecommendDeps,
+  leaveAt: Date,
+  trafficAt: (t: Date) => number,
+  metroOpen: (t: Date) => boolean,
+  calib: { car: number; metro: number },
+  carRaw: Map<string, number>,
+): NonNullable<RecommendResponse['meta']['timeOptions']> {
+  const now = deps.now?.() ?? new Date();
+  const out: NonNullable<RecommendResponse['meta']['timeOptions']> = [];
+  for (const off of [-60, -30, 0, 30, 60, 90, 120, 180]) {
+    const t = new Date(leaveAt.getTime() + off * 60_000);
+    if (t.getTime() < now.getTime() - 60_000) continue;
+    let worst = 0;
+    let blocked: 'metro' | 'prayer' | undefined;
+    req.people.forEach((x, i) => {
+      let m: number;
+      if (x.mode === 'car') {
+        m = (carRaw.get(`${top.venue.id}|${i}`) ?? estimateCarMinutes(x.location, top.venue.location)) * trafficAt(t) * directionFactor(x.location, top.venue.location, t) * calib.car;
+      } else {
+        const w = metroWaitMin(t);
+        const est = createMetroEstimator(deps.stations, { waitMin: w, transferMin: 2 + w, access: x.access ?? 'walk', carMinutes: (a, b) => estimateCarMinutes(a, b) * trafficAt(t) }).from(x.location)(top.venue.location);
+        m = est.minutes * calib.metro;
+        if (!est.walkOnly && (!metroOpen(t) || !metroOpen(new Date(t.getTime() + m * 60_000)))) blocked = 'metro';
+      }
+      worst = Math.max(worst, m);
+    });
+    if (!blocked && prayerOverlap(new Date(t.getTime() + (worst - 10) * 60_000), new Date(t.getTime() + worst * 60_000))) blocked = 'prayer';
+    out.push({ departAt: t.toISOString(), maxEta: Math.round(worst), ...(blocked ? { blocked } : {}) });
+  }
+  return out;
 }
 
 /**

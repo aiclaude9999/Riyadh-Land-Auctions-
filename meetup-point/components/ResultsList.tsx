@@ -33,11 +33,17 @@ interface Props {
   voting?: { counts: Record<string, number>; mine: string | null; onVote: (venueId: string | null) => void };
   style: Style;
   onStyle: (s: Style) => void;
+  /** best-time strip: search again leaving at this time */
+  onUseTime?: (iso: string) => void;
+  onWeGo: (venueId: string) => void;
+  /** venue names already saved as past meetups (to show "saved") */
+  savedIds: string[];
+  fairnessNames: string[];
 }
 
 const fmt = (m: number) => String(Math.round(m));
 
-export default function ResultsList({ response, people, stale, selectedId, onSelect, routes, onShowRoute, onZoom, prefs, onToggleFavourite, onHide, voting, style, onStyle }: Props) {
+export default function ResultsList({ response, people, stale, selectedId, onSelect, routes, onShowRoute, onZoom, prefs, onToggleFavourite, onHide, voting, style, onStyle, onUseTime, onWeGo, savedIds, fairnessNames }: Props) {
   const t = useT();
   const n = useName();
   const { locale } = useLocale();
@@ -79,6 +85,44 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
         ))}
       </div>
       <p className="mb-2 text-xs text-slate-500">{style === 'fair' ? t.styleFairHelp : style === 'quick' ? t.styleQuickHelp : t.styleBestHelp}</p>
+
+      {meta.betterTime && (
+        <div className="mb-2 rounded-lg bg-indigo-50 p-2 text-xs text-indigo-900">
+          {t.betterTime(riyadhTimeLabel(new Date(meta.betterTime.departAt)), meta.betterTime.maxEta, meta.betterTime.saves)}{' '}
+          {onUseTime && (
+            <button type="button" className="font-semibold underline" onClick={() => onUseTime(meta.betterTime!.departAt)}>
+              {t.useThisTime}
+            </button>
+          )}
+        </div>
+      )}
+      {meta.timeOptions && meta.timeOptions.length > 1 && (
+        <div className="mb-2">
+          <p className="text-[11px] text-slate-500">{t.timeStrip}</p>
+          <div className="mt-1 flex gap-1 overflow-x-auto pb-1">
+            {meta.timeOptions.map((o) => {
+              const current = Math.abs(Date.parse(o.departAt) - Date.parse(meta.leaveAt)) < 60_000;
+              return (
+                <button
+                  key={o.departAt}
+                  type="button"
+                  disabled={!onUseTime || current}
+                  onClick={() => onUseTime?.(o.departAt)}
+                  title={o.blocked === 'metro' ? t.blockedMetro : o.blocked === 'prayer' ? t.blockedPrayer : undefined}
+                  className={`shrink-0 rounded-md border px-2 py-1 text-[11px] leading-tight ${current ? 'border-brand bg-brand-light font-semibold' : 'border-slate-200 bg-white hover:border-brand'} ${o.blocked === 'metro' ? 'opacity-50' : ''}`}
+                >
+                  <span className="block tabular-nums">{riyadhTimeLabel(new Date(o.departAt))}</span>
+                  <span className="block">
+                    {o.blocked === 'metro' ? '🚇✕ ' : o.blocked === 'prayer' ? '🕌 ' : ''}
+                    {t.minutes(o.maxEta)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {fairnessNames.length > 0 && <p className="mb-2 rounded-lg bg-violet-50 p-2 text-xs text-violet-900">⚖️ {t.fairnessNote(fairnessNames.join(', '))}</p>}
       <ol className="space-y-2">
         {results.map((r) => {
           const selected = r.venue.id === selectedId;
@@ -120,6 +164,7 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
                   <span className={`rounded-full px-2 py-0.5 ${r.match.against ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-800'}`}>👥 {t.fits(r.match.fits, r.match.people)}</span>
                 )}
                 {r.match && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{t.placeScore(r.match.score)}</span>}
+                {r.match?.metroFriendly && <span className="rounded-full bg-sky-50 px-2 py-0.5 text-sky-800">🚇 {t.noLineChange}</span>}
                 {r.openAtArrival === false && <span className="rounded-full bg-rose-50 px-2 py-0.5 text-rose-700">⚠️ {t.closedAtArrival}</span>}
                 {r.openAtArrival === true && <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-800">🕒 {t.openAtArrival}</span>}
               </div>
@@ -141,11 +186,12 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
                 </div>
               )}
 
-              {(r.warnings.prayer || r.warnings.metroClosed || r.warnings.longWalk) && (
+              {(r.warnings.prayer || r.warnings.metroClosed || r.warnings.longWalk || r.warnings.iftar) && (
                 <div className="mt-2 space-y-1 text-xs">
                   {r.warnings.prayer && (
                     <p className="rounded-md bg-sky-50 px-2 py-1 text-sky-900">🕌 {t.prayerWarn(t.prayers[r.warnings.prayer.name], riyadhTimeLabel(new Date(r.warnings.prayer.time)))}</p>
                   )}
+                  {r.warnings.iftar && <p className="rounded-md bg-amber-50 px-2 py-1 text-amber-900">🌙 {t.iftarWarn}</p>}
                   {r.warnings.longWalk && (
                     <p className="rounded-md bg-amber-50 px-2 py-1 text-amber-900">🚶 {t.longWalkWarn(r.warnings.longWalk.map((i) => displayName(people[i], i, t.namePlaceholder)).join(', '))}</p>
                   )}
@@ -173,7 +219,14 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
                           </span>
                         )}
                       </span>
-                      <span className="shrink-0 tabular-nums">{t.minutes(e.minutes)}</span>
+                      <span className="shrink-0 text-end tabular-nums">
+                        {t.minutes(e.minutes)}
+                        {(() => {
+                          // everyone arrives together: leave at (arrival − own trip)
+                          const leave = Date.parse(meta.leaveAt) + (r.maxEta - e.minutes) * 60_000;
+                          return <span className="block text-[10px] text-slate-500">{leave <= Date.now() + 60_000 ? t.leaveNow : t.leaveAt(riyadhTimeLabel(new Date(leave)))}</span>;
+                        })()}
+                      </span>
                       <span
                         className={`shrink-0 rounded px-1 text-[10px] font-medium uppercase ${e.source === 'estimated' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}
                         title={e.source === 'estimated' ? t.estimatedHelp : undefined}
@@ -218,6 +271,14 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
                     <button type="button" onClick={() => onToggleFavourite(r.venue.id)} className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:border-amber-400">
                       {fav ? `★ ${t.unfavourite}` : `☆ ${t.favourite}`}
                     </button>
+                    <button
+                      type="button"
+                      disabled={savedIds.includes(n(r.venue.name, r.venue.nameAr))}
+                      onClick={() => onWeGo(r.venue.id)}
+                      className="rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-white hover:bg-emerald-700 disabled:bg-emerald-200 disabled:text-emerald-900"
+                    >
+                      {savedIds.includes(n(r.venue.name, r.venue.nameAr)) ? t.saved : t.weGo}
+                    </button>
                     <button type="button" onClick={() => onHide(r.venue.id)} className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:border-rose-300 hover:text-rose-600">
                       🚫 {t.hide}
                     </button>
@@ -232,6 +293,8 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
       <div className="mt-3 space-y-1 text-xs text-slate-500">
         <p>{meta.dataSource === 'google' ? t.sourceGoogle : t.sourceFree}</p>
         <p>{t.matchNote}</p>
+        {meta.heat && anyMetro && <p>{t.heatNote(meta.heat.tempC, meta.heat.factor.toFixed(1), meta.heat.source === 'forecast')}</p>}
+        {meta.ramadan && <p>🌙 {t.ramadanNote}</p>}
         {anyCar && meta.traffic.kind === 'typical' && <p>{t.trafficNote(leaveLabel, meta.traffic.factor.toFixed(1))}</p>}
         {meta.carSource === 'estimate' && <p className="text-amber-700">{t.carEstimated}</p>}
         {anyMetro && meta.metroSource !== 'google-transit' && <p>{t.metroEstimatedNote}</p>}

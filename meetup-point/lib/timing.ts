@@ -146,3 +146,48 @@ export function directionFactor(from: { lat: number; lng: number }, to: { lat: n
   if (h >= 14.5 && h < 19.5) return inbound ? 0.95 : 1.12;
   return 1;
 }
+
+// ---------------------------------------------------------------------------------------------
+// Ramadan mode (approximate; days and timings change every year — check the Darb app)
+
+/** Ramadan metro hours as announced for recent Ramadans (approx.): Sat–Thu 10:00–02:00, Fri 12:00–03:00. */
+export const RAMADAN_METRO = { normal: { open: 10 * 60, close: 26 * 60 }, friday: { open: 12 * 60, close: 27 * 60 } };
+
+export function metroRunningRamadan(at: Date): boolean {
+  const { day, minutes } = riyadhClock(at);
+  const prev = (day + 6) % 7;
+  const today = day === 5 ? RAMADAN_METRO.friday : RAMADAN_METRO.normal;
+  const yesterday = prev === 5 ? RAMADAN_METRO.friday : RAMADAN_METRO.normal;
+  if (minutes >= today.open && minutes < Math.min(today.close, 24 * 60)) return true;
+  return yesterday.close > 24 * 60 && minutes < yesterday.close - 24 * 60; // after midnight
+}
+
+/** Maghrib (iftar) time on that Riyadh date, in minutes since midnight. */
+export function iftarMinutes(at: Date): number {
+  const local = new Date(at.getTime() + 3 * 3600_000);
+  const date = new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate(), 9));
+  const pt = new PrayerTimes(new Coordinates(RIYADH_CENTER.lat, RIYADH_CENTER.lng), date, CalculationMethod.UmmAlQura());
+  return riyadhClock(pt.maghrib).minutes;
+}
+
+/**
+ * Typical Ramadan traffic (approx.): busy after work, a rush in the hour before iftar, nearly empty
+ * during iftar, busy again late at night. Replaces trafficFactor() in Ramadan mode.
+ */
+export function ramadanTrafficFactor(at: Date): number {
+  const m = riyadhClock(at).minutes;
+  const iftar = iftarMinutes(at);
+  if (m >= iftar - 75 && m < iftar) return 1.9; // pre-iftar rush
+  if (m >= iftar && m < iftar + 60) return 1.0; // everyone is eating
+  if (m >= 13 * 60 && m < iftar - 75) return 1.5;
+  if (m >= 21 * 60 || m < 60) return 1.6; // late-night outings
+  if (m >= 60 && m < 4 * 60) return 1.25; // suhoor time
+  return 1.1;
+}
+
+/** Arriving in the hour before iftar: many places are full or only serve takeaway. */
+export function nearIftar(arrive: Date): boolean {
+  const m = riyadhClock(arrive).minutes;
+  const iftar = iftarMinutes(arrive);
+  return m >= iftar - 60 && m < iftar + 15;
+}

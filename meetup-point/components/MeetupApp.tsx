@@ -11,6 +11,8 @@ import ResultsList from './ResultsList';
 import SharePanel from './SharePanel';
 import { fromWire } from '@/lib/groupClient';
 import { useGroup } from '@/lib/useGroup';
+import { fairnessWeights, loadHistory, saveHistory, type Meetup } from '@/lib/history';
+import { riyadhClock } from '@/lib/timing';
 import type { Style } from '@/lib/matching';
 import { orderedResults } from '@/lib/styleOrder';
 import TripOptions, { departDate, initialTrip, type TripState } from './TripOptions';
@@ -51,13 +53,15 @@ interface SearchResult {
 
 type Tab = 'people' | 'results' | 'prefs';
 
-function buildRequest(people: Person[], trip: TripState, prefs: RecommendRequest['prefs']): RecommendRequest {
+function buildRequest(people: Person[], trip: TripState, prefs: RecommendRequest['prefs'], weights?: number[]): RecommendRequest {
   return {
     people: people.map((p, i) => ({ name: displayName(p, i), mode: p.mode, location: p.location!, access: p.mode === 'metro' ? (p.access ?? 'walk') : undefined, likes: p.likes as CuisineGroup[] | undefined, avoids: p.avoids as CuisineGroup[] | undefined })),
     venueType: trip.venueType,
     ...(trip.departMode === 'later' ? { departAt: departDate(trip)!.toISOString() } : {}),
     prefs,
     filters: { nearMetro: trip.nearMetro, food: trip.food },
+    ...(trip.ramadan ? { ramadan: true } : {}),
+    ...(weights && weights.some((w) => w !== 1) ? { weights } : {}),
   };
 }
 
@@ -92,7 +96,13 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
   const seenResultsAt = useRef<string | null | undefined>(undefined);
 
   const ready = isReady(state);
-  const signature = ready ? JSON.stringify(buildRequest(state.people, trip, prefs)) : '';
+  // fairness over time: weights from past meetups (by name)
+  const [history, setHistory] = useState<Meetup[]>([]);
+  useEffect(() => setHistory(loadHistory()), []);
+  const weights = useMemo(() => fairnessWeights(state.people.map((p, i) => displayName(p, i)), history), [state.people, history]);
+  const signature = ready ? JSON.stringify(buildRequest(state.people, trip, prefs, weights)) : '';
+  const [pendingFind, setPendingFind] = useState(false);
+  const [reachOn, setReachOn] = useState(false);
   // shared group: friends cannot re-run the search, so their results are never "stale"
   const stale = !!result && (!group.id || group.isAdmin) && result.signature !== signature;
 
@@ -162,6 +172,15 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
     const out: Overlay[] = [];
     if (focusDistrict) out.push({ kind: 'area', rings: focusDistrict.rings, color: '#0f766e' });
     const zone = result?.response.zone;
+    if (reachOn && zone && !stale) {
+      // each person's reach in their colour; overlaps look darker = good meeting area
+      result!.people.forEach((_, pi) => {
+        for (const c of zone.cells) {
+          if ((c.per?.[pi] ?? Infinity) > zoneMin) continue;
+          out.push({ kind: 'cell', south: c.lat - zone.cellLat / 2, north: c.lat + zone.cellLat / 2, west: c.lng - zone.cellLng / 2, east: c.lng + zone.cellLng / 2, color: personColor(pi), opacity: 0.16 });
+        }
+      });
+    }
     if (zoneOn && zone && !stale) {
       for (const c of zone.cells) {
         if (c.maxEta > zoneMin) continue;
@@ -181,7 +200,7 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
       }
     }
     return out;
-  }, [focusDistrict, result, stale, zoneOn, zoneMin, personPieces, focusPerson, n]);
+  }, [focusDistrict, result, stale, zoneOn, zoneMin, reachOn, personPieces, focusPerson, n]);
 
   function showRoute(person: number) {
     const pts = (personPieces.get(person) ?? []).flatMap((p) => (p.kind === 'stop' ? [p.at] : p.points));
@@ -239,6 +258,37 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [ready, signature, state.people, t, n],
   );
+
+  // "use this time" from the best-time strip: switch to that departure and search again
+  useEffect(() => {
+    if (!pendingFind) return;
+    setPendingFind(false);
+    void find();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature, pendingFind]);
+  function applyTime(iso: string) {
+    const d = new Date(iso);
+    const c = riyadhClock(d);
+    const today = riyadhClock(new Date());
+    const dayOffset = (c.day - today.day + 7) % 7;
+    setTrip((tr) => ({ ...tr, departMode: 'later', departDay: dayOffset, departMinutes: Math.round(c.minutes / 30) * 30 }));
+    setPendingFind(true);
+  }
+
+  /** "We are going here": remember the trip times for fairness next time and for real-time reports. */
+  function weGo(venueId: string) {
+    const r = result?.response.results.find((x) => x.venue.id === venueId);
+    if (!r || !result) return;
+    const entry: Meetup = {
+      id: crypto.randomUUID(),
+      date: new Date().toISOString(),
+      venue: n(r.venue.name, r.venue.nameAr),
+      people: r.etas.map((e) => ({ name: displayName(result.people[e.person], e.person), mode: e.mode, minutes: Math.round(e.minutes) })),
+    };
+    const next = [...history, entry];
+    setHistory(next);
+    saveHistory(next);
+  }
 
   async function find() {
     if (!ready || loading) return;
@@ -329,7 +379,12 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
                     {t.zoneToggle} <strong className="tabular-nums">{t.minutes(zoneMin)}</strong>
                   </span>
                 </label>
-                {zoneOn && (
+                <label className="mt-1 flex cursor-pointer items-center gap-2">
+                  <input type="checkbox" checked={reachOn} onChange={(e) => setReachOn(e.target.checked)} className="accent-emerald-600" />
+                  <span>{t.reachToggle}</span>
+                </label>
+                {reachOn && <p className="text-xs text-slate-500">{t.reachLegend}</p>}
+                {(zoneOn || reachOn) && (
                   <>
                     <input type="range" min={10} max={90} step={5} value={zoneMin} onChange={(e) => setZoneMin(Number(e.target.value))} aria-label={t.zoneToggle} className="mt-1 w-full accent-emerald-600" />
                     <p className="text-xs text-slate-500">{t.zoneLegend}</p>
@@ -351,11 +406,15 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
               onHide={(id) => updatePrefs((p) => ({ ...p, hidden: [...p.hidden, id], favourites: p.favourites.filter((x) => x !== id) }))}
               style={style}
               onStyle={setStyle}
+              onUseTime={!group.id || group.isAdmin ? applyTime : undefined}
+              onWeGo={weGo}
+              savedIds={history.map((h) => h.venue)}
+              fairnessNames={state.people.filter((_, i) => (weights[i] ?? 1) > 1.04).map((p) => displayName(p, state.people.indexOf(p), t.namePlaceholder))}
               voting={group.id && group.view ? { counts: group.view.votes, mine: group.myVote, onVote: (v) => void group.vote(v).catch(() => setError(t.requestFailed)) } : undefined}
             />
           </div>
         ) : tab === 'prefs' ? (
-          <PrefsPanel prefs={prefs} update={updatePrefs} names={names} />
+          <PrefsPanel prefs={prefs} update={updatePrefs} names={names} history={history} onHistory={(h: Meetup[]) => { setHistory(h); saveHistory(h); }} />
         ) : (
           // share box + people scroll together, so nothing gets squeezed under the controls on phones
           <div className="min-h-0 flex-1 overflow-y-auto">
