@@ -9,7 +9,7 @@ import type { Venue } from './venues';
 
 const read = <T,>(file: string): T => JSON.parse(readFileSync(path.join(process.cwd(), 'data', file), 'utf8')) as T;
 const stations = toStations(read<StationCollection>('metro-stations.geojson'));
-const allVenues = read<{ venues: Venue[] }>('venues-riyadh.json').venues;
+export const allVenues = read<{ venues: Venue[] }>('venues-riyadh.json').venues;
 const MIN_RATING = 3.8;
 
 export function recommendDeps(): RecommendDeps {

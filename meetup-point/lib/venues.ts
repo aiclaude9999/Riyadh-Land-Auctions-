@@ -15,6 +15,8 @@ export interface Venue {
   cuisine?: string;
   openingHours?: string;
   brand?: string;
+  /** where the place comes from: 'osm', 'overture' */
+  sources?: string[];
 }
 
 type OsmElement = {

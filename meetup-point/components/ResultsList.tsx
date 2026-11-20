@@ -49,14 +49,14 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
     if (selectedId) refs.current.get(selectedId)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }, [selectedId]);
 
-  const topVotes = voting ? Math.max(0, ...results.slice(0, 3).map((r) => voting.counts[r.venue.id] ?? 0)) : 0;
+  const topVotes = voting ? Math.max(0, ...results.filter((r) => r.rank >= 1 && r.rank <= 3).map((r) => voting.counts[r.venue.id] ?? 0)) : 0;
 
   if (!results.length) return <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{t.noResults}</p>;
 
   return (
     <div className={stale ? 'opacity-60' : ''}>
       {stale && <p className="mb-2 rounded-lg bg-amber-50 p-2 text-xs text-amber-900">{t.staleResults}</p>}
-      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">{t.topPlaces(results.length)}</h2>
+      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">{t.topPlaces(results.filter((r) => r.rank >= 1).length)}</h2>
       <ol className="space-y-2">
         {results.map((r) => {
           const selected = r.venue.id === selectedId;
@@ -76,12 +76,13 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
               className={`cursor-pointer rounded-xl border bg-white p-3 shadow-sm transition ${selected ? 'border-brand ring-2 ring-brand/30' : 'border-slate-200 hover:border-slate-300'}`}
             >
               <div className="flex items-start gap-2">
-                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white ${r.rank === 1 ? 'bg-brand' : 'bg-slate-700'}`}>{r.rank}</span>
+                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white ${r.rank === 0 ? 'bg-amber-700' : r.rank === 1 ? 'bg-brand' : 'bg-slate-700'}`}>{r.rank === 0 ? '★' : r.rank}</span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold">
                     {fav && <span className="text-amber-500">★ </span>}
                     {n(r.venue.name, r.venue.nameAr)}
                   </p>
+                  {r.rank === 0 && <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700">{t.yourPick}</p>}
                   <p className="truncate text-xs text-slate-500">
                     {[t.venueTypes[r.venue.kind], locale === 'ar' ? venueGroups(r.venue).filter((g) => g !== 'coffee' || r.venue.kind !== 'cafe').map((g) => t.groups[g]).join('، ') || null : r.venue.cuisine, r.venue.rating != null ? `★ ${r.venue.rating.toFixed(1)}` : null, r.venue.address].filter(Boolean).join(' · ')}
                   </p>
@@ -92,7 +93,7 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
                 </span>
               </div>
 
-              {voting && r.rank <= 3 && (
+              {voting && r.rank >= 1 && r.rank <= 3 && (
                 <div className="mt-2 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                   <button
                     type="button"

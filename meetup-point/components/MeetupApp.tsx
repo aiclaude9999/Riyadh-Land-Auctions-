@@ -1,6 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { venueGroups } from '@/lib/cuisine';
+import { fromCompact, type CompactVenue } from '@/lib/venueLayer';
+import { matchesType, type Venue } from '@/lib/venues';
 import MeetupMap from './MeetupMap';
 import PeoplePanel from './PeoplePanel';
 import PrefsPanel from './PrefsPanel';
@@ -75,6 +78,8 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
   const [routes, setRoutes] = useState<Record<string, RouteState>>({});
   const [focusPerson, setFocusPerson] = useState<number | null>(null);
   const [fitTo, setFitTo] = useState<FitTarget | null>(null);
+  const [showAllVenues, setShowAllVenues] = useState(false);
+  const [venuesAll, setVenuesAll] = useState<Venue[] | null>(null);
   const [prefs, updatePrefs] = usePrefs();
   const [names, setNames] = useState<Record<string, string>>({});
   const stationList = useMemo(() => toStations(stations), [stations]);
@@ -173,6 +178,57 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
     setFocusPerson(person);
     if (pts.length) setFitTo({ points: pts, key: `route-${person}-${Date.now()}` });
   }
+
+  // "All cafés & restaurants" layer: loaded once when first switched on, then filtered like the search
+  useEffect(() => {
+    if (!showAllVenues || venuesAll) return;
+    fetch('/api/venues')
+      .then((r) => r.json() as Promise<CompactVenue[]>)
+      .then((rows) => setVenuesAll(rows.map(fromCompact)))
+      .catch(() => setError(t.requestFailed));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showAllVenues]);
+  const visibleVenues = useMemo(
+    () => venuesAll?.filter((v) => matchesType(v, trip.venueType) && (!trip.food || venueGroups(v).includes(trip.food)) && !prefs.hidden.includes(v.id)) ?? null,
+    [venuesAll, trip.venueType, trip.food, prefs.hidden],
+  );
+
+  /** "Use as meeting place": everyone's trip to a place tapped on the map; shown first as ★ "Your pick". */
+  const pickVenue = useCallback(
+    async (v: Venue) => {
+      if (!ready) {
+        setError(t.pickNeedsPeople);
+        setTab('people');
+        return;
+      }
+      setError(null);
+      setLoading(true);
+      try {
+        const body = { ...(JSON.parse(signature) as RecommendRequest), venueIds: [v.id] };
+        const res = await fetch('/api/recommend', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        const data = (await res.json()) as RecommendResponse | RecommendError;
+        if (!res.ok || 'error' in data || !data.results[0]) {
+          setError(t.requestFailed);
+          return;
+        }
+        const pick = { ...data.results[0], rank: 0 };
+        setResult((prev) => {
+          const keep = prev && prev.signature === signature ? prev : null;
+          const others = keep ? keep.response.results.filter((r) => r.rank !== 0 && r.venue.id !== v.id) : [];
+          return { response: { ...(keep?.response ?? data), results: [pick, ...others] }, people: state.people, signature };
+        });
+        setNames((old) => ({ ...old, [v.id]: n(v.name, v.nameAr) }));
+        setSelectedId(v.id);
+        setTab('results');
+      } catch {
+        setError(t.requestFailed);
+      } finally {
+        setLoading(false);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [ready, signature, state.people, t, n],
+  );
 
   async function find() {
     if (!ready || loading) return;
@@ -360,6 +416,10 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
           }}
           overlays={overlays}
           fitTo={fitTo}
+          allVenues={visibleVenues}
+          showAllVenues={showAllVenues}
+          onToggleAllVenues={() => setShowAllVenues((s) => !s)}
+          onPickVenue={!group.id || group.isAdmin ? pickVenue : undefined}
         />
         {focusPerson !== null && result && selected && (() => {
           const e = selected.etas.find((x) => x.person === focusPerson);

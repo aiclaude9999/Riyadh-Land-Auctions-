@@ -11,6 +11,8 @@ export interface RecommendRequest {
   /** Group preferences kept in the browser. */
   prefs?: import('./preferences').Preferences;
   filters?: Filters;
+  /** "Use as meeting place": score exactly these places (from the map layer) instead of searching */
+  venueIds?: string[];
 }
 
 export interface Filters {

@@ -3,7 +3,9 @@
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useEffect, useRef } from 'react';
-import { venueMarkerHtml, type MapViewProps } from './MeetupMap';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+import { MapToggles, useVenueLabels, venueDotHtml, venueMarkerHtml, venuePopup, type MapViewProps } from './MeetupMap';
 import { RIYADH_BOUNDS, RIYADH_CENTER } from '@/lib/geo';
 import { useName, useT } from './LocaleProvider';
 import { displayName, personColor, personInitial } from '@/lib/people';
@@ -39,6 +41,8 @@ export default function FreeMap(props: MapViewProps) {
   const peopleRef = useRef<L.LayerGroup | null>(null);
   const venuesRef = useRef<L.LayerGroup | null>(null);
   const overlayRef = useRef<L.LayerGroup | null>(null);
+  const venuesLayerRef = useRef<L.Layer | null>(null);
+  const labelsFor = useVenueLabels();
   // latest callbacks without re-binding map listeners
   const cb = useRef(props);
   cb.current = props;
@@ -184,6 +188,36 @@ export default function FreeMap(props: MapViewProps) {
     if (map && v && !map.getBounds().contains([v.venue.location.lat, v.venue.location.lng])) map.panTo([v.venue.location.lat, v.venue.location.lng]);
   }, [selectedVenueId, results]);
 
+  // "All cafés & restaurants": thousands of small dots grouped into numbered clusters
+  const { allVenues, showAllVenues, onPickVenue } = props;
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !showAllVenues || !allVenues) return;
+    let cancelled = false;
+    (async () => {
+      // the plugin extends the global L, so expose ours before loading it
+      (window as unknown as { L: typeof L }).L = L;
+      await import('leaflet.markercluster');
+      if (cancelled) return;
+      const group = L.markerClusterGroup({ chunkedLoading: true, maxClusterRadius: 55, disableClusteringAtZoom: 17, showCoverageOnHover: false, spiderfyOnMaxZoom: false });
+      const icons = { cafe: L.divIcon({ className: '', iconSize: [12, 12], html: venueDotHtml('cafe') }), restaurant: L.divIcon({ className: '', iconSize: [12, 12], html: venueDotHtml('restaurant') }) };
+      group.addLayers(
+        allVenues.map((v) =>
+          L.marker([v.location.lat, v.location.lng], { icon: icons[v.kind], title: v.name }).bindPopup(() =>
+            venuePopup(v, labelsFor(v), onPickVenue && ((x) => { map.closePopup(); onPickVenue(x); })),
+          ),
+        ),
+      );
+      group.addTo(map);
+      venuesLayerRef.current = group;
+    })();
+    return () => {
+      cancelled = true;
+      venuesLayerRef.current?.remove();
+      venuesLayerRef.current = null;
+    };
+  }, [allVenues, showAllVenues, onPickVenue, labelsFor]);
+
   // route lines + chosen neighbourhood outline
   useEffect(() => {
     const group = overlayRef.current;
@@ -236,10 +270,7 @@ export default function FreeMap(props: MapViewProps) {
       {/* Leaflet expects a left-to-right container even when the page is Arabic */}
       <div ref={el} dir="ltr" className="h-full w-full" />
       {/* the map is always left-to-right: keep controls on the right, away from the zoom buttons */}
-      <label className="absolute right-3 top-3 z-[1000] flex cursor-pointer items-center gap-2 rounded-lg bg-white/95 px-3 py-1.5 text-sm shadow">
-        <input type="checkbox" checked={showMetro} onChange={props.onToggleMetro} className="accent-brand" />
-        {t.metroLayer}
-      </label>
+      <MapToggles {...props} />
       <p className="pointer-events-none absolute bottom-6 left-2 z-[1000] max-w-[70%] rounded bg-white/80 px-1.5 text-[10px] leading-tight text-slate-600">{t.mapCredits}</p>
     </>
   );

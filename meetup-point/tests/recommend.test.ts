@@ -65,6 +65,16 @@ describe('recommend (free mode, routers faked)', () => {
     expect(asr.results.some((r) => r.warnings.prayer?.name === 'Asr')).toBe(true);
   });
 
+  it('"use as meeting place": scores exactly the picked place', async () => {
+    const osrm = async (o: unknown[], d: unknown[]) => o.map(() => d.map(() => 12));
+    const pick = allVenues[100];
+    const r = parseRequest({ people: [sara, omar], venueType: 'both', venueIds: [pick.id, 5, 'x'.repeat(200)] });
+    expect(r.venueIds).toEqual([pick.id]);
+    const res = await recommend(r, { stations, allVenues, osrm });
+    expect(res.results.map((x) => x.venue.id)).toEqual([pick.id]);
+    expect(res.zone).toBeUndefined();
+  });
+
   it('hidden places never come back', async () => {
     const osrm = async (o: unknown[], d: unknown[]) => o.map(() => d.map(() => 15));
     const first = await recommend({ people: [sara, omar], venueType: 'both' }, { stations, allVenues, osrm });

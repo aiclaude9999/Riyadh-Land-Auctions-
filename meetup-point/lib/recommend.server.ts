@@ -73,7 +73,8 @@ export function parseRequest(body: unknown): RecommendRequest {
     nearMetro: f.nearMetro === true,
     food: CUISINE_GROUPS.includes(f.food as CuisineGroup) ? (f.food as CuisineGroup) : null,
   };
-  return { people, venueType, ...(departAt ? { departAt } : {}), prefs, filters };
+  const venueIds = Array.isArray(b.venueIds) ? b.venueIds.filter((x): x is string => typeof x === 'string' && x.length < 80).slice(0, 3) : [];
+  return { people, venueType, ...(departAt ? { departAt } : {}), prefs, filters, ...(venueIds.length ? { venueIds } : {}) };
 }
 
 export async function recommend(req: RecommendRequest, deps: RecommendDeps): Promise<RecommendResponse> {
@@ -90,9 +91,11 @@ export async function recommend(req: RecommendRequest, deps: RecommendDeps): Pro
   const leaveAt = req.departAt ? new Date(req.departAt) : (deps.now?.() ?? new Date());
   // free mode has no live traffic: scale road times by the typical slowdown at that hour
   const factor = deps.google ? 1 : trafficFactor(leaveAt);
-  const venues = deps.google
-    ? (await deps.google.candidates(area, req.venueType, req.departAt)).filter(allowed).slice(0, p.maxCandidates)
-    : pickCandidates(deps.allVenues.filter((v) => matchesType(v, req.venueType) && allowed(v)), area, p);
+  const venues = req.venueIds?.length
+    ? deps.allVenues.filter((v) => req.venueIds!.includes(v.id)) // the user picked these on the map
+    : deps.google
+      ? (await deps.google.candidates(area, req.venueType, req.departAt)).filter(allowed).slice(0, p.maxCandidates)
+      : pickCandidates(deps.allVenues.filter((v) => matchesType(v, req.venueType) && allowed(v)), area, p);
 
   const meta: RecommendResponse['meta'] = {
     dataSource: deps.google ? 'google' : 'free',
@@ -105,7 +108,7 @@ export async function recommend(req: RecommendRequest, deps: RecommendDeps): Pro
     candidates: venues.length,
     notes,
   };
-  const zonePromise = computeZone(req, area, deps, factor).catch((e) => {
+  const zonePromise = (req.venueIds?.length ? Promise.resolve(undefined) : computeZone(req, area, deps, factor)).catch((e) => {
     console.error(e);
     return undefined;
   });
