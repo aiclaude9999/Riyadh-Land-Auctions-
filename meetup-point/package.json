@@ -8,7 +8,8 @@
     "start": "next start",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "build:metro": "tsx scripts/build-metro-geojson.ts"
+    "build:metro": "tsx scripts/build-metro-geojson.ts",
+    "build:venues": "tsx scripts/build-venues.ts"
   },
   "dependencies": {
     "@vis.gl/react-google-maps": "1.10.2",

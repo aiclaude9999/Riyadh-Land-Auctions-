@@ -97,7 +97,7 @@ export default function PlaceSearch({ onSelect }: { onSelect: (place: { location
       {open && (
         <ul id={listId} role="listbox" className="absolute inset-x-0 top-full z-20 mt-1 max-h-64 overflow-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
           {suggestions.length === 0 ? (
-            <li className="px-3 py-2 text-sm text-slate-400">{t.noResults}</li>
+            <li className="px-3 py-2 text-sm text-slate-400">{t.noMatches}</li>
           ) : (
             suggestions.map((s, i) => (
               <li

@@ -3,7 +3,18 @@
 Picks the fairest café or restaurant for 2–6 people in Riyadh, by car or metro.
 Spec and build order: [`CLAUDE.md`](./CLAUDE.md). This folder is a separate app; it has nothing to do with Mazad Radar's deploy.
 
-**Built so far:** step 1 (scaffold + map with the metro layer) and step 2 (people input panel).
+**Built so far:** steps 1–5: map + metro layer, people panel, `/api/recommend` (candidates → travel times → scoring), results list + numbered map markers + ETA breakdown, and the metro fallback estimator with tests. Step 6 (polish) is not started.
+
+**Free mode vs Google mode** (chosen automatically):
+| | Free (no keys) | Google (`GOOGLE_MAPS_API_KEY` set) |
+|---|---|---|
+| Places | `data/venues-riyadh.json`: 668 named cafés/restaurants from OpenStreetMap, no ratings | Places API (New) `searchNearby`, closed / rating < 3.8 dropped |
+| Car times | OSRM public server (OSM roads, **no live traffic**); local estimate if it is down | Routes `computeRouteMatrix` DRIVE, TRAFFIC_AWARE |
+| Metro times | local estimate (spec "Fallback"), marked *est.* | Routes TRANSIT; missing routes use the local estimate |
+
+Google mode is written to the documented API shapes and unit-tested with fakes, but has **not** been run against Google yet (no key).
+
+**Heat penalty:** the spec says "+1.5× walking minutes". It is implemented as *walking minutes count 1.5×*, so a metro user's walking adds 0.5× on top of the trip time (`heatFactor` in `lib/scoring.ts`).
 
 ## Run it on your computer
 
@@ -32,6 +43,7 @@ Google Cloud Console → pick or create a project:
 
 - `npm test`: unit tests (vitest)
 - `npm run typecheck`
+- `npm run build:venues`: rebuilds `data/venues-riyadh.json` from OpenStreetMap (Overpass; `-- --from saved.json` to convert a saved reply)
 - `npm run build:metro`: rebuilds `data/metro-stations.geojson` + `data/metro-lines.geojson` from OpenStreetMap
 
 ## Metro data
@@ -47,4 +59,6 @@ If RCRC comes back, map its export to the same shape (`lib/metro.ts`).
 - `components/FreeMap.tsx`: the same map on free OpenStreetMap tiles, used when no Google browser key is set (OSM's tile policy covers light use; a busy public site needs its own tile provider)
 - `components/PeoplePanel.tsx`, `PersonCard.tsx`, `PlaceSearch.tsx`: people input (name, car/metro, search or pick on map)
 - `app/api/places/*`: server-side Places autocomplete + details (10-min in-memory cache, `lib/cache.ts`)
+- `app/api/recommend/route.ts` → `lib/recommend.server.ts` (pipeline) → `lib/scoring.ts` (pure scoring), `lib/estimator.ts` (metro/car estimates), `lib/osrm.server.ts`, `lib/google.server.ts`
+- `components/TripOptions.tsx`, `ResultsList.tsx`: place type, departure time, ranked results with "why"
 - `lib/people.ts` (pure state + rules), `lib/metro.ts`, `lib/geo.ts`, `lib/i18n.ts` (English strings, RTL-ready)

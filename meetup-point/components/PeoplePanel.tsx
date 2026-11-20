@@ -16,7 +16,6 @@ interface Props {
 
 export default function PeoplePanel({ state, dispatch, stations, pickingId, onPick }: Props) {
   const { people } = state;
-  const ready = people.filter((p) => p.location).length;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -48,12 +47,8 @@ export default function PeoplePanel({ state, dispatch, stations, pickingId, onPi
           />
         ))}
       </ol>
+      <p className="px-4 pb-3 text-xs text-slate-400">{t.dragHint}</p>
 
-      <footer className="border-t border-slate-200 px-4 py-3 text-sm">
-        <p className={ready === people.length ? 'font-medium text-brand-dark' : 'text-slate-600'}>{t.readyCount(ready, people.length)}</p>
-        <p className="mt-0.5 text-xs text-slate-400">{t.dragHint}</p>
-        <p className="mt-2 rounded-md bg-slate-100 px-2 py-1.5 text-xs text-slate-500">{t.nextStepNote}</p>
-      </footer>
     </div>
   );
 }

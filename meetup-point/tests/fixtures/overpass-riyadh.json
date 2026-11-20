@@ -1,0 +1,128 @@
+{
+ "elements": [
+  {
+   "type": "node",
+   "id": 448833068,
+   "lat": 24.6904926,
+   "lon": 46.7232179,
+   "tags": {
+    "amenity": "restaurant",
+    "name": "Kudu"
+   }
+  },
+  {
+   "type": "node",
+   "id": 586570960,
+   "lat": 24.7675896,
+   "lon": 46.7597589,
+   "tags": {
+    "amenity": "restaurant",
+    "name": "Firdays"
+   }
+  },
+  {
+   "type": "node",
+   "id": 665105754,
+   "lat": 24.7016088,
+   "lon": 46.6915377,
+   "tags": {
+    "amenity": "cafe",
+    "name": "Roma Cafe"
+   }
+  },
+  {
+   "type": "node",
+   "id": 672161159,
+   "lat": 24.7014755,
+   "lon": 46.6916745,
+   "tags": {
+    "amenity": "restaurant",
+    "name": "Shiraz Restaurant (Iranian)"
+   }
+  },
+  {
+   "type": "node",
+   "id": 672665471,
+   "lat": 24.711061,
+   "lon": 46.6977886,
+   "tags": {
+    "amenity": "restaurant",
+    "name": "Al Mansaf"
+   }
+  },
+  {
+   "type": "node",
+   "id": 672668413,
+   "lat": 24.7085594,
+   "lon": 46.6874735,
+   "tags": {
+    "amenity": "restaurant",
+    "name": "Shawerma House"
+   }
+  },
+  {
+   "type": "node",
+   "id": 672668416,
+   "lat": 24.7246035,
+   "lon": 46.6818599,
+   "tags": {
+    "addr:street": "Sheikh Abdullah Al Angari Street",
+    "amenity": "cafe",
+    "name": "Coffee hill cafe"
+   }
+  },
+  {
+   "type": "node",
+   "id": 672714900,
+   "lat": 24.6898413,
+   "lon": 46.6864482,
+   "tags": {
+    "amenity": "restaurant",
+    "cuisine": "regional",
+    "name": "Kudu"
+   }
+  },
+  {
+   "type": "way",
+   "id": 133795285,
+   "center": {
+    "lat": 24.7209602,
+    "lon": 46.619493
+   },
+   "tags": {
+    "amenity": "restaurant",
+    "building": "yes",
+    "name": "Dining Hall"
+   }
+  },
+  {
+   "type": "way",
+   "id": 137275831,
+   "center": {
+    "lat": 24.7498948,
+    "lon": 46.8173027
+   },
+   "tags": {
+    "amenity": "restaurant",
+    "building": "yes",
+    "name": "الطازج",
+    "name:en": "Al-Tazaj Restaurant"
+   }
+  },
+  {
+   "type": "way",
+   "id": 170826086,
+   "center": {
+    "lat": 24.5856797,
+    "lon": 46.6915122
+   },
+   "tags": {
+    "amenity": "restaurant",
+    "building": "yes",
+    "cuisine": "regional",
+    "name": "كودو",
+    "name:en": "Kudu"
+   }
+  }
+ ]
+}

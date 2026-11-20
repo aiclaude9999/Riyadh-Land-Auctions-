@@ -3,7 +3,7 @@
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useEffect, useRef } from 'react';
-import type { MapViewProps } from './MeetupMap';
+import { venueMarkerHtml, type MapViewProps } from './MeetupMap';
 import { RIYADH_BOUNDS, RIYADH_CENTER } from '@/lib/geo';
 import { t } from '@/lib/i18n';
 import { displayName, personColor } from '@/lib/people';
@@ -30,11 +30,12 @@ function personIcon(color: string, letter: string): L.DivIcon {
  * OSM's tile policy allows light use like this prototype; a busy public site needs its own tile provider.
  */
 export default function FreeMap(props: MapViewProps) {
-  const { people, pickingId, showMetro, stationsGeoJson, linesGeoJson } = props;
+  const { people, pickingId, showMetro, stationsGeoJson, linesGeoJson, results, resultsKey, selectedVenueId } = props;
   const el = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const metroRef = useRef<L.LayerGroup | null>(null);
   const peopleRef = useRef<L.LayerGroup | null>(null);
+  const venuesRef = useRef<L.LayerGroup | null>(null);
   // latest callbacks without re-binding map listeners
   const cb = useRef(props);
   cb.current = props;
@@ -56,6 +57,7 @@ export default function FreeMap(props: MapViewProps) {
       if (cb.current.pickingId) cb.current.onMapPick({ lat: e.latlng.lat, lng: e.latlng.lng });
     });
     peopleRef.current = L.layerGroup().addTo(map);
+    venuesRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
     return () => {
       map.remove();
@@ -141,6 +143,40 @@ export default function FreeMap(props: MapViewProps) {
         .addTo(group);
     });
   }, [people]);
+
+  // ranked venues (numbered squares); click selects
+  useEffect(() => {
+    const group = venuesRef.current;
+    if (!group) return;
+    group.clearLayers();
+    for (const r of results) {
+      const selected = r.venue.id === selectedVenueId;
+      const size = selected ? 34 : 28;
+      L.marker([r.venue.location.lat, r.venue.location.lng], {
+        title: `${r.rank}. ${r.venue.name}`,
+        zIndexOffset: selected ? 3000 : 2000 - r.rank,
+        icon: L.divIcon({ className: '', iconSize: [size, size], iconAnchor: [size / 2, size / 2], html: venueMarkerHtml(r.rank, selected) }),
+      })
+        .on('click', () => cb.current.onSelectVenue(r.venue.id))
+        .addTo(group);
+    }
+  }, [results, selectedVenueId]);
+
+  // new search → show everyone and every result
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !resultsKey || !results.length) return;
+    const pts = [...people.flatMap((p) => (p.location ? [[p.location.lat, p.location.lng] as [number, number]] : [])), ...results.map((r) => [r.venue.location.lat, r.venue.location.lng] as [number, number])];
+    map.fitBounds(L.latLngBounds(pts), { padding: [50, 50], maxZoom: 15 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resultsKey]);
+
+  // keep the selected venue in view
+  useEffect(() => {
+    const map = mapRef.current;
+    const v = results.find((r) => r.venue.id === selectedVenueId);
+    if (map && v && !map.getBounds().contains([v.venue.location.lat, v.venue.location.lng])) map.panTo([v.venue.location.lat, v.venue.location.lng]);
+  }, [selectedVenueId, results]);
 
   // crosshair while picking
   useEffect(() => {
