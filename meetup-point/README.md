@@ -12,7 +12,7 @@ Spec and build order: [`CLAUDE.md`](./CLAUDE.md). This folder is a separate app;
 3. Copy `.env.example` to `.env.local` and fill in the keys (see below).
 4. `npm run dev` → open http://localhost:3000
 
-Without keys the app still opens: the map area shows a notice and the address search says it is off.
+**No keys needed to try it:** without a Google browser key the app uses a free OpenStreetMap map (Leaflet), with metro lines, pin-on-map and draggable pins. Only the address search needs the server key. Add the Google browser key later to switch to the Google map.
 
 ## Google keys (two separate keys)
 
@@ -40,6 +40,7 @@ If RCRC comes back, map its export to the same shape (`lib/metro.ts`).
 
 - `app/page.tsx`: reads the metro GeoJSON on the server and renders `components/MeetupApp.tsx` (state + layout)
 - `components/MeetupMap.tsx`: Google map, person pins (draggable), metro toggle; `MetroLayer.tsx` draws lines + stations
+- `components/FreeMap.tsx`: the same map on free OpenStreetMap tiles, used when no Google browser key is set (OSM's tile policy covers light use; a busy public site needs its own tile provider)
 - `components/PeoplePanel.tsx`, `PersonCard.tsx`, `PlaceSearch.tsx`: people input (name, car/metro, search or pick on map)
 - `app/api/places/*`: server-side Places autocomplete + details (10-min in-memory cache, `lib/cache.ts`)
 - `lib/people.ts` (pure state + rules), `lib/metro.ts`, `lib/geo.ts`, `lib/i18n.ts` (English strings, RTL-ready)

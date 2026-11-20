@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { AdvancedMarker, APIProvider, Map, Pin, type MapMouseEvent } from '@vis.gl/react-google-maps';
 import MetroLayer, { type MetroLineCollection } from './MetroLayer';
 import { RIYADH_CENTER, type LatLng } from '@/lib/geo';
@@ -11,7 +12,10 @@ import { displayName, personColor, type Person } from '@/lib/people';
 const BROWSER_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY ?? '';
 const MAP_ID = process.env.NEXT_PUBLIC_GOOGLE_MAP_ID || 'DEMO_MAP_ID';
 
-interface Props {
+// Free OpenStreetMap map, used when no Google browser key is set (Leaflet needs `window`, so no SSR).
+const FreeMap = dynamic(() => import('./FreeMap'), { ssr: false, loading: () => <div className="h-full w-full bg-slate-100" /> });
+
+export interface MapViewProps {
   people: Person[];
   stationsGeoJson: StationCollection;
   linesGeoJson: MetroLineCollection;
@@ -22,17 +26,8 @@ interface Props {
   onDragPerson: (id: string, location: LatLng) => void;
 }
 
-export default function MeetupMap(props: Props) {
-  if (!BROWSER_KEY) {
-    return (
-      <div className="flex h-full items-center justify-center bg-slate-100 p-6">
-        <div className="max-w-sm rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-          <p className="font-semibold">{t.mapNoKeyTitle}</p>
-          <p className="mt-1">{t.mapNoKeyBody}</p>
-        </div>
-      </div>
-    );
-  }
+export default function MeetupMap(props: MapViewProps) {
+  if (!BROWSER_KEY) return <FreeMap {...props} />;
 
   const { people, pickingId } = props;
   const picking = pickingId !== null;

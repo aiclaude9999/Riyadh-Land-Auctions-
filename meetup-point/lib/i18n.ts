@@ -32,8 +32,6 @@ export const en = {
   searchNoKey: 'Address search is off: GOOGLE_MAPS_API_KEY is not set on the server. Use “Pick on map”.',
   searchError: 'Search failed. Try again or use “Pick on map”.',
   noResults: 'No matches',
-  mapNoKeyTitle: 'Map needs a browser key',
-  mapNoKeyBody: 'Add NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY to .env.local (see .env.example), then restart `npm run dev`.',
   metroAttribution: 'Metro data © OpenStreetMap contributors (ODbL)',
   lines: 'Lines',
   interchange: 'Interchange',
