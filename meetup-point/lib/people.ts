@@ -1,6 +1,8 @@
 import { inRiyadh, type LatLng } from './geo';
 
 export type TravelMode = 'car' | 'metro';
+/** How a metro user reaches the first station. */
+export type StationAccess = 'walk' | 'car';
 
 export interface Person {
   id: string;
@@ -12,6 +14,8 @@ export interface Person {
   locationSource: 'pin' | 'search' | 'district' | null;
   /** neighbourhood the point is in (label is written in the UI language) */
   districtId?: string | null;
+  /** metro users: walk to the station (default) or get a car/taxi drop-off */
+  access?: StationAccess;
 }
 
 export const MIN_PEOPLE = 2;
@@ -30,6 +34,7 @@ export type PeopleAction =
   | { type: 'remove'; id: string; force?: boolean }
   | { type: 'rename'; id: string; name: string }
   | { type: 'setMode'; id: string; mode: TravelMode }
+  | { type: 'setAccess'; id: string; access: StationAccess }
   | { type: 'setLocation'; id: string; location: LatLng; address: string | null; source: 'pin' | 'search' | 'district'; districtId?: string | null }
   | { type: 'clearLocation'; id: string }
   /** shared groups: the server's list replaces ours (ids come from the server) */
@@ -61,6 +66,8 @@ export function peopleReducer(state: PeopleState, action: PeopleAction): PeopleS
       return patch(action.id, { name: action.name.slice(0, 40) });
     case 'setMode':
       return patch(action.id, { mode: action.mode });
+    case 'setAccess':
+      return patch(action.id, { access: action.access });
     case 'setLocation':
       return patch(action.id, { location: action.location, address: action.address, locationSource: action.source, districtId: action.districtId ?? null });
     case 'clearLocation':

@@ -29,6 +29,10 @@ const side = (m?: string) => (m?.includes('left') ? 'left' : m?.includes('right'
 
 export const en = {
   langName: 'English',
+  accessLabel: 'To the station:',
+  longWalkWarn: (names: string) => `${names}: more than 20 min on foot to the station. In People, set “To the station” to Car / taxi for a quicker trip.`,
+  accessWalk: 'Walk',
+  accessCar: 'Car / taxi',
   allVenuesLayer: 'All cafés & restaurants',
   loadingVenues: 'Loading places…',
   useAsMeetingPlace: 'Use as meeting place',
@@ -125,6 +129,7 @@ export const en = {
   carSummary: (km: string, min: string) => `${km} km · about ${min} min without traffic`,
   stepWalkToStation: (min: string, station: string) => `Walk ${min} min to ${station} station`,
   stepWait: (min: string) => `Wait about ${min} min for the train`,
+  stepDriveToStation: (min: string, station: string) => `Get a ride (car/taxi) to ${station} station · about ${min} min`,
   stepRide: (line: string, toward: string, stops: number) => `Take the ${line} toward ${toward} · ${stops} stop${stops === 1 ? '' : 's'}`,
   stepGetOff: (station: string) => `Get off at ${station}`,
   stepTransfer: (station: string, line: string) => `Change at ${station} to the ${line} (about 5 min)`,
@@ -221,6 +226,10 @@ export type Strings = typeof en;
 
 export const ar: Strings = {
   langName: 'العربية',
+  accessLabel: 'إلى المحطة:',
+  longWalkWarn: (names) => `${names}: أكثر من 20 دقيقة مشيًا إلى المحطة. اختر في «الأشخاص» الذهاب إلى المحطة بسيارة أو أجرة لرحلة أسرع.`,
+  accessWalk: 'مشيًا',
+  accessCar: 'سيارة / أجرة',
   allVenuesLayer: 'كل المقاهي والمطاعم',
   loadingVenues: 'تُحمَّل الأماكن…',
   useAsMeetingPlace: 'اجعله مكان اللقاء',
@@ -317,6 +326,7 @@ export const ar: Strings = {
   carSummary: (km, min) => `${km} كم · نحو ${arMin(min)} بلا زحام`,
   stepWalkToStation: (min, station) => `امشِ ${arMin(min)} إلى محطة ${station}`,
   stepWait: (min) => `انتظر القطار نحو ${arMin(min)}`,
+  stepDriveToStation: (min, station) => `توجّه بالسيارة أو سيارة الأجرة إلى محطة ${station} · نحو ${arMin(min)}`,
   stepRide: (line, toward, stops) => `اركب ${line} باتجاه ${toward} · ${stops} ${stops === 1 ? 'محطة' : stops === 2 ? 'محطتان' : stops <= 10 ? 'محطات' : 'محطة'}`,
   stepGetOff: (station) => `انزل في محطة ${station}`,
   stepTransfer: (station, line) => `بدّل القطار في ${station} إلى ${line} (نحو 5 دقائق)`,

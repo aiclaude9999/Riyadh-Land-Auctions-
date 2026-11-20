@@ -2,9 +2,10 @@
  * Local travel-time estimates, used when no routing API answers (spec "Fallback").
  * All results are flagged `estimated` in the UI.
  *
- * Metro: walk to a station (5 km/h) + 4 min wait + 1.5 min per station + 5 min per transfer
- *        + walk from the last station. The best station pair is searched over the network
- *        (Dijkstra on station×line nodes), trying the 3 stations nearest each end.
+ * Metro: reach a station (walk at 5 km/h, or by car/taxi drop-off) + wait (depends on the time of day,
+ *        see metroWaitMin) + 1.5 min per station + per change (2 min walk + a wait) + walk from the
+ *        last station. The best station pair is searched over the network (Dijkstra on station×line
+ *        nodes), trying the 5 stations nearest each end (8 at the start when arriving by car).
  *        If walking the whole way is quicker, the person simply walks.
  * Car:   straight line × detour factor at an average city speed + parking time.
  */
@@ -20,14 +21,23 @@ export interface MetroParams {
   transferMin: number;
   /** How many stations near each end to try. */
   stationsToTry: number;
+  /** How the person reaches the first station. */
+  access: 'walk' | 'car';
+  /** A metro user only walks the whole way when that takes at most this long. */
+  maxWalkOnlyMin: number;
+  /** Car minutes to a station (drop-off/taxi); default: rough estimate. */
+  carMinutes?: (a: LatLng, b: LatLng) => number;
 }
 
-export const DEFAULT_METRO: MetroParams = { walkKmh: 5, walkDetour: 1.25, waitMin: 4, minPerStation: 1.5, transferMin: 5, stationsToTry: 3 };
+export const DEFAULT_METRO: MetroParams = { walkKmh: 5, walkDetour: 1.25, waitMin: 4, minPerStation: 1.5, transferMin: 5, stationsToTry: 5, access: 'walk', maxWalkOnlyMin: 20 };
+/** Extra minutes to get out of a car and into the station. */
+const DROP_OFF_MIN = 3;
 
 /** One step of a metro trip, for the step-by-step view. */
 /** Station names come in pairs: English + Arabic (`…Ar`, falls back to English when OSM has none). */
 export type MetroLeg =
   | { kind: 'walk'; minutes: number; to: 'station' | 'destination'; station?: string; stationAr?: string }
+  | { kind: 'drive'; minutes: number; station: string; stationAr: string }
   | { kind: 'ride'; minutes: number; line: string; lineName: string; color: string; from: string; fromAr: string; to: string; toAr: string; toward: string; towardAr: string; stops: number; path: LatLng[] }
   | { kind: 'transfer'; minutes: number; at: string; atAr: string; toLine: string; toLineRef: string; wait: boolean }
   | { kind: 'wait'; minutes: number; at: string; atAr: string };
@@ -104,6 +114,8 @@ interface Label {
   stations: number;
   transfers: number;
   walk: number;
+  /** minutes to the first station when arriving by car */
+  drive: number;
   from: string;
   fromAr: string;
   prev: number; // previous node, −1 at a start
@@ -121,19 +133,21 @@ function dijkstra(g: Graph, starts: { node: number; label: Label }[]): (Label | 
     done[u] = true;
     const lu = best[u]!;
     for (const e of g.edges[u]) {
-      const cand = { min: lu.min + e.min, stations: lu.stations + e.stations, transfers: lu.transfers + e.transfers, walk: lu.walk, from: lu.from, fromAr: lu.fromAr, prev: u };
+      const cand = { min: lu.min + e.min, stations: lu.stations + e.stations, transfers: lu.transfers + e.transfers, walk: lu.walk, drive: lu.drive, from: lu.from, fromAr: lu.fromAr, prev: u };
       if (!best[e.to] || cand.min < best[e.to]!.min) best[e.to] = cand;
     }
   }
 }
 
 /** Turns the node path that ends at `end` into walk / wait / ride / transfer steps. */
-function buildLegs(g: Graph, best: (Label | undefined)[], end: number, walkIn: number, walkOut: number, p: MetroParams): MetroLeg[] {
+function buildLegs(g: Graph, best: (Label | undefined)[], end: number, walkIn: number, walkOut: number, p: MetroParams, driveIn = 0): MetroLeg[] {
   const path: number[] = [];
   for (let n = end; n >= 0; n = best[n]!.prev) path.unshift(n);
   const first = g.nodes[path[0]].station;
   const legs: MetroLeg[] = [
-    { kind: 'walk', minutes: walkIn, to: 'station', station: first.name_en, stationAr: arName(first) },
+    driveIn > 0
+      ? { kind: 'drive', minutes: driveIn, station: first.name_en, stationAr: arName(first) }
+      : { kind: 'walk', minutes: walkIn, to: 'station', station: first.name_en, stationAr: arName(first) },
     { kind: 'wait', minutes: p.waitMin, at: first.name_en, atAr: arName(first) },
   ];
   let i = 0;
@@ -186,18 +200,25 @@ export function createMetroEstimator(stations: Station[], params: Partial<MetroP
   const g = buildGraph(stations, p);
   return {
     from(origin) {
-      const starts = nearestStations(origin, stations, p.stationsToTry).flatMap(({ station }) => {
-        const walk = walkMinutes(origin, station.position, p);
+      const byCar = p.access === 'car';
+      const carMin = p.carMinutes ?? ((a: LatLng, b: LatLng) => estimateCarMinutes(a, b));
+      const starts = nearestStations(origin, stations, byCar ? 8 : p.stationsToTry).flatMap(({ station }) => {
+        const walk = byCar ? 0 : walkMinutes(origin, station.position, p);
+        const drive = byCar ? carMin(origin, station.position) + DROP_OFF_MIN : 0;
         return (g.byStation.get(station.id) ?? []).map((node) => ({
           node,
-          label: { min: walk + p.waitMin, stations: 0, transfers: 0, walk, from: station.name_en, fromAr: arName(station), prev: -1 },
+          label: { min: walk + drive + p.waitMin, stations: 0, transfers: 0, walk, drive, from: station.name_en, fromAr: arName(station), prev: -1 },
         }));
       });
       const best = dijkstra(g, starts);
 
       return (dest) => {
         const direct = walkMinutes(origin, dest, p);
-        let result: MetroEstimate = { minutes: direct, legs: [{ kind: 'walk', minutes: direct, to: 'destination' }], walkMinutes: direct, walkOnly: true, stations: 0, transfers: 0 };
+        // walking the whole way only counts when it is short (people who chose the metro do not walk 40 min)
+        let result: MetroEstimate =
+          direct <= p.maxWalkOnlyMin
+            ? { minutes: direct, legs: [{ kind: 'walk', minutes: direct, to: 'destination' }], walkMinutes: direct, walkOnly: true, stations: 0, transfers: 0 }
+            : { minutes: Infinity, legs: [], walkMinutes: 0, walkOnly: false, stations: 0, transfers: 0 };
         for (const { station } of nearestStations(dest, stations, p.stationsToTry)) {
           const walkOut = walkMinutes(station.position, dest, p);
           for (const node of g.byStation.get(station.id) ?? []) {
@@ -207,7 +228,7 @@ export function createMetroEstimator(stations: Station[], params: Partial<MetroP
             if (total < result.minutes) {
               result = {
                 minutes: total,
-                legs: buildLegs(g, best, node, l.walk, walkOut, p),
+                legs: buildLegs(g, best, node, l.walk, walkOut, p, l.drive),
                 walkMinutes: l.walk + walkOut,
                 walkOnly: false,
                 fromStation: l.from,
@@ -220,6 +241,7 @@ export function createMetroEstimator(stations: Station[], params: Partial<MetroP
             }
           }
         }
+        if (result.minutes === Infinity) result = { minutes: direct, legs: [{ kind: 'walk', minutes: direct, to: 'destination' }], walkMinutes: direct, walkOnly: true, stations: 0, transfers: 0 };
         return result;
       };
     },

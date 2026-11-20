@@ -112,3 +112,37 @@ export type TrafficLevel = 'light' | 'moderate' | 'heavy';
 export function trafficLevel(factor: number): TrafficLevel {
   return factor < 1.3 ? 'light' : factor < 1.7 ? 'moderate' : 'heavy';
 }
+
+/**
+ * Average wait for a train: half the time between trains + 1 min to reach the platform.
+ * Riyadh Metro runs about every 3–4 min at peak and 6–8 min otherwise (operator figures quoted
+ * as "3 to 7 minutes"); quieter late evenings and Friday mornings are taken as ~8 min.
+ */
+export function metroWaitMin(at: Date): number {
+  const { day, minutes } = riyadhClock(at);
+  const h = minutes / 60;
+  const peak = !isWeekend(day) && ((h >= 6.5 && h < 9.5) || (h >= 15.5 && h < 19.5));
+  const quiet = h >= 22 || h < 7 || (day === 5 && h < 13);
+  const headway = peak ? 4 : quiet ? 8 : 6;
+  return headway / 2 + 1;
+}
+
+/** Riyadh's main office/business area (Olaya / King Fahd Road). */
+const CENTRE = { lat: 24.705, lng: 46.68 };
+
+/**
+ * Direction matters: on working days traffic is heavier going INTO the centre in the morning and
+ * OUT of it in the afternoon. Multiplier around 1 (0.9–1.15) on top of trafficFactor().
+ */
+export function directionFactor(from: { lat: number; lng: number }, to: { lat: number; lng: number }, at: Date): number {
+  const { day, minutes } = riyadhClock(at);
+  if (isWeekend(day)) return 1;
+  const d = (p: { lat: number; lng: number }) => Math.hypot(p.lat - CENTRE.lat, (p.lng - CENTRE.lng) * Math.cos((CENTRE.lat * Math.PI) / 180)) * 111;
+  const delta = d(from) - d(to); // > 0: heading towards the centre
+  if (Math.abs(delta) < 1.5) return 1;
+  const inbound = delta > 0;
+  const h = minutes / 60;
+  if (h >= 6 && h < 10) return inbound ? 1.15 : 0.92;
+  if (h >= 14.5 && h < 19.5) return inbound ? 0.95 : 1.12;
+  return 1;
+}

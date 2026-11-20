@@ -164,7 +164,8 @@ export function scoreVenues(
     const list: ScoredEta[] = row.map((e, pi) => {
       const mode = people[pi].mode;
       const penalty = mode === 'metro' ? e!.walkMinutes * (p.heatFactor - 1) : 0;
-      return { ...e!, person: pi, mode, adjusted: e!.minutes + penalty };
+      // fairness over time: someone who travelled more last times gets a weight > 1
+      return { ...e!, person: pi, mode, adjusted: (e!.minutes + penalty) * (people[pi].weight ?? 1) };
     });
     const worst = list.reduce((a, b) => (b.adjusted > a.adjusted ? b : a));
     const near = nearestStations(venue.location, stations, 1)[0];

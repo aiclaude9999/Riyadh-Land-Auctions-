@@ -39,3 +39,20 @@ describe('prayerOverlap', () => {
     expect(prayerOverlap(r('2026-11-18T09:30:00'), r('2026-11-18T09:50:00'))).toBeUndefined();
   });
 });
+
+import { directionFactor, metroWaitMin } from '@/lib/timing';
+describe('metro waits and traffic direction', () => {
+  it('waits are shorter at peak than late at night', () => {
+    expect(metroWaitMin(r('2026-11-18T08:00:00'))).toBe(3);
+    expect(metroWaitMin(r('2026-11-18T12:00:00'))).toBe(4);
+    expect(metroWaitMin(r('2026-11-18T23:00:00'))).toBe(5);
+  });
+  it('morning trips into the centre are slower, afternoon trips out of it are slower', () => {
+    const suburb = { lat: 24.85, lng: 46.6 };
+    const olaya = { lat: 24.7, lng: 46.68 };
+    expect(directionFactor(suburb, olaya, r('2026-11-18T08:00:00'))).toBeGreaterThan(1);
+    expect(directionFactor(olaya, suburb, r('2026-11-18T08:00:00'))).toBeLessThan(1);
+    expect(directionFactor(olaya, suburb, r('2026-11-18T17:00:00'))).toBeGreaterThan(1);
+    expect(directionFactor(olaya, suburb, r('2026-11-20T17:00:00'))).toBe(1); // Friday
+  });
+});

@@ -29,8 +29,10 @@ describe('recommend (free mode, routers faked)', () => {
     // Wednesday 22:00 Riyadh: light traffic, metro running, no prayer window
     const deps: RecommendDeps = { stations, allVenues, osrm, now: () => new Date('2026-11-18T19:00:00Z') };
     const res = await recommend({ people: [sara, omar], venueType: 'both' }, deps);
-    expect(osrm).toHaveBeenCalledTimes(2); // car group → venues, and car group → zone grid
-    expect(osrm.mock.calls.every((c) => c[0].length === 1)).toBe(true);
+    // zone grid first (fair-area search), then the candidates in batches of < 100 points
+    expect(osrm.mock.calls.length).toBeGreaterThanOrEqual(2);
+    expect(osrm.mock.calls.every((c) => c[0].length === 1 && c[0].length + c[1].length <= 100)).toBe(true);
+    expect(res.meta.candidates).toBeGreaterThan(40);
     expect(res.meta.traffic.kind).toBe('typical');
     expect(res.zone?.cells.length).toBeGreaterThan(40);
     expect(res.results[0].warnings).toEqual({});
@@ -60,7 +62,11 @@ describe('recommend (free mode, routers faked)', () => {
     const carNight = night.results[0].etas[0].minutes;
     const carRush = rush.results[0].etas[0].minutes;
     expect(carRush).toBeGreaterThan(carNight * 1.5);
-    expect(night.results.some((r) => r.warnings.metroClosed?.includes(1))).toBe(true);
+    // every result where Omar actually rides the metro at 2 am carries the warning
+    for (const r of night.results) {
+      const rides = r.etas[1].detail?.walkOnly === false;
+      expect(!!r.warnings.metroClosed?.includes(1)).toBe(rides);
+    }
     const asr = await at('2026-11-18T11:15:00Z'); // leave Wed 14:15 Riyadh → arrive ~14:35–14:55, Asr ≈ 14:43
     expect(asr.results.some((r) => r.warnings.prayer?.name === 'Asr')).toBe(true);
   });

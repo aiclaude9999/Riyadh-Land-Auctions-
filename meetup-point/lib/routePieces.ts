@@ -43,7 +43,8 @@ export function routeRequests(venue: ScoredVenue, people: Person[]) {
     }
     const first = r[0].path[0];
     const last = r[r.length - 1].path.at(-1)!;
-    out.push({ key: routeKey('foot', from, first), mode: 'foot', from, to: first, person: e.person });
+    const byCar = e.detail?.legs?.[0]?.kind === 'drive';
+    out.push({ key: routeKey(byCar ? 'car' : 'foot', from, first), mode: byCar ? 'car' : 'foot', from, to: first, person: e.person });
     out.push({ key: routeKey('foot', last, to), mode: 'foot', from: last, to, person: e.person });
   }
   return out;
@@ -64,7 +65,12 @@ export function buildPieces(e: ScoredEta, from: LatLng | null, to: LatLng, route
   const legs = e.detail?.legs ?? [];
   const r = rides(e);
   if (!r.length) return [walk(routes, from, to, color)];
-  const pieces: RoutePiece[] = [walk(routes, from, r[0].path[0], color)];
+  const byCar = legs[0]?.kind === 'drive';
+  const drive = (): RoutePiece => {
+    const rr = routes[routeKey('car', from, r[0].path[0])];
+    return rr && typeof rr === 'object' ? { kind: 'car', points: [from, ...rr.path, r[0].path[0]], color } : { kind: 'car', points: [from, r[0].path[0]], color, rough: true };
+  };
+  const pieces: RoutePiece[] = [byCar ? drive() : walk(routes, from, r[0].path[0], color)];
   for (const leg of legs) {
     if (leg.kind !== 'ride') continue;
     pieces.push({ kind: 'ride', points: ridePath(tracks.get(leg.line), leg.path), color: leg.color });

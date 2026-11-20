@@ -88,6 +88,24 @@ export default function PersonCard({ person, index, canRemove, dispatch, station
         ))}
       </div>
 
+      {person.mode === 'metro' && (
+        <div className="mt-1.5 flex items-center gap-2 text-xs">
+          <span className="text-slate-500">{t.accessLabel}</span>
+          {(['walk', 'car'] as const).map((acc) => (
+            <button
+              key={acc}
+              type="button"
+              disabled={readOnly}
+              aria-pressed={(person.access ?? 'walk') === acc}
+              onClick={() => dispatch({ type: 'setAccess', id: person.id, access: acc })}
+              className={`rounded-full border px-2 py-0.5 ${(person.access ?? 'walk') === acc ? 'border-brand bg-brand-light text-brand-dark' : 'border-slate-300 text-slate-600'}`}
+            >
+              {acc === 'walk' ? `🚶 ${t.accessWalk}` : `🚗 ${t.accessCar}`}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="mt-2">
         <span className="text-xs font-medium text-slate-500">{t.locationLabel}</span>
         {person.location ? (

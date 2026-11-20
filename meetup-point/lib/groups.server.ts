@@ -67,7 +67,8 @@ export function cleanPerson(raw: unknown): Omit<GroupPerson, 'id'> {
     location = { lat: +lat.toFixed(6), lng: +lng.toFixed(6) };
   }
   const districtId = typeof r.districtId === 'string' && /^d\d{1,4}$/.test(r.districtId) ? r.districtId : null;
-  return { name, mode, location, districtId };
+  const access = r.access === 'car' ? 'car' : 'walk';
+  return { name, mode, location, districtId, access };
 }
 
 function view(doc: GroupDoc, version: number): GroupView {
@@ -157,7 +158,7 @@ export async function updatePerson(store: Store, id: string, personId: string, t
   const { view: v } = await mutate(store, id, (doc) => {
     const p = canEdit(doc, personId, token);
     const r = (raw ?? {}) as Record<string, unknown>;
-    const c = cleanPerson({ name: p.name, mode: p.mode, location: p.location, districtId: p.districtId, ...r });
+    const c = cleanPerson({ name: p.name, mode: p.mode, location: p.location, districtId: p.districtId, access: p.access, ...r });
     Object.assign(p, c);
   });
   return v;

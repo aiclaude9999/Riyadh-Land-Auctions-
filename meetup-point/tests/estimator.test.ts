@@ -104,3 +104,15 @@ describe('estimateCarMinutes', () => {
     expect(m).toBeLessThan(27);
   });
 });
+
+describe('reaching the station by car', () => {
+  it('a far-away metro user gets a drive leg instead of a long walk, and arrives sooner', () => {
+    const far = { lat: 24.62, lng: 46.85 }; // ~5 km from the nearest station
+    const dest = real.find((s) => /Financial District/.test(s.name_en))!.position;
+    const walk = createMetroEstimator(real).from(far)(dest);
+    const car = createMetroEstimator(real, { access: 'car' }).from(far)(dest);
+    expect(car.legs[0].kind).toBe('drive');
+    expect(car.minutes).toBeLessThan(walk.minutes);
+    expect(car.walkMinutes).toBeLessThan(walk.walkMinutes);
+  });
+});

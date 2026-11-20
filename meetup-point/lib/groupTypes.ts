@@ -9,6 +9,7 @@ export interface GroupPerson {
   mode: TravelMode;
   location: LatLng | null;
   districtId: string | null;
+  access?: 'walk' | 'car';
 }
 
 export interface GroupView {

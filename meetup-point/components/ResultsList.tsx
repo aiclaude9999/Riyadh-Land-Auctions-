@@ -110,10 +110,13 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
                 </div>
               )}
 
-              {(r.warnings.prayer || r.warnings.metroClosed) && (
+              {(r.warnings.prayer || r.warnings.metroClosed || r.warnings.longWalk) && (
                 <div className="mt-2 space-y-1 text-xs">
                   {r.warnings.prayer && (
                     <p className="rounded-md bg-sky-50 px-2 py-1 text-sky-900">🕌 {t.prayerWarn(t.prayers[r.warnings.prayer.name], riyadhTimeLabel(new Date(r.warnings.prayer.time)))}</p>
+                  )}
+                  {r.warnings.longWalk && (
+                    <p className="rounded-md bg-amber-50 px-2 py-1 text-amber-900">🚶 {t.longWalkWarn(r.warnings.longWalk.map((i) => displayName(people[i], i, t.namePlaceholder)).join(', '))}</p>
                   )}
                   {r.warnings.metroClosed && (
                     <p className="rounded-md bg-amber-50 px-2 py-1 text-amber-900">

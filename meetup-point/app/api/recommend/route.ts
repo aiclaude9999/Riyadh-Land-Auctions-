@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     });
     const hit = cache.get(key);
     if (hit) return NextResponse.json(hit);
-    const result = await recommend(request, recommendDeps());
+    const result = await recommend(request, await recommendDeps());
     if (result.results.length) cache.set(key, result);
     return NextResponse.json(result);
   } catch (e) {

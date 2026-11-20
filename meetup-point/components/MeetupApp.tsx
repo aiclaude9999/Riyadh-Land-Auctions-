@@ -51,7 +51,7 @@ type Tab = 'people' | 'results' | 'prefs';
 
 function buildRequest(people: Person[], trip: TripState, prefs: RecommendRequest['prefs']): RecommendRequest {
   return {
-    people: people.map((p, i) => ({ name: displayName(p, i), mode: p.mode, location: p.location! })),
+    people: people.map((p, i) => ({ name: displayName(p, i), mode: p.mode, location: p.location!, access: p.mode === 'metro' ? (p.access ?? 'walk') : undefined })),
     venueType: trip.venueType,
     ...(trip.departMode === 'later' ? { departAt: departDate(trip)!.toISOString() } : {}),
     prefs,

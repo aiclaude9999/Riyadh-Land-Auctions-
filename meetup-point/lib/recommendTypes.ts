@@ -4,7 +4,7 @@ import type { ScoredVenue } from './scoring';
 import type { VenueType } from './venues';
 
 export interface RecommendRequest {
-  people: { name: string; mode: 'car' | 'metro'; location: LatLng }[];
+  people: { name: string; mode: 'car' | 'metro'; location: LatLng; access?: 'walk' | 'car' }[];
   venueType: VenueType;
   /** ISO time; omitted = leave now. */
   departAt?: string;
@@ -13,6 +13,10 @@ export interface RecommendRequest {
   filters?: Filters;
   /** "Use as meeting place": score exactly these places (from the map layer) instead of searching */
   venueIds?: string[];
+  /** fairness over time: >1 for people who travelled more last times (their minutes count more) */
+  weights?: number[];
+  /** walking multiplier for metro users (heat); default from scoring params */
+  heatFactor?: number;
 }
 
 export interface Filters {
@@ -27,13 +31,16 @@ export interface VenueWarnings {
   prayer?: import('./timing').PrayerHit;
   /** people (index) whose metro trip falls outside metro hours */
   metroClosed?: number[];
+  /** people (index) who would walk > 20 min to the first station: suggest car/taxi */
+  longWalk?: number[];
 }
 
 export type ResultVenue = ScoredVenue & { warnings: VenueWarnings };
 
 /** Grid of points with the longest trip from the group; the UI shades cells ≤ the chosen minutes. */
 export interface Zone {
-  cells: { lat: number; lng: number; maxEta: number }[];
+  /** per = each person's minutes to that point (for the "everyone's reach" map) */
+  cells: { lat: number; lng: number; maxEta: number; per?: number[] }[];
   cellLat: number;
   cellLng: number;
 }
@@ -52,6 +59,10 @@ export interface RecommendResponse {
     leaveAt: string;
     /** car-time adjustment: Google live traffic, typical-traffic factor (free mode), or none */
     traffic: { kind: 'live' | 'typical' | 'none'; factor: number };
+    /** average metro wait used (depends on the time of day) */
+    metroWaitMin?: number;
+    /** learned correction factors from real trip reports */
+    calibration?: { car: number; metro: number };
     candidates: number;
     notes: string[];
   };

@@ -17,12 +17,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const b = (await body(req)) as Record<string, unknown>;
     let request;
     try {
-      request = parseRequest({ ...b, people: people.map((p) => ({ name: p.name, mode: p.mode, location: p.location })) });
+      request = parseRequest({ ...b, people: people.map((p) => ({ name: p.name, mode: p.mode, location: p.location, access: p.access })) });
     } catch (e) {
       if (e instanceof BadRequest) throw new GroupError(400, 'bad_request', e.message);
       throw e;
     }
-    const results = await recommend(request, recommendDeps());
+    const results = await recommend(request, await recommendDeps());
     return { group: await saveResults(store, id, token, results) };
   });
 }
