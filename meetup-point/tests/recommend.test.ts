@@ -26,10 +26,14 @@ describe('parseRequest', () => {
 describe('recommend (free mode, routers faked)', () => {
   it('car via OSRM, metro estimated; returns 5 ranked venues', async () => {
     const osrm = vi.fn(async (o: unknown[], d: unknown[]) => o.map(() => d.map((_, i) => 15 + (i % 7))));
-    const deps: RecommendDeps = { stations, allVenues, osrm };
+    // Wednesday 22:00 Riyadh: light traffic, metro running, no prayer window
+    const deps: RecommendDeps = { stations, allVenues, osrm, now: () => new Date('2026-11-18T19:00:00Z') };
     const res = await recommend({ people: [sara, omar], venueType: 'both' }, deps);
-    expect(osrm).toHaveBeenCalledTimes(1); // one call for the car group
-    expect(osrm.mock.calls[0][0]).toHaveLength(1);
+    expect(osrm).toHaveBeenCalledTimes(2); // car group → venues, and car group → zone grid
+    expect(osrm.mock.calls.every((c) => c[0].length === 1)).toBe(true);
+    expect(res.meta.traffic.kind).toBe('typical');
+    expect(res.zone?.cells.length).toBeGreaterThan(40);
+    expect(res.results[0].warnings).toEqual({});
     expect(res.meta).toMatchObject({ dataSource: 'free', carSource: 'osrm', metroSource: 'estimate' });
     expect(res.meta.candidates).toBeGreaterThan(10);
     expect(res.results).toHaveLength(5);
@@ -37,6 +41,28 @@ describe('recommend (free mode, routers faked)', () => {
     expect(res.results[0].etas[1]).toMatchObject({ source: 'estimated', mode: 'metro' });
     const scores = res.results.map((r) => r.score);
     expect([...scores].sort((a, b) => a - b)).toEqual(scores);
+  });
+
+  it('filters: near metro only, and one food group', async () => {
+    const osrm = async (o: unknown[], d: unknown[]) => o.map(() => d.map(() => 15));
+    const res = await recommend({ people: [sara, omar], venueType: 'both', filters: { nearMetro: true, food: 'coffee' } }, { stations, allVenues, osrm });
+    expect(res.results.length).toBeGreaterThan(0);
+    for (const r of res.results) {
+      expect(r.nearStation && r.nearStation.meters <= 600).toBe(true);
+    }
+  });
+
+  it('rush hour makes car trips longer in free mode; warnings for prayer and metro hours', async () => {
+    const osrm = async (o: unknown[], d: unknown[]) => o.map(() => d.map(() => 20));
+    const at = async (iso: string) => recommend({ people: [sara, omar], venueType: 'both' }, { stations, allVenues, osrm, now: () => new Date(iso) });
+    const night = await at('2026-11-18T23:00:00Z'); // Thu 02:00 Riyadh → metro closed
+    const rush = await at('2026-11-18T13:30:00Z'); // Wed 16:30 Riyadh
+    const carNight = night.results[0].etas[0].minutes;
+    const carRush = rush.results[0].etas[0].minutes;
+    expect(carRush).toBeGreaterThan(carNight * 1.5);
+    expect(night.results.some((r) => r.warnings.metroClosed?.includes(1))).toBe(true);
+    const asr = await at('2026-11-18T11:15:00Z'); // leave Wed 14:15 Riyadh → arrive ~14:35–14:55, Asr ≈ 14:43
+    expect(asr.results.some((r) => r.warnings.prayer?.name === 'Asr')).toBe(true);
   });
 
   it('hidden places never come back', async () => {

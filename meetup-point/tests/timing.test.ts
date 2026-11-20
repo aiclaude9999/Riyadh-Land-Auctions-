@@ -1,0 +1,38 @@
+import { describe, expect, it } from 'vitest';
+import { metroRunning, prayerOverlap, riyadhClock, trafficFactor } from '@/lib/timing';
+
+// Riyadh = UTC+3. 2026-11-18 is a Wednesday, 2026-11-20 a Friday.
+const r = (local: string) => new Date(`${local}+03:00`);
+
+describe('riyadhClock', () => {
+  it('uses Riyadh time whatever the server zone', () => {
+    expect(riyadhClock(new Date('2026-11-18T21:30:00Z'))).toEqual({ day: 4, minutes: 30 }); // Thu 00:30
+  });
+});
+
+describe('trafficFactor (typical Riyadh traffic)', () => {
+  it('rush hour on a workday is about 2× an empty road; the night is close to 1×', () => {
+    expect(trafficFactor(r('2026-11-18T16:30:00'))).toBeGreaterThan(1.9);
+    expect(trafficFactor(r('2026-11-18T03:00:00'))).toBeLessThan(1.1);
+    expect(trafficFactor(r('2026-11-18T08:00:00'))).toBeGreaterThan(1.4);
+  });
+  it('weekend mornings are light', () => {
+    expect(trafficFactor(r('2026-11-20T08:00:00'))).toBeLessThan(1.1);
+  });
+});
+
+describe('metroRunning', () => {
+  it('runs during the day, not at 3 am, and starts late on Friday', () => {
+    expect(metroRunning(r('2026-11-18T09:00:00'))).toBe(true);
+    expect(metroRunning(r('2026-11-18T03:00:00'))).toBe(false);
+    expect(metroRunning(r('2026-11-20T08:00:00'))).toBe(false); // Friday before 10:00
+    expect(metroRunning(r('2026-11-20T11:00:00'))).toBe(true);
+  });
+});
+
+describe('prayerOverlap', () => {
+  it('finds Maghrib when arriving around sunset, nothing mid-morning', () => {
+    expect(prayerOverlap(r('2026-11-18T17:00:00'), r('2026-11-18T17:15:00'))?.name).toBe('Maghrib');
+    expect(prayerOverlap(r('2026-11-18T09:30:00'), r('2026-11-18T09:50:00'))).toBeUndefined();
+  });
+});

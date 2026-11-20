@@ -188,6 +188,8 @@ export default function FreeMap(props: MapViewProps) {
     for (const o of overlays) {
       if (o.kind === 'area') {
         L.polygon(o.rings, { color: o.color, weight: 2, fillOpacity: 0.08, interactive: false }).addTo(group);
+      } else if (o.kind === 'cell') {
+        L.rectangle([[o.south, o.west], [o.north, o.east]], { stroke: false, fillColor: o.color, fillOpacity: o.opacity, interactive: false }).addTo(group);
       } else {
         L.polyline(o.points.map((p) => [p.lat, p.lng] as [number, number]), {
           color: o.color,

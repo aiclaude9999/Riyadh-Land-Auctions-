@@ -5,6 +5,8 @@ Spec and build order: [`CLAUDE.md`](./CLAUDE.md). This folder is a separate app;
 
 **Built so far:** steps 1–5: map + metro layer, people panel, `/api/recommend` (candidates → travel times → scoring), results list + numbered map markers + ETA breakdown, and the metro fallback estimator with tests. Step 6 (polish) is not started.
 
+**Step 6 + "smarter results" (Nov 2026):** day + time-of-day slider; in free mode car times get a *typical traffic* factor per hour (TomTom Traffic Index 2025 averages for Riyadh, `lib/timing.ts`); warnings when the group arrives around a prayer time (`adhan`, Umm al-Qura) or a metro trip falls outside the usual hours (Sat–Thu 6:00–24:00, Fri from 10:00 — not confirmed with the operator, adjust `METRO_HOURS`); "everyone within X min" zone (9×9 grid, approximate); filters: near a metro station, food group.
+
 **Extras (Nov 2026, "easier to use" batch):** neighbourhood list (189 Riyadh districts, English/Arabic search, tap to refine), step-by-step trip per person (metro lines, direction, changes; car turns + route line from OSRM), Google Maps *Directions* and *Reviews* links, and *Preferences* (liked/avoided food, favourite and hidden places), saved only in the browser.
 
 **Free mode vs Google mode** (chosen automatically):

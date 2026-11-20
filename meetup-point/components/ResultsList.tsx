@@ -7,6 +7,7 @@ import { t } from '@/lib/i18n';
 import { displayName, personColor, type Person } from '@/lib/people';
 import type { Preferences } from '@/lib/preferences';
 import type { RecommendResponse } from '@/lib/recommendTypes';
+import { riyadhClock, riyadhTimeLabel } from '@/lib/timing';
 
 interface Props {
   response: RecommendResponse;
@@ -28,6 +29,9 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
   const { results, meta } = response;
   const anyEstimated = results.some((r) => r.etas.some((e) => e.source === 'estimated'));
   const anyMetro = results.some((r) => r.etas.some((e) => e.mode === 'metro'));
+  const anyCar = results.some((r) => r.etas.some((e) => e.mode === 'car'));
+  const leave = new Date(meta.leaveAt);
+  const leaveLabel = `${t.weekdays[riyadhClock(leave).day]} ${riyadhTimeLabel(leave)}`;
 
   useEffect(() => {
     if (selectedId) refs.current.get(selectedId)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -74,6 +78,19 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
                 </span>
               </div>
 
+              {(r.warnings.prayer || r.warnings.metroClosed) && (
+                <div className="mt-2 space-y-1 text-xs">
+                  {r.warnings.prayer && (
+                    <p className="rounded-md bg-sky-50 px-2 py-1 text-sky-900">🕌 {t.prayerWarn(t.prayers[r.warnings.prayer.name], riyadhTimeLabel(new Date(r.warnings.prayer.time)))}</p>
+                  )}
+                  {r.warnings.metroClosed && (
+                    <p className="rounded-md bg-amber-50 px-2 py-1 text-amber-900">
+                      🚇 {t.metroWarn(r.warnings.metroClosed.map((i) => displayName(people[i], i)).join(', '))}
+                    </p>
+                  )}
+                </div>
+              )}
+
               <ul className="mt-2 space-y-1.5">
                 {r.etas.map((e) => (
                   <li key={e.person} className="text-sm">
@@ -92,7 +109,7 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
                         className={`shrink-0 rounded px-1 text-[10px] font-medium uppercase ${e.source === 'estimated' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}
                         title={e.source === 'estimated' ? t.estimatedHelp : undefined}
                       >
-                        {e.source === 'estimated' ? t.estimated : meta.carSource === 'google-traffic' || e.mode === 'metro' ? t.live : t.noTraffic}
+                        {e.source === 'estimated' ? t.estimated : meta.carSource === 'google-traffic' || e.mode === 'metro' ? t.live : t.typicalTraffic}
                       </span>
                     </div>
                     {selected && people[e.person]?.location && (
@@ -138,6 +155,7 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
 
       <div className="mt-3 space-y-1 text-xs text-slate-500">
         <p>{meta.dataSource === 'google' ? t.sourceGoogle : t.sourceFree}</p>
+        {anyCar && meta.traffic.kind === 'typical' && <p>{t.trafficNote(leaveLabel, meta.traffic.factor.toFixed(1))}</p>}
         {meta.carSource === 'estimate' && <p className="text-amber-700">{t.carEstimated}</p>}
         {anyMetro && meta.metroSource !== 'google-transit' && <p>{t.metroEstimatedNote}</p>}
         {anyEstimated && <p>{t.estimatedHelp}</p>}

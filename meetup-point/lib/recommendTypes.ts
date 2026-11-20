@@ -10,10 +10,35 @@ export interface RecommendRequest {
   departAt?: string;
   /** Group preferences kept in the browser. */
   prefs?: import('./preferences').Preferences;
+  filters?: Filters;
+}
+
+export interface Filters {
+  /** only places ≤ 600 m from a metro station */
+  nearMetro?: boolean;
+  /** only places serving this food group */
+  food?: import('./cuisine').CuisineGroup | null;
+}
+
+export interface VenueWarnings {
+  /** the group arrives during a prayer pause window */
+  prayer?: import('./timing').PrayerHit;
+  /** people (index) whose metro trip falls outside metro hours */
+  metroClosed?: number[];
+}
+
+export type ResultVenue = ScoredVenue & { warnings: VenueWarnings };
+
+/** Grid of points with the longest trip from the group; the UI shades cells ≤ the chosen minutes. */
+export interface Zone {
+  cells: { lat: number; lng: number; maxEta: number }[];
+  cellLat: number;
+  cellLng: number;
 }
 
 export interface RecommendResponse {
-  results: ScoredVenue[];
+  results: ResultVenue[];
+  zone?: Zone;
   meta: {
     dataSource: 'free' | 'google';
     /** What produced the car times: Google live traffic, OSRM (no traffic) or a local estimate. */
@@ -21,6 +46,10 @@ export interface RecommendResponse {
     metroSource: 'google-transit' | 'estimate' | 'none';
     center: LatLng;
     radiusM: number;
+    /** departure used for the times (ISO) */
+    leaveAt: string;
+    /** car-time adjustment: Google live traffic, typical-traffic factor (free mode), or none */
+    traffic: { kind: 'live' | 'typical' | 'none'; factor: number };
     candidates: number;
     notes: string[];
   };

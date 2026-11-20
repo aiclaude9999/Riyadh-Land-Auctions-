@@ -54,10 +54,12 @@ function GoogleOverlays({ overlays, focusBounds }: Pick<MapViewProps, 'overlays'
   const map = useMap();
   useEffect(() => {
     if (!map) return;
-    const shapes: (google.maps.Polyline | google.maps.Polygon)[] = overlays.map((o) =>
+    const shapes: (google.maps.Polyline | google.maps.Polygon | google.maps.Rectangle)[] = overlays.map((o) =>
       o.kind === 'area'
         ? new google.maps.Polygon({ map, paths: o.rings.map((r) => r.map(([lat, lng]) => ({ lat, lng }))), strokeColor: o.color, strokeWeight: 2, fillColor: o.color, fillOpacity: 0.08, clickable: false })
-        : new google.maps.Polyline({
+        : o.kind === 'cell'
+          ? new google.maps.Rectangle({ map, bounds: { south: o.south, west: o.west, north: o.north, east: o.east }, strokeWeight: 0, fillColor: o.color, fillOpacity: o.opacity, clickable: false })
+          : new google.maps.Polyline({
             map,
             path: o.points,
             strokeColor: o.color,

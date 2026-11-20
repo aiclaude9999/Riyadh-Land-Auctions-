@@ -5,7 +5,7 @@ import MeetupMap from './MeetupMap';
 import PeoplePanel from './PeoplePanel';
 import PrefsPanel from './PrefsPanel';
 import ResultsList from './ResultsList';
-import TripOptions, { type TripState } from './TripOptions';
+import TripOptions, { departDate, initialTrip, type TripState } from './TripOptions';
 import type { RouteState } from './TripDetails';
 import type { MetroLineCollection } from './MetroLayer';
 import type { CarRoute } from '@/lib/directions';
@@ -29,8 +29,9 @@ function buildRequest(people: Person[], trip: TripState, prefs: RecommendRequest
   return {
     people: people.map((p, i) => ({ name: displayName(p, i), mode: p.mode, location: p.location! })),
     venueType: trip.venueType,
-    ...(trip.departMode === 'later' && trip.departLocal ? { departAt: new Date(trip.departLocal).toISOString() } : {}),
+    ...(trip.departMode === 'later' ? { departAt: departDate(trip)!.toISOString() } : {}),
     prefs,
+    filters: { nearMetro: trip.nearMetro, food: trip.food },
   };
 }
 
@@ -39,7 +40,9 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
   const [pickingId, setPickingId] = useState<string | null>(null);
   const [focusDistrict, setFocusDistrict] = useState<District | null>(null);
   const [showMetro, setShowMetro] = useState(true);
-  const [trip, setTrip] = useState<TripState>({ venueType: 'both', departMode: 'now', departLocal: '' });
+  const [trip, setTrip] = useState<TripState>(() => initialTrip());
+  const [zoneOn, setZoneOn] = useState(false);
+  const [zoneMin, setZoneMin] = useState(30);
   const [tab, setTab] = useState<Tab>('people');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,6 +92,13 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
   const overlays = useMemo<Overlay[]>(() => {
     const out: Overlay[] = [];
     if (focusDistrict) out.push({ kind: 'area', rings: focusDistrict.rings, color: '#0f766e' });
+    const zone = result?.response.zone;
+    if (zoneOn && zone && !stale) {
+      for (const c of zone.cells) {
+        if (c.maxEta > zoneMin) continue;
+        out.push({ kind: 'cell', south: c.lat - zone.cellLat / 2, north: c.lat + zone.cellLat / 2, west: c.lng - zone.cellLng / 2, east: c.lng + zone.cellLng / 2, color: '#059669', opacity: 0.22 + 0.23 * (1 - c.maxEta / Math.max(zoneMin, 1)) });
+      }
+    }
     if (!result || !selected || stale) return out;
     for (const e of selected.etas) {
       const color = personColor(e.person);
@@ -110,7 +120,7 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
       out.push({ kind: 'line', points: [rides[rides.length - 1].path.at(-1)!, selected.venue.location], color, weight: 3, dashed: true });
     }
     return out;
-  }, [focusDistrict, result, selected, stale, carRoutes]);
+  }, [focusDistrict, result, selected, stale, carRoutes, zoneOn, zoneMin]);
 
   async function find() {
     if (!ready || loading) return;
@@ -128,6 +138,8 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
       setResult({ response: data, people: state.people, signature });
       setNames((n) => ({ ...n, ...Object.fromEntries(data.results.map((r) => [r.venue.id, r.venue.name])) }));
       setSelectedId(data.results[0]?.venue.id ?? null);
+      // start the zone slider at the best place's longest trip, rounded up to 5 min
+      if (data.results[0]) setZoneMin(Math.max(10, Math.ceil(data.results[0].maxEta / 5) * 5));
       setTab('results');
     } catch {
       setError(t.requestFailed);
@@ -173,6 +185,22 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
 
         {tab === 'results' && result ? (
           <div className="min-h-0 flex-1 overflow-y-auto p-4">
+            {result.response.zone && !stale && (
+              <div className="mb-3 rounded-lg border border-emerald-200 bg-emerald-50/60 p-2.5 text-sm">
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input type="checkbox" checked={zoneOn} onChange={(e) => setZoneOn(e.target.checked)} className="accent-emerald-600" />
+                  <span>
+                    {t.zoneToggle} <strong className="tabular-nums">{zoneMin} min</strong>
+                  </span>
+                </label>
+                {zoneOn && (
+                  <>
+                    <input type="range" min={10} max={90} step={5} value={zoneMin} onChange={(e) => setZoneMin(Number(e.target.value))} aria-label={t.zoneToggle} className="mt-1 w-full accent-emerald-600" />
+                    <p className="text-xs text-slate-500">{t.zoneLegend}</p>
+                  </>
+                )}
+              </div>
+            )}
             <ResultsList
               response={result.response}
               people={result.people}
@@ -204,7 +232,6 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
 
         <footer className="space-y-2 border-t border-slate-200 px-4 py-3">
           <TripOptions trip={trip} onChange={setTrip} />
-          {trip.departMode === 'later' && result?.response.meta.dataSource !== 'google' && <p className="text-xs text-slate-400">{t.noTrafficLater}</p>}
           <button
             type="button"
             onClick={find}
