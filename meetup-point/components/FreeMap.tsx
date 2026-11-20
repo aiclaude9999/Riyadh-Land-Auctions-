@@ -32,7 +32,7 @@ function personIcon(color: string, letter: string): L.DivIcon {
 export default function FreeMap(props: MapViewProps) {
   const t = useT();
   const n = useName();
-  const { people, pickingId, showMetro, stationsGeoJson, linesGeoJson, results, resultsKey, selectedVenueId, overlays, focusBounds } = props;
+  const { people, pickingId, showMetro, stationsGeoJson, linesGeoJson, results, resultsKey, selectedVenueId, overlays, fitTo } = props;
   const el = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const metroRef = useRef<L.LayerGroup | null>(null);
@@ -194,24 +194,36 @@ export default function FreeMap(props: MapViewProps) {
         L.polygon(o.rings, { color: o.color, weight: 2, fillOpacity: 0.08, interactive: false }).addTo(group);
       } else if (o.kind === 'cell') {
         L.rectangle([[o.south, o.west], [o.north, o.east]], { stroke: false, fillColor: o.color, fillOpacity: o.opacity, interactive: false }).addTo(group);
+      } else if (o.kind === 'dot') {
+        L.circleMarker([o.at.lat, o.at.lng], { radius: 6, color: '#fff', weight: 2.5, fillColor: o.color, fillOpacity: 1, interactive: !!o.label })
+          .bindTooltip(o.label ?? '', { direction: 'top' })
+          .addTo(group);
       } else {
-        L.polyline(o.points.map((p) => [p.lat, p.lng] as [number, number]), {
+        const latlngs = o.points.map((p) => [p.lat, p.lng] as [number, number]);
+        // white casing under the line, like Google Maps routes
+        if (o.outline) L.polyline(latlngs, { color: '#ffffff', weight: o.weight + 4, opacity: 1, lineCap: 'round', lineJoin: 'round', interactive: false, dashArray: undefined }).addTo(group);
+        L.polyline(latlngs, {
           color: o.color,
           weight: o.weight,
           opacity: o.opacity ?? 1,
           dashArray: o.dashed ? '6 8' : undefined,
           lineCap: 'round',
+          lineJoin: 'round',
           interactive: false,
         }).addTo(group);
       }
     }
   }, [overlays]);
 
+  // zoom to a route, a step or a neighbourhood
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !focusBounds?.length) return;
-    map.fitBounds(L.latLngBounds(focusBounds.flat()), { padding: [30, 30], maxZoom: 16 });
-  }, [focusBounds]);
+    if (!map || !fitTo?.points.length) return;
+    if (fitTo.points.length === 1) map.setView([fitTo.points[0].lat, fitTo.points[0].lng], 17, { animate: true });
+    // extra room at the bottom for the route card
+    else map.fitBounds(L.latLngBounds(fitTo.points.map((p) => [p.lat, p.lng] as [number, number])), { paddingTopLeft: [50, 60], paddingBottomRight: [50, 130], maxZoom: 16, animate: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fitTo?.key]);
 
   // crosshair while picking
   useEffect(() => {

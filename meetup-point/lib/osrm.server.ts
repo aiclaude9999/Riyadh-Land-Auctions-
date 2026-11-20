@@ -24,14 +24,23 @@ export async function osrmCarMinutes(origins: LatLng[], destinations: LatLng[]):
   return parseOsrmTable(await res.json());
 }
 
-/** Car route with turn-by-turn steps and the line to draw on the map. */
-export async function osrmCarRoute(from: LatLng, to: LatLng): Promise<CarRoute> {
+const FOOT_URL = process.env.OSRM_FOOT_URL || 'https://routing.openstreetmap.de/routed-foot';
+
+/**
+ * Route with turn-by-turn steps and the line to draw on the map.
+ * car: OSRM demo server; foot: the FOSSGIS walking router (routing.openstreetmap.de, fair use, OSM data).
+ */
+export async function osrmRoute(from: LatLng, to: LatLng, mode: 'car' | 'foot' = 'car'): Promise<CarRoute> {
   const coords = [from, to].map((p) => `${p.lng.toFixed(5)},${p.lat.toFixed(5)}`).join(';');
-  const url = `${OSRM_URL}/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=true`;
+  const base = mode === 'foot' ? FOOT_URL : OSRM_URL;
+  const url = `${base}/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=true`;
   const res = await fetch(url, { headers: { 'User-Agent': 'riyadh-meetup-point-prototype/0.1' }, signal: AbortSignal.timeout(15_000), cache: 'no-store' });
-  if (!res.ok) throw new Error(`OSRM route: HTTP ${res.status}`);
+  if (!res.ok) throw new Error(`OSRM ${mode} route: HTTP ${res.status}`);
   const route = parseOsrmRoute(await res.json());
   // full geometry can be long; keep at most ~400 points for the map
   const step = Math.max(1, Math.ceil(route.path.length / 400));
   return { ...route, path: route.path.filter((_, i) => i % step === 0 || i === route.path.length - 1) };
 }
+
+/** Car route (kept for older callers). */
+export const osrmCarRoute = (from: LatLng, to: LatLng) => osrmRoute(from, to, 'car');

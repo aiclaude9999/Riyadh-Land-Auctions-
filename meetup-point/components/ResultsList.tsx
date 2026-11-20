@@ -4,6 +4,8 @@ import { useEffect, useRef } from 'react';
 import TripDetails, { type RouteState } from './TripDetails';
 import { venueGroups } from '@/lib/cuisine';
 import { googleReviewsUrl } from '@/lib/directions';
+import type { LatLng } from '@/lib/geo';
+import { routeKey } from '@/lib/routePieces';
 import { useLocale, useName, useT } from './LocaleProvider';
 import { displayName, personColor, type Person } from '@/lib/people';
 import type { Preferences } from '@/lib/preferences';
@@ -17,7 +19,11 @@ interface Props {
   stale: boolean;
   selectedId: string | null;
   onSelect: (id: string) => void;
-  carRoutes: Record<string, RouteState>;
+  routes: Record<string, RouteState>;
+  /** focus the map on one person's route */
+  onShowRoute: (person: number) => void;
+  /** zoom the map to these points (a step) */
+  onZoom: (points: LatLng[]) => void;
   prefs: Preferences;
   onToggleFavourite: (id: string) => void;
   onHide: (id: string) => void;
@@ -27,7 +33,7 @@ interface Props {
 
 const fmt = (m: number) => String(Math.round(m));
 
-export default function ResultsList({ response, people, stale, selectedId, onSelect, carRoutes, prefs, onToggleFavourite, onHide, voting }: Props) {
+export default function ResultsList({ response, people, stale, selectedId, onSelect, routes, onShowRoute, onZoom, prefs, onToggleFavourite, onHide, voting }: Props) {
   const t = useT();
   const n = useName();
   const { locale } = useLocale();
@@ -142,7 +148,14 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
                     </div>
                     {selected && people[e.person]?.location && (
                       <div className="ps-4">
-                        <TripDetails eta={e} from={people[e.person].location!} to={r.venue.location} route={carRoutes[`${e.person}|${r.venue.id}`]} />
+                        <TripDetails
+                          eta={e}
+                          from={people[e.person].location!}
+                          to={r.venue.location}
+                          route={routes[routeKey('car', people[e.person].location!, r.venue.location)]}
+                          onShowRoute={() => onShowRoute(e.person)}
+                          onZoom={onZoom}
+                        />
                       </div>
                     )}
                   </li>

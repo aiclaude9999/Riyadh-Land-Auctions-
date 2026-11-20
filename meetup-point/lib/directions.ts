@@ -8,6 +8,8 @@ import { en, type CarStepInfo } from './i18n';
 /** One driving instruction; the text is written in the UI language (`carStep` in lib/i18n.ts). */
 export interface CarStep extends CarStepInfo {
   meters: number;
+  /** where the manoeuvre happens (tap a step → the map zooms there) */
+  at?: LatLng;
 }
 
 export interface CarRoute {
@@ -21,7 +23,7 @@ interface OsrmStep {
   name?: string;
   ref?: string;
   distance: number;
-  maneuver: { type: string; modifier?: string; exit?: number };
+  maneuver: { type: string; modifier?: string; exit?: number; location?: [number, number] };
 }
 
 /** English text of one OSRM step (tests, logs). */
@@ -54,7 +56,8 @@ export function parseOsrmRoute(json: {
       steps[steps.length - 1].meters += s.distance; // same road (or unnamed link): fold into previous step
       continue;
     }
-    steps.push({ ...toInfo(s), meters: s.distance });
+    const loc = s.maneuver.location;
+    steps.push({ ...toInfo(s), meters: s.distance, ...(loc ? { at: { lat: loc[1], lng: loc[0] } } : {}) });
     if (road) lastRoad = road;
   }
   return {

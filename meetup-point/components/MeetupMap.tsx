@@ -9,7 +9,7 @@ import { useT } from './LocaleProvider';
 import type { StationCollection } from '@/lib/metro';
 import { displayName, personColor, personInitial, type Person } from '@/lib/people';
 import type { ScoredVenue } from '@/lib/scoring';
-import type { Overlay } from '@/lib/overlays';
+import type { FitTarget, Overlay } from '@/lib/overlays';
 
 // Browser key only: restrict it to your site's referrer and the Maps JavaScript API.
 const BROWSER_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY ?? '';
@@ -34,8 +34,8 @@ export interface MapViewProps {
   onSelectVenue: (id: string) => void;
   /** Route lines for the selected place and the chosen neighbourhood outline. */
   overlays: Overlay[];
-  /** When set (a neighbourhood was chosen), the map zooms to these rings. */
-  focusBounds: [number, number][][] | null;
+  /** Zoom target: a neighbourhood, one person's route, or one step. */
+  fitTo: FitTarget | null;
 }
 
 /** Numbered square marker for a ranked venue (shared look for both maps). */
@@ -49,37 +49,54 @@ export function venueMarkerHtml(rank: number, selected: boolean): string {
   );
 }
 
-/** Google map: draw overlays as Polylines / Polygons; zoom to a chosen neighbourhood. */
-function GoogleOverlays({ overlays, focusBounds }: Pick<MapViewProps, 'overlays' | 'focusBounds'>) {
+/** Google map: draw overlays (routes with a white casing, dots, areas) and zoom to the current target. */
+function GoogleOverlays({ overlays, fitTo }: Pick<MapViewProps, 'overlays' | 'fitTo'>) {
   const map = useMap();
   useEffect(() => {
     if (!map) return;
-    const shapes: (google.maps.Polyline | google.maps.Polygon | google.maps.Rectangle)[] = overlays.map((o) =>
-      o.kind === 'area'
-        ? new google.maps.Polygon({ map, paths: o.rings.map((r) => r.map(([lat, lng]) => ({ lat, lng }))), strokeColor: o.color, strokeWeight: 2, fillColor: o.color, fillOpacity: 0.08, clickable: false })
-        : o.kind === 'cell'
-          ? new google.maps.Rectangle({ map, bounds: { south: o.south, west: o.west, north: o.north, east: o.east }, strokeWeight: 0, fillColor: o.color, fillOpacity: o.opacity, clickable: false })
-          : new google.maps.Polyline({
-            map,
-            path: o.points,
-            strokeColor: o.color,
-            strokeWeight: o.weight,
-            strokeOpacity: o.dashed ? 0 : (o.opacity ?? 1),
-            clickable: false,
-            zIndex: o.dashed ? 5 : 4,
-            // dashed line = repeated short dash symbols
-            icons: o.dashed ? [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, strokeColor: o.color, scale: o.weight }, offset: '0', repeat: '12px' }] : undefined,
-          }),
+    type Shape = google.maps.Polyline | google.maps.Polygon | google.maps.Rectangle | google.maps.Marker;
+    const shapes: Shape[] = overlays.flatMap((o): Shape[] =>
+      o.kind === 'dot'
+        ? [new google.maps.Marker({ map, position: o.at, title: o.label, icon: { path: google.maps.SymbolPath.CIRCLE, scale: 6, fillColor: o.color, fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2.5 } })]
+        : o.kind === 'line' && o.outline
+          ? [new google.maps.Polyline({ map, path: o.points, strokeColor: '#ffffff', strokeWeight: o.weight + 4, strokeOpacity: 1, clickable: false, zIndex: 3 }), lineOf(map, o)]
+          : [o.kind === 'line' ? lineOf(map, o) : shapeOf(map, o)],
     );
     return () => shapes.forEach((s) => s.setMap(null));
   }, [map, overlays]);
   useEffect(() => {
-    if (!map || !focusBounds?.length) return;
+    if (!map || !fitTo?.points.length) return;
+    if (fitTo.points.length === 1) {
+      map.panTo(fitTo.points[0]);
+      map.setZoom(17);
+      return;
+    }
     const b = new google.maps.LatLngBounds();
-    focusBounds.forEach((r) => r.forEach(([lat, lng]) => b.extend({ lat, lng })));
-    map.fitBounds(b, 40);
-  }, [map, focusBounds]);
+    fitTo.points.forEach((p) => b.extend(p));
+    map.fitBounds(b, { top: 60, left: 50, right: 50, bottom: 130 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, fitTo?.key]);
   return null;
+}
+
+function shapeOf(map: google.maps.Map, o: Exclude<Overlay, { kind: 'line' } | { kind: 'dot' }>): google.maps.Polygon | google.maps.Rectangle {
+  return o.kind === 'area'
+    ? new google.maps.Polygon({ map, paths: o.rings.map((r) => r.map(([lat, lng]) => ({ lat, lng }))), strokeColor: o.color, strokeWeight: 2, fillColor: o.color, fillOpacity: 0.08, clickable: false })
+    : new google.maps.Rectangle({ map, bounds: { south: o.south, west: o.west, north: o.north, east: o.east }, strokeWeight: 0, fillColor: o.color, fillOpacity: o.opacity, clickable: false });
+}
+
+function lineOf(map: google.maps.Map, o: Extract<Overlay, { kind: 'line' }>): google.maps.Polyline {
+  return new google.maps.Polyline({
+    map,
+    path: o.points,
+    strokeColor: o.color,
+    strokeWeight: o.weight,
+    strokeOpacity: o.dashed ? 0 : (o.opacity ?? 1),
+    clickable: false,
+    zIndex: o.dashed ? 5 : 4,
+    // dashed line = repeated short dash symbols
+    icons: o.dashed ? [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, strokeColor: o.color, scale: o.weight }, offset: '0', repeat: '12px' }] : undefined,
+  });
 }
 
 /** Google map: fit people + results when a new search arrives; pan to the selected venue. */
@@ -156,7 +173,7 @@ export default function MeetupMap(props: MapViewProps) {
             <div dangerouslySetInnerHTML={{ __html: venueMarkerHtml(r.rank, r.venue.id === props.selectedVenueId) }} />
           </AdvancedMarker>
         ))}
-        <GoogleOverlays overlays={props.overlays} focusBounds={props.focusBounds} />
+        <GoogleOverlays overlays={props.overlays} fitTo={props.fitTo} />
         <GoogleFit people={people} results={props.results} resultsKey={props.resultsKey} selectedVenueId={props.selectedVenueId} />
       </Map>
 

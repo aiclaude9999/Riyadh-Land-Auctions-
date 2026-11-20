@@ -21,6 +21,7 @@ describe('parseOsrmRoute (real reply)', () => {
     expect(texts.at(-1)).toBe('Arrive at the meeting place');
     expect(texts).toContain('Turn left onto طريق العروبة');
     expect(r.steps.map((s) => ar.carStep(s))).toContain('انعطف يسارًا إلى طريق العروبة');
+    expect(r.steps[0].at?.lat).toBeGreaterThan(24);
     const total = r.steps.reduce((s, x) => s + x.meters, 0);
     expect(total).toBeCloseTo(18623.1, 0); // folding keeps the total distance
   });
@@ -43,5 +44,14 @@ describe('Google Maps links', () => {
   it('reviews link searches the place name at its spot (or uses the Google id)', () => {
     expect(googleReviewsUrl('Tim Hortons', { lat: 24.7, lng: 46.6 })).toBe('https://www.google.com/maps/search/Tim%20Hortons/@24.700000,46.600000,18z');
     expect(googleReviewsUrl('X', { lat: 0, lng: 0 }, 'abc')).toContain('query_place_id=abc');
+  });
+});
+
+describe('walking route (real FOSSGIS foot router reply)', () => {
+  it('parses like a car route', () => {
+    const w = parseOsrmRoute(JSON.parse(readFileSync(path.join(__dirname, 'fixtures/osrm-foot.json'), 'utf8')));
+    expect(w.km).toBeCloseTo(1.03, 1);
+    expect(w.minutes).toBeGreaterThan(10);
+    expect(w.path.length).toBeGreaterThan(5);
   });
 });

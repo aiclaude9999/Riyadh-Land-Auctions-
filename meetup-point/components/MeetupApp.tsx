@@ -12,10 +12,13 @@ import TripOptions, { departDate, initialTrip, type TripState } from './TripOpti
 import type { RouteState } from './TripDetails';
 import type { MetroLineCollection } from './MetroLayer';
 import type { CarRoute } from '@/lib/directions';
+import { buildTrack } from '@/lib/metroTrack';
+import { buildPieces, routeRequests, type RoutePiece } from '@/lib/routePieces';
+import { googleDirectionsUrl } from '@/lib/directions';
 import { districtAt, shortAr, shortEn, type District } from '@/lib/districts';
 import { useLocale, useName, useT } from './LocaleProvider';
 import { toStations, type StationCollection } from '@/lib/metro';
-import type { Overlay } from '@/lib/overlays';
+import type { FitTarget, Overlay } from '@/lib/overlays';
 import { displayName, initialPeopleState, isReady, peopleReducer, personColor, type Person } from '@/lib/people';
 import type { RecommendError, RecommendRequest, RecommendResponse } from '@/lib/recommendTypes';
 import { usePrefs } from '@/lib/usePrefs';
@@ -69,7 +72,9 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SearchResult | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [carRoutes, setCarRoutes] = useState<Record<string, RouteState>>({});
+  const [routes, setRoutes] = useState<Record<string, RouteState>>({});
+  const [focusPerson, setFocusPerson] = useState<number | null>(null);
+  const [fitTo, setFitTo] = useState<FitTarget | null>(null);
   const [prefs, updatePrefs] = usePrefs();
   const [names, setNames] = useState<Record<string, string>>({});
   const stationList = useMemo(() => toStations(stations), [stations]);
@@ -112,25 +117,32 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
     return () => window.removeEventListener('keydown', onKey);
   }, [pickingId, state.people]);
 
-  // Car routes for the selected place (loaded on demand, cached here and on the server for 10 min).
+  // Routes for the selected place, loaded on demand (cached here and on the server for 10 min):
+  // car = road route; metro = walking legs along the streets (rides follow the metro track).
   const selected = result?.response.results.find((r) => r.venue.id === selectedId);
+  const tracks = useMemo(() => new Map(lines.features.map((f) => [f.properties.ref, buildTrack(f)] as const)), [lines]);
+  const neededRoutes = useMemo(() => (result && selected ? routeRequests(selected, result.people) : []), [result, selected]);
   useEffect(() => {
-    if (!result || !selected) return;
-    for (const e of selected.etas) {
-      const from = result.people[e.person]?.location;
-      const key = `${e.person}|${selected.venue.id}`;
-      if (e.mode !== 'car' || !from || carRoutes[key] !== undefined) continue;
-      setCarRoutes((c) => ({ ...c, [key]: 'loading' }));
-      const to = selected.venue.location;
-      fetch(`/api/route?from=${from.lat},${from.lng}&to=${to.lat},${to.lng}`)
-        .then((r) => (r.ok ? (r.json() as Promise<CarRoute>) : Promise.reject(new Error(String(r.status)))))
-        .then((route) => setCarRoutes((c) => ({ ...c, [key]: route })))
-        .catch(() => setCarRoutes((c) => ({ ...c, [key]: 'error' })));
+    for (const r of neededRoutes) {
+      if (routes[r.key] !== undefined) continue;
+      setRoutes((c) => ({ ...c, [r.key]: 'loading' }));
+      fetch(`/api/route?from=${r.from.lat},${r.from.lng}&to=${r.to.lat},${r.to.lng}&mode=${r.mode}`)
+        .then((res) => (res.ok ? (res.json() as Promise<CarRoute>) : Promise.reject(new Error(String(res.status)))))
+        .then((route) => setRoutes((c) => ({ ...c, [r.key]: route })))
+        .catch(() => setRoutes((c) => ({ ...c, [r.key]: 'error' })));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected?.venue.id, result]);
+  }, [neededRoutes]);
 
-  // Lines on the map for the selected place: car routes, metro rides in line colours, walks dashed.
+  // a new place or new results → show everyone again
+  useEffect(() => setFocusPerson(null), [selectedId, result]);
+
+  // Each person's route to the selected place as map pieces.
+  const personPieces = useMemo(() => {
+    if (!result || !selected || stale) return new Map<number, RoutePiece[]>();
+    return new Map(selected.etas.map((e) => [e.person, buildPieces(e, result.people[e.person]?.location ?? null, selected.venue.location, routes, tracks)] as const));
+  }, [result, selected, stale, routes, tracks]);
+
   const overlays = useMemo<Overlay[]>(() => {
     const out: Overlay[] = [];
     if (focusDistrict) out.push({ kind: 'area', rings: focusDistrict.rings, color: '#0f766e' });
@@ -141,28 +153,26 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
         out.push({ kind: 'cell', south: c.lat - zone.cellLat / 2, north: c.lat + zone.cellLat / 2, west: c.lng - zone.cellLng / 2, east: c.lng + zone.cellLng / 2, color: '#059669', opacity: 0.22 + 0.23 * (1 - c.maxEta / Math.max(zoneMin, 1)) });
       }
     }
-    if (!result || !selected || stale) return out;
-    for (const e of selected.etas) {
-      const color = personColor(e.person);
-      const from = result.people[e.person]?.location;
-      if (!from) continue;
-      if (e.mode === 'car') {
-        const route = carRoutes[`${e.person}|${selected.venue.id}`];
-        if (route && typeof route === 'object') out.push({ kind: 'line', points: route.path, color, weight: 5, opacity: 0.85 });
-        continue;
+    for (const [person, pieces] of personPieces) {
+      if (focusPerson !== null && person !== focusPerson) continue;
+      const focused = focusPerson === person;
+      for (const p of pieces) {
+        if (p.kind === 'stop') {
+          if (focused) out.push({ kind: 'dot', at: p.at, color: p.color, label: n(p.name, p.nameAr) });
+          continue;
+        }
+        const weight = p.kind === 'ride' ? (focused ? 8 : 6) : p.kind === 'walk' ? (focused ? 5 : 3) : focused ? 7 : 5;
+        out.push({ kind: 'line', points: p.points, color: p.color, weight, dashed: p.kind === 'walk' || p.rough, opacity: focused ? 1 : 0.85, outline: focused && p.kind !== 'walk' });
       }
-      const legs = e.detail?.legs ?? [];
-      const rides = legs.filter((l) => l.kind === 'ride');
-      if (!rides.length) {
-        out.push({ kind: 'line', points: [from, selected.venue.location], color, weight: 3, dashed: true });
-        continue;
-      }
-      out.push({ kind: 'line', points: [from, rides[0].path[0]], color, weight: 3, dashed: true });
-      for (const r of rides) out.push({ kind: 'line', points: r.path, color: r.color, weight: 7, opacity: 0.9 });
-      out.push({ kind: 'line', points: [rides[rides.length - 1].path.at(-1)!, selected.venue.location], color, weight: 3, dashed: true });
     }
     return out;
-  }, [focusDistrict, result, selected, stale, carRoutes, zoneOn, zoneMin]);
+  }, [focusDistrict, result, stale, zoneOn, zoneMin, personPieces, focusPerson, n]);
+
+  function showRoute(person: number) {
+    const pts = (personPieces.get(person) ?? []).flatMap((p) => (p.kind === 'stop' ? [p.at] : p.points));
+    setFocusPerson(person);
+    if (pts.length) setFitTo({ points: pts, key: `route-${person}-${Date.now()}` });
+  }
 
   async function find() {
     if (!ready || loading) return;
@@ -206,6 +216,7 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
   function chooseDistrict(personId: string, d: District) {
     act({ type: 'setLocation', id: personId, location: d.center, address: null, source: 'district', districtId: d.id });
     setFocusDistrict(d);
+    setFitTo({ points: d.rings.flat().map(([lat, lng]) => ({ lat, lng })), key: `district-${d.id}-${Date.now()}` });
     setPickingId(personId); // next tap on the map refines the spot
   }
 
@@ -266,7 +277,9 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
               stale={stale}
               selectedId={selectedId}
               onSelect={setSelectedId}
-              carRoutes={carRoutes}
+              routes={routes}
+              onShowRoute={showRoute}
+              onZoom={(points) => setFitTo({ points, key: `step-${Date.now()}` })}
               prefs={prefs}
               onToggleFavourite={(id) => updatePrefs((p) => ({ ...p, favourites: p.favourites.includes(id) ? p.favourites.filter((x) => x !== id) : [...p.favourites, id] }))}
               onHide={(id) => updatePrefs((p) => ({ ...p, hidden: [...p.hidden, id], favourites: p.favourites.filter((x) => x !== id) }))}
@@ -346,8 +359,34 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
             setTab('results');
           }}
           overlays={overlays}
-          focusBounds={focusDistrict?.rings ?? null}
+          fitTo={fitTo}
         />
+        {focusPerson !== null && result && selected && (() => {
+          const e = selected.etas.find((x) => x.person === focusPerson);
+          const who = result.people[focusPerson];
+          if (!e || !who?.location) return null;
+          const car = routes[routeRequests(selected, result.people).find((r) => r.person === focusPerson && r.mode === 'car')?.key ?? ''];
+          return (
+            <div className="absolute inset-x-3 bottom-10 z-[1100] mx-auto flex max-w-md items-center gap-3 rounded-xl bg-white/95 p-3 shadow-lg">
+              <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: personColor(focusPerson) }} aria-hidden />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">
+                  {e.mode === 'metro' ? '🚇' : '🚗'} {t.routeOf(displayName(who, focusPerson, t.namePlaceholder))} → {n(selected.venue.name, selected.venue.nameAr)}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {t.minutes(e.minutes)}
+                  {car && typeof car === 'object' ? ` · ${t.distance(car.km * 1000)}` : ''}
+                </p>
+              </div>
+              <a href={googleDirectionsUrl(who.location, selected.venue.location, e.mode)} target="_blank" rel="noreferrer" className="shrink-0 rounded-md border border-slate-300 px-2 py-1 text-xs hover:border-brand">
+                🧭 {t.directions}
+              </a>
+              <button type="button" onClick={() => setFocusPerson(null)} className="shrink-0 rounded-md bg-slate-100 px-2 py-1 text-xs hover:bg-slate-200">
+                {t.showEveryone}
+              </button>
+            </div>
+          );
+        })()}
         {pickingName && (
           <div className="pointer-events-auto absolute inset-x-0 top-3 z-[1100] mx-auto flex w-fit max-w-[calc(100%-2rem)] items-center gap-3 rounded-full bg-slate-900/90 px-4 py-2 text-sm text-white shadow-lg">
             <span>{focusDistrict ? t.refineBanner(pickingName, n(shortEn(focusDistrict), shortAr(focusDistrict))) : t.pickBanner(pickingName)}</span>

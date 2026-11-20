@@ -29,6 +29,11 @@ const side = (m?: string) => (m?.includes('left') ? 'left' : m?.includes('right'
 
 export const en = {
   langName: 'English',
+  showRoute: 'Show route on map',
+  showEveryone: 'Show everyone',
+  stepHint: 'Tap a step to zoom the map to it.',
+  routeOf: (name: string) => `${name}'s route`,
+  walkingRoute: 'walking',
   shareTitle: 'Plan together',
   shareIntro: 'Share a link: each friend adds their own starting point, then everyone votes on the top 3.',
   shareButton: 'Share with friends',
@@ -211,6 +216,11 @@ export type Strings = typeof en;
 
 export const ar: Strings = {
   langName: 'العربية',
+  showRoute: 'اعرض المسار على الخريطة',
+  showEveryone: 'اعرض الجميع',
+  stepHint: 'المس خطوة لتقترب الخريطة منها.',
+  routeOf: (name) => `مسار ${name}`,
+  walkingRoute: 'مشيًا',
   shareTitle: 'خطّطوا معًا',
   shareIntro: 'شارك رابطًا يضيف فيه كل صديق نقطة انطلاقه، ثم يصوّت الجميع على أفضل ثلاثة أماكن.',
   shareButton: 'شارك أصحابك',
