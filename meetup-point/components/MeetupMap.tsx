@@ -9,6 +9,7 @@ import { t } from '@/lib/i18n';
 import type { StationCollection } from '@/lib/metro';
 import { displayName, personColor, type Person } from '@/lib/people';
 import type { ScoredVenue } from '@/lib/scoring';
+import type { Overlay } from '@/lib/overlays';
 
 // Browser key only: restrict it to your site's referrer and the Maps JavaScript API.
 const BROWSER_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY ?? '';
@@ -31,6 +32,10 @@ export interface MapViewProps {
   resultsKey: string;
   selectedVenueId: string | null;
   onSelectVenue: (id: string) => void;
+  /** Route lines for the selected place and the chosen neighbourhood outline. */
+  overlays: Overlay[];
+  /** When set (a neighbourhood was chosen), the map zooms to these rings. */
+  focusBounds: [number, number][][] | null;
 }
 
 /** Numbered square marker for a ranked venue (shared look for both maps). */
@@ -42,6 +47,37 @@ export function venueMarkerHtml(rank: number, selected: boolean): string {
     `display:flex;align-items:center;justify-content:center;font:700 ${selected ? 16 : 14}px system-ui,sans-serif;` +
     `border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)${selected ? ',0 0 0 4px rgba(15,118,110,.35)' : ''}">${rank}</div>`
   );
+}
+
+/** Google map: draw overlays as Polylines / Polygons; zoom to a chosen neighbourhood. */
+function GoogleOverlays({ overlays, focusBounds }: Pick<MapViewProps, 'overlays' | 'focusBounds'>) {
+  const map = useMap();
+  useEffect(() => {
+    if (!map) return;
+    const shapes: (google.maps.Polyline | google.maps.Polygon)[] = overlays.map((o) =>
+      o.kind === 'area'
+        ? new google.maps.Polygon({ map, paths: o.rings.map((r) => r.map(([lat, lng]) => ({ lat, lng }))), strokeColor: o.color, strokeWeight: 2, fillColor: o.color, fillOpacity: 0.08, clickable: false })
+        : new google.maps.Polyline({
+            map,
+            path: o.points,
+            strokeColor: o.color,
+            strokeWeight: o.weight,
+            strokeOpacity: o.dashed ? 0 : (o.opacity ?? 1),
+            clickable: false,
+            zIndex: o.dashed ? 5 : 4,
+            // dashed line = repeated short dash symbols
+            icons: o.dashed ? [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, strokeColor: o.color, scale: o.weight }, offset: '0', repeat: '12px' }] : undefined,
+          }),
+    );
+    return () => shapes.forEach((s) => s.setMap(null));
+  }, [map, overlays]);
+  useEffect(() => {
+    if (!map || !focusBounds?.length) return;
+    const b = new google.maps.LatLngBounds();
+    focusBounds.forEach((r) => r.forEach(([lat, lng]) => b.extend({ lat, lng })));
+    map.fitBounds(b, 40);
+  }, [map, focusBounds]);
+  return null;
 }
 
 /** Google map: fit people + results when a new search arrives; pan to the selected venue. */
@@ -117,6 +153,7 @@ export default function MeetupMap(props: MapViewProps) {
             <div dangerouslySetInnerHTML={{ __html: venueMarkerHtml(r.rank, r.venue.id === props.selectedVenueId) }} />
           </AdvancedMarker>
         ))}
+        <GoogleOverlays overlays={props.overlays} focusBounds={props.focusBounds} />
         <GoogleFit people={people} results={props.results} resultsKey={props.resultsKey} selectedVenueId={props.selectedVenueId} />
       </Map>
 

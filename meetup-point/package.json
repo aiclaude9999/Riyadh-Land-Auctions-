@@ -9,7 +9,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "build:metro": "tsx scripts/build-metro-geojson.ts",
-    "build:venues": "tsx scripts/build-venues.ts"
+    "build:venues": "tsx scripts/build-venues.ts",
+    "build:districts": "tsx scripts/build-districts.ts"
   },
   "dependencies": {
     "@vis.gl/react-google-maps": "1.10.2",

@@ -3,6 +3,7 @@
 import type { Dispatch } from 'react';
 import PersonCard from './PersonCard';
 import { t } from '@/lib/i18n';
+import type { District } from '@/lib/districts';
 import type { Station } from '@/lib/metro';
 import { MAX_PEOPLE, type PeopleAction, type PeopleState } from '@/lib/people';
 
@@ -12,9 +13,11 @@ interface Props {
   stations: Station[];
   pickingId: string | null;
   onPick: (id: string) => void;
+  districts: District[];
+  onDistrict: (personId: string, d: District) => void;
 }
 
-export default function PeoplePanel({ state, dispatch, stations, pickingId, onPick }: Props) {
+export default function PeoplePanel({ state, dispatch, stations, pickingId, onPick, districts, onDistrict }: Props) {
   const { people } = state;
 
   return (
@@ -44,6 +47,8 @@ export default function PeoplePanel({ state, dispatch, stations, pickingId, onPi
             stations={stations}
             picking={pickingId === person.id}
             onPick={() => onPick(person.id)}
+            districts={districts}
+            onDistrict={(d) => onDistrict(person.id, d)}
           />
         ))}
       </ol>

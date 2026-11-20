@@ -7,6 +7,7 @@
  *   adjusted trip = ETA, plus for metro users the walking minutes × (heatFactor − 1),
  *                   i.e. their walking counts 1.5× (summer heat; configurable)
  *   bonus    = 3 min off when the venue is ≤ 400 m from a metro station
+ *   prefs    = optional extra minutes off for liked food / favourite places (`bonusFor`)
  */
 import { haversineMeters, type LatLng } from './geo';
 import { nearestStations, type Station } from './metro';
@@ -110,12 +111,18 @@ export function pickCandidates(venues: Venue[], area: SearchArea, p: ScoringPara
   return [...picked.values()];
 }
 
+export interface VenueBonus {
+  bonusMin: number;
+  liked: string[];
+  favourite: boolean;
+}
+
 export interface Eta {
   minutes: number;
   source: 'api' | 'estimated';
   /** Minutes on foot inside this trip (metro users; used for the heat penalty). */
   walkMinutes: number;
-  detail?: { fromStation?: string; toStation?: string; transfers?: number; walkOnly?: boolean };
+  detail?: { fromStation?: string; toStation?: string; transfers?: number; walkOnly?: boolean; legs?: import('./estimator').MetroLeg[] };
 }
 
 export interface ScoredEta extends Eta {
@@ -133,6 +140,8 @@ export interface ScoredVenue {
   worstPerson: number;
   spreadMin: number;
   nearStation?: { name: string; meters: number; bonusMin: number };
+  /** Group preferences (liked food / favourite place). */
+  pref?: VenueBonus;
   etas: ScoredEta[];
 }
 
@@ -146,6 +155,7 @@ export function scoreVenues(
   etas: (Eta | null)[][],
   stations: Station[],
   p: ScoringParams = DEFAULT_SCORING,
+  bonusFor?: (v: Venue) => VenueBonus,
 ): ScoredVenue[] {
   const scored: ScoredVenue[] = [];
   venues.forEach((venue, vi) => {
@@ -160,14 +170,16 @@ export function scoreVenues(
     const near = nearestStations(venue.location, stations, 1)[0];
     const bonus = near && near.meters <= p.metroBonusMeters ? p.metroBonusMin : 0;
     const raw = list.map((e) => e.minutes);
+    const pref = bonusFor?.(venue);
     scored.push({
       venue,
       rank: 0,
-      score: worst.adjusted - bonus,
+      score: worst.adjusted - bonus - (pref?.bonusMin ?? 0),
       maxEta: Math.max(...raw),
       sumEta: list.reduce((s, e) => s + e.adjusted, 0),
       worstPerson: worst.person,
       spreadMin: Math.max(...raw) - Math.min(...raw),
+      ...(pref && pref.bonusMin ? { pref } : {}),
       ...(near && near.meters <= 800 ? { nearStation: { name: near.station.name_en, meters: Math.round(near.meters), bonusMin: bonus } } : {}),
       etas: list,
     });

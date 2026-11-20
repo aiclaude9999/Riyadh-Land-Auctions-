@@ -1,7 +1,9 @@
 'use client';
 
 import type { Dispatch } from 'react';
+import NeighbourhoodPicker from './NeighbourhoodPicker';
 import PlaceSearch from './PlaceSearch';
+import type { District } from '@/lib/districts';
 import { t } from '@/lib/i18n';
 import { nearestStations, type Station } from '@/lib/metro';
 import { displayName, personColor, personIssues, type PeopleAction, type Person, type TravelMode } from '@/lib/people';
@@ -14,14 +16,19 @@ interface Props {
   stations: Station[];
   picking: boolean;
   onPick: () => void;
+  districts: District[];
+  onDistrict: (d: District) => void;
 }
+
+// Google address search needs the paid Google key; without it the free neighbourhood list is used.
+const HAS_GOOGLE = !!process.env.NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY;
 
 const MODES: { mode: TravelMode; label: string; icon: string }[] = [
   { mode: 'car', label: t.car, icon: '🚗' },
   { mode: 'metro', label: t.metro, icon: '🚇' },
 ];
 
-export default function PersonCard({ person, index, canRemove, dispatch, stations, picking, onPick }: Props) {
+export default function PersonCard({ person, index, canRemove, dispatch, stations, picking, onPick, districts, onDistrict }: Props) {
   const color = personColor(index);
   const issues = personIssues(person);
   const nearest = person.mode === 'metro' && person.location ? nearestStations(person.location, stations, 1)[0] : undefined;
@@ -91,9 +98,13 @@ export default function PersonCard({ person, index, canRemove, dispatch, station
           </div>
         ) : (
           <div className="mt-1 flex gap-2">
-            <PlaceSearch
-              onSelect={(place) => dispatch({ type: 'setLocation', id: person.id, location: place.location, address: place.label, source: 'search' })}
-            />
+            {HAS_GOOGLE ? (
+              <PlaceSearch
+                onSelect={(place) => dispatch({ type: 'setLocation', id: person.id, location: place.location, address: place.label, source: 'search' })}
+              />
+            ) : (
+              <NeighbourhoodPicker districts={districts} onSelect={onDistrict} />
+            )}
             <button
               type="button"
               onClick={onPick}

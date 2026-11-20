@@ -9,7 +9,7 @@ export interface Person {
   location: LatLng | null;
   /** Human-readable label: the searched address, or "Pinned on map". */
   address: string | null;
-  locationSource: 'pin' | 'search' | null;
+  locationSource: 'pin' | 'search' | 'district' | null;
 }
 
 export const MIN_PEOPLE = 2;
@@ -28,7 +28,7 @@ export type PeopleAction =
   | { type: 'remove'; id: string }
   | { type: 'rename'; id: string; name: string }
   | { type: 'setMode'; id: string; mode: TravelMode }
-  | { type: 'setLocation'; id: string; location: LatLng; address: string | null; source: 'pin' | 'search' }
+  | { type: 'setLocation'; id: string; location: LatLng; address: string | null; source: 'pin' | 'search' | 'district' }
   | { type: 'clearLocation'; id: string };
 
 function newPerson(n: number): Person {

@@ -10,6 +10,7 @@ import { createMetroEstimator, estimateCarMinutes, type MetroEstimate } from './
 import type { Station } from './metro';
 import type { RecommendRequest, RecommendResponse } from './recommendTypes';
 import { DEFAULT_SCORING, pickCandidates, scoreVenues, searchArea, type Eta, type ScoringParams } from './scoring';
+import { allowedByPrefs, prefBonus, sanitizePrefs } from './preferences';
 import { matchesType, type Venue, type VenueType } from './venues';
 
 export interface RecommendDeps {
@@ -47,7 +48,8 @@ export function parseRequest(body: unknown): RecommendRequest {
     if (Number.isNaN(t.getTime())) throw new BadRequest('departAt is not a date');
     if (t.getTime() > Date.now() + 60_000) departAt = t.toISOString(); // past or "now" → leave now
   }
-  return { people, venueType, ...(departAt ? { departAt } : {}) };
+  const prefs = sanitizePrefs(b.prefs);
+  return { people, venueType, ...(departAt ? { departAt } : {}), prefs };
 }
 
 export async function recommend(req: RecommendRequest, deps: RecommendDeps): Promise<RecommendResponse> {
@@ -58,9 +60,11 @@ export async function recommend(req: RecommendRequest, deps: RecommendDeps): Pro
   if (req.people.some((x) => !inRiyadh(x.location))) notes.push('someone_outside_riyadh');
 
   // 1–2. candidates
+  const prefs = sanitizePrefs(req.prefs);
+  const allowed = (v: Venue) => allowedByPrefs(v, prefs);
   const venues = deps.google
-    ? (await deps.google.candidates(area, req.venueType, req.departAt)).slice(0, p.maxCandidates)
-    : pickCandidates(deps.allVenues.filter((v) => matchesType(v, req.venueType)), area, p);
+    ? (await deps.google.candidates(area, req.venueType, req.departAt)).filter(allowed).slice(0, p.maxCandidates)
+    : pickCandidates(deps.allVenues.filter((v) => matchesType(v, req.venueType) && allowed(v)), area, p);
 
   const meta: RecommendResponse['meta'] = {
     dataSource: deps.google ? 'google' : 'free',
@@ -115,7 +119,7 @@ export async function recommend(req: RecommendRequest, deps: RecommendDeps): Pro
       const est = estimator.from(req.people[pi].location);
       venues.forEach((v, vi) => {
         const local: MetroEstimate = est(v.location);
-        const detail = { fromStation: local.fromStation, toStation: local.toStation, transfers: local.transfers, walkOnly: local.walkOnly };
+        const detail = { fromStation: local.fromStation, toStation: local.toStation, transfers: local.transfers, walkOnly: local.walkOnly, legs: local.legs };
         const api = transit?.[row]?.[vi];
         if (api != null) usedApi = true;
         // Google's matrix has no walking breakdown, so the heat penalty uses our walking estimate.
@@ -126,5 +130,5 @@ export async function recommend(req: RecommendRequest, deps: RecommendDeps): Pro
   }
 
   // 4–5. score
-  return { results: scoreVenues(venues, travellers, etas, deps.stations, p), meta };
+  return { results: scoreVenues(venues, travellers, etas, deps.stations, p, (v) => prefBonus(v, prefs)), meta };
 }

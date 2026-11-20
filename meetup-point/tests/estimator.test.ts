@@ -51,6 +51,29 @@ describe('metro estimator (spec fallback formula)', () => {
     expect(r).toMatchObject({ fromStation: 'A0', toStation: 'B2' });
   });
 
+  it('lists the steps: walk, wait, ride toward the end of the line, change, ride, walk', () => {
+    const r = est.from(toy[0].position)(toy[4].position);
+    expect(r.legs.map((l) => l.kind)).toEqual(['walk', 'wait', 'ride', 'transfer', 'ride', 'walk']);
+    const [, , ride1, transfer, ride2] = r.legs;
+    expect(ride1).toMatchObject({ kind: 'ride', line: 'A', from: 'A0', to: 'X', toward: 'X', stops: 2 });
+    expect(transfer).toMatchObject({ kind: 'transfer', at: 'X', toLine: 'B' });
+    expect(ride2).toMatchObject({ kind: 'ride', line: 'B', from: 'X', to: 'B2', toward: 'B2', stops: 2 });
+    if (ride1.kind === 'ride') expect(ride1.path).toHaveLength(3);
+    const sum = r.legs.reduce((s, l) => s + l.minutes, 0);
+    expect(sum).toBeCloseTo(r.minutes, 5);
+  });
+
+  it('direction is toward the first station when riding backwards', () => {
+    const r = est.from(toy[2].position)(toy[0].position);
+    const ride = r.legs.find((l) => l.kind === 'ride');
+    expect(ride).toMatchObject({ toward: 'A0', stops: 2 });
+  });
+
+  it('walk-only trips have a single walk step', () => {
+    const r = est.from({ lat: 24.705, lng: 46.61 })({ lat: 24.705, lng: 46.612 });
+    expect(r.legs).toEqual([{ kind: 'walk', minutes: r.minutes, to: 'destination' }]);
+  });
+
   it('adds walking at both ends', () => {
     const origin = { lat: 24.709, lng: 46.6 }; // ~1 km north of A0 → ~12 min walk
     const r = est.from(origin)(toy[2].position);

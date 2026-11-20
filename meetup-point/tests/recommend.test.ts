@@ -39,6 +39,14 @@ describe('recommend (free mode, routers faked)', () => {
     expect([...scores].sort((a, b) => a - b)).toEqual(scores);
   });
 
+  it('hidden places never come back', async () => {
+    const osrm = async (o: unknown[], d: unknown[]) => o.map(() => d.map(() => 15));
+    const first = await recommend({ people: [sara, omar], venueType: 'both' }, { stations, allVenues, osrm });
+    const top = first.results[0].venue.id;
+    const again = await recommend({ people: [sara, omar], venueType: 'both', prefs: { likes: [], avoids: [], favourites: [], hidden: [top] } }, { stations, allVenues, osrm });
+    expect(again.results.map((r) => r.venue.id)).not.toContain(top);
+  });
+
   it('falls back to estimated car times when OSRM is down', async () => {
     const deps: RecommendDeps = { stations, allVenues, osrm: async () => { throw new Error('down'); } };
     const res = await recommend({ people: [sara, { ...omar, mode: 'car' }], venueType: 'cafe' }, deps);

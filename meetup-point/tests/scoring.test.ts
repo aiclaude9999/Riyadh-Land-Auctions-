@@ -78,6 +78,15 @@ describe('scoreVenues', () => {
     expect(noHeat[0].venue.id).toBe('a');
   });
 
+  it('preference bonus moves a liked place up and is reported', () => {
+    const res = scoreVenues([far('a'), far('b')], cars, [[car(20), car(20)], [car(21), car(21)]], [station], DEFAULT_SCORING, (v) =>
+      v.id === 'b' ? { bonusMin: 2, liked: ['coffee'], favourite: false } : { bonusMin: 0, liked: [], favourite: false },
+    );
+    expect(res[0].venue.id).toBe('b');
+    expect(res[0].pref).toMatchObject({ liked: ['coffee'] });
+    expect(res[1].pref).toBeUndefined();
+  });
+
   it('skips venues someone cannot reach and returns at most 5', () => {
     const venues = Array.from({ length: 8 }, (_, i) => far(`v${i}`));
     const etas = venues.map((_, i) => (i === 0 ? [car(1), null] : [car(10 + i), car(10)]));

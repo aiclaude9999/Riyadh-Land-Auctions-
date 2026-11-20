@@ -30,12 +30,13 @@ function personIcon(color: string, letter: string): L.DivIcon {
  * OSM's tile policy allows light use like this prototype; a busy public site needs its own tile provider.
  */
 export default function FreeMap(props: MapViewProps) {
-  const { people, pickingId, showMetro, stationsGeoJson, linesGeoJson, results, resultsKey, selectedVenueId } = props;
+  const { people, pickingId, showMetro, stationsGeoJson, linesGeoJson, results, resultsKey, selectedVenueId, overlays, focusBounds } = props;
   const el = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const metroRef = useRef<L.LayerGroup | null>(null);
   const peopleRef = useRef<L.LayerGroup | null>(null);
   const venuesRef = useRef<L.LayerGroup | null>(null);
+  const overlayRef = useRef<L.LayerGroup | null>(null);
   // latest callbacks without re-binding map listeners
   const cb = useRef(props);
   cb.current = props;
@@ -56,6 +57,7 @@ export default function FreeMap(props: MapViewProps) {
     map.on('click', (e: L.LeafletMouseEvent) => {
       if (cb.current.pickingId) cb.current.onMapPick({ lat: e.latlng.lat, lng: e.latlng.lng });
     });
+    overlayRef.current = L.layerGroup().addTo(map);
     peopleRef.current = L.layerGroup().addTo(map);
     venuesRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
@@ -178,6 +180,33 @@ export default function FreeMap(props: MapViewProps) {
     if (map && v && !map.getBounds().contains([v.venue.location.lat, v.venue.location.lng])) map.panTo([v.venue.location.lat, v.venue.location.lng]);
   }, [selectedVenueId, results]);
 
+  // route lines + chosen neighbourhood outline
+  useEffect(() => {
+    const group = overlayRef.current;
+    if (!group) return;
+    group.clearLayers();
+    for (const o of overlays) {
+      if (o.kind === 'area') {
+        L.polygon(o.rings, { color: o.color, weight: 2, fillOpacity: 0.08, interactive: false }).addTo(group);
+      } else {
+        L.polyline(o.points.map((p) => [p.lat, p.lng] as [number, number]), {
+          color: o.color,
+          weight: o.weight,
+          opacity: o.opacity ?? 1,
+          dashArray: o.dashed ? '6 8' : undefined,
+          lineCap: 'round',
+          interactive: false,
+        }).addTo(group);
+      }
+    }
+  }, [overlays]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !focusBounds?.length) return;
+    map.fitBounds(L.latLngBounds(focusBounds.flat()), { padding: [30, 30], maxZoom: 16 });
+  }, [focusBounds]);
+
   // crosshair while picking
   useEffect(() => {
     const c = mapRef.current?.getContainer();
@@ -191,7 +220,11 @@ export default function FreeMap(props: MapViewProps) {
         <input type="checkbox" checked={showMetro} onChange={props.onToggleMetro} className="accent-brand" />
         {t.metroLayer}
       </label>
-      <p className="pointer-events-none absolute bottom-6 start-2 z-[1000] rounded bg-white/80 px-1.5 text-[11px] text-slate-600">{t.metroAttribution}</p>
+      <p className="pointer-events-none absolute bottom-6 start-2 z-[1000] rounded bg-white/80 px-1.5 text-[11px] leading-tight text-slate-600">
+        {t.metroAttribution}
+        <br />
+        {t.districtCredit}
+      </p>
     </>
   );
 }

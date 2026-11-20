@@ -8,6 +8,8 @@ export interface RecommendRequest {
   venueType: VenueType;
   /** ISO time; omitted = leave now. */
   departAt?: string;
+  /** Group preferences kept in the browser. */
+  prefs?: import('./preferences').Preferences;
 }
 
 export interface RecommendResponse {

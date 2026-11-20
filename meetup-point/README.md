@@ -5,6 +5,8 @@ Spec and build order: [`CLAUDE.md`](./CLAUDE.md). This folder is a separate app;
 
 **Built so far:** steps 1–5: map + metro layer, people panel, `/api/recommend` (candidates → travel times → scoring), results list + numbered map markers + ETA breakdown, and the metro fallback estimator with tests. Step 6 (polish) is not started.
 
+**Extras (Nov 2026, "easier to use" batch):** neighbourhood list (189 Riyadh districts, English/Arabic search, tap to refine), step-by-step trip per person (metro lines, direction, changes; car turns + route line from OSRM), Google Maps *Directions* and *Reviews* links, and *Preferences* (liked/avoided food, favourite and hidden places), saved only in the browser.
+
 **Free mode vs Google mode** (chosen automatically):
 | | Free (no keys) | Google (`GOOGLE_MAPS_API_KEY` set) |
 |---|---|---|
@@ -52,6 +54,10 @@ The spec names the RCRC open data portal. In Nov 2026 the portal (`rcrc.opendata
 Each station has `name_en`, `name_ar` (empty when OSM has no real Arabic name), `lines[]` (`ref`, `name`, `color`, `seq` = position along the line) and `interchange`.
 If RCRC comes back, map its export to the same shape (`lib/metro.ts`).
 
+## Neighbourhood data
+
+`data/riyadh-districts.json` (`npm run build:districts`, from the Mazad Radar files) comes from the Saudi Post address map via github.com/homaily/Saudi-Arabia-Regions-Cities-and-Districts, licensed **GPL-2.0**; credit is shown on the map. Fine for this prototype. If the app is ever sold or closed-source, switch to OpenStreetMap neighbourhoods (ODbL).
+
 ## Code map
 
 - `app/page.tsx`: reads the metro GeoJSON on the server and renders `components/MeetupApp.tsx` (state + layout)
@@ -61,4 +67,5 @@ If RCRC comes back, map its export to the same shape (`lib/metro.ts`).
 - `app/api/places/*`: server-side Places autocomplete + details (10-min in-memory cache, `lib/cache.ts`)
 - `app/api/recommend/route.ts` → `lib/recommend.server.ts` (pipeline) → `lib/scoring.ts` (pure scoring), `lib/estimator.ts` (metro/car estimates), `lib/osrm.server.ts`, `lib/google.server.ts`
 - `components/TripOptions.tsx`, `ResultsList.tsx`: place type, departure time, ranked results with "why"
+- `components/NeighbourhoodPicker.tsx` + `lib/districts.ts` (search, point-in-district); `components/TripDetails.tsx` + `lib/directions.ts` (car steps, Google Maps links); `components/PrefsPanel.tsx` + `lib/preferences.ts`, `lib/cuisine.ts`, `lib/usePrefs.ts` (browser storage); `app/api/route` (car route)
 - `lib/people.ts` (pure state + rules), `lib/metro.ts`, `lib/geo.ts`, `lib/i18n.ts` (English strings, RTL-ready)

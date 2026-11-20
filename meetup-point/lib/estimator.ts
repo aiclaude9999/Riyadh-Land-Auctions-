@@ -24,8 +24,16 @@ export interface MetroParams {
 
 export const DEFAULT_METRO: MetroParams = { walkKmh: 5, walkDetour: 1.25, waitMin: 4, minPerStation: 1.5, transferMin: 5, stationsToTry: 3 };
 
+/** One step of a metro trip, for the step-by-step view. */
+export type MetroLeg =
+  | { kind: 'walk'; minutes: number; to: 'station' | 'destination'; station?: string }
+  | { kind: 'ride'; minutes: number; line: string; lineName: string; color: string; from: string; to: string; toward: string; stops: number; path: LatLng[] }
+  | { kind: 'transfer'; minutes: number; at: string; toLine: string; wait: boolean }
+  | { kind: 'wait'; minutes: number; at: string };
+
 export interface MetroEstimate {
   minutes: number;
+  legs: MetroLeg[];
   walkMinutes: number;
   walkOnly: boolean;
   fromStation?: string;
@@ -54,6 +62,8 @@ interface Graph {
   nodes: Node[];
   edges: Edge[][];
   byStation: Map<string, number[]>;
+  /** line ref → stations in order */
+  lineStations: Map<string, Station[]>;
 }
 
 function buildGraph(stations: Station[], p: MetroParams): Graph {
@@ -79,7 +89,9 @@ function buildGraph(stations: Station[], p: MetroParams): Graph {
   for (const ids of byStation.values()) {
     for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) link(ids[i], ids[j], { min: p.transferMin, stations: 0, transfers: 1 });
   }
-  return { nodes, edges, byStation };
+  const lineStations = new Map<string, Station[]>();
+  for (const [ref, list] of byLine) lineStations.set(ref, list.map((x) => nodes[x.node].station));
+  return { nodes, edges, byStation, lineStations };
 }
 
 interface Label {
@@ -88,6 +100,7 @@ interface Label {
   transfers: number;
   walk: number;
   from: string;
+  prev: number; // previous node, −1 at a start
 }
 
 /** Multi-source Dijkstra (graph has ~90 nodes, so a linear scan is plenty). */
@@ -102,10 +115,55 @@ function dijkstra(g: Graph, starts: { node: number; label: Label }[]): (Label | 
     done[u] = true;
     const lu = best[u]!;
     for (const e of g.edges[u]) {
-      const cand = { min: lu.min + e.min, stations: lu.stations + e.stations, transfers: lu.transfers + e.transfers, walk: lu.walk, from: lu.from };
+      const cand = { min: lu.min + e.min, stations: lu.stations + e.stations, transfers: lu.transfers + e.transfers, walk: lu.walk, from: lu.from, prev: u };
       if (!best[e.to] || cand.min < best[e.to]!.min) best[e.to] = cand;
     }
   }
+}
+
+/** Turns the node path that ends at `end` into walk / wait / ride / transfer steps. */
+function buildLegs(g: Graph, best: (Label | undefined)[], end: number, walkIn: number, walkOut: number, p: MetroParams): MetroLeg[] {
+  const path: number[] = [];
+  for (let n = end; n >= 0; n = best[n]!.prev) path.unshift(n);
+  const first = g.nodes[path[0]].station;
+  const legs: MetroLeg[] = [
+    { kind: 'walk', minutes: walkIn, to: 'station', station: first.name_en },
+    { kind: 'wait', minutes: p.waitMin, at: first.name_en },
+  ];
+  let i = 0;
+  while (i < path.length - 1) {
+    const a = g.nodes[path[i]];
+    const b = g.nodes[path[i + 1]];
+    if (a.station.id === b.station.id) {
+      const line = a.station.lines.find((l) => l.ref === b.line) ?? b.station.lines.find((l) => l.ref === b.line)!;
+      legs.push({ kind: 'transfer', minutes: p.transferMin, at: a.station.name_en, toLine: line.name, wait: true });
+      i++;
+      continue;
+    }
+    // ride along one line until the line changes
+    let j = i;
+    while (j < path.length - 1 && g.nodes[path[j + 1]].line === a.line && g.nodes[path[j + 1]].station.id !== g.nodes[path[j]].station.id) j++;
+    const stationsOnLine = g.lineStations.get(a.line)!;
+    const seqA = stationsOnLine.indexOf(a.station);
+    const seqB = stationsOnLine.indexOf(g.nodes[path[j]].station);
+    const toward = (seqB > seqA ? stationsOnLine[stationsOnLine.length - 1] : stationsOnLine[0]).name_en;
+    const info = a.station.lines.find((l) => l.ref === a.line)!;
+    legs.push({
+      kind: 'ride',
+      minutes: (j - i) * p.minPerStation,
+      line: a.line,
+      lineName: info.name,
+      color: info.color,
+      from: a.station.name_en,
+      to: g.nodes[path[j]].station.name_en,
+      toward,
+      stops: j - i,
+      path: path.slice(i, j + 1).map((n) => g.nodes[n].station.position),
+    });
+    i = j;
+  }
+  legs.push({ kind: 'walk', minutes: walkOut, to: 'destination' });
+  return legs;
 }
 
 export interface MetroEstimator {
@@ -122,14 +180,14 @@ export function createMetroEstimator(stations: Station[], params: Partial<MetroP
         const walk = walkMinutes(origin, station.position, p);
         return (g.byStation.get(station.id) ?? []).map((node) => ({
           node,
-          label: { min: walk + p.waitMin, stations: 0, transfers: 0, walk, from: station.name_en },
+          label: { min: walk + p.waitMin, stations: 0, transfers: 0, walk, from: station.name_en, prev: -1 },
         }));
       });
       const best = dijkstra(g, starts);
 
       return (dest) => {
         const direct = walkMinutes(origin, dest, p);
-        let result: MetroEstimate = { minutes: direct, walkMinutes: direct, walkOnly: true, stations: 0, transfers: 0 };
+        let result: MetroEstimate = { minutes: direct, legs: [{ kind: 'walk', minutes: direct, to: 'destination' }], walkMinutes: direct, walkOnly: true, stations: 0, transfers: 0 };
         for (const { station } of nearestStations(dest, stations, p.stationsToTry)) {
           const walkOut = walkMinutes(station.position, dest, p);
           for (const node of g.byStation.get(station.id) ?? []) {
@@ -137,7 +195,16 @@ export function createMetroEstimator(stations: Station[], params: Partial<MetroP
             if (!l) continue;
             const total = l.min + walkOut;
             if (total < result.minutes) {
-              result = { minutes: total, walkMinutes: l.walk + walkOut, walkOnly: false, fromStation: l.from, toStation: station.name_en, stations: l.stations, transfers: l.transfers };
+              result = {
+                minutes: total,
+                legs: buildLegs(g, best, node, l.walk, walkOut, p),
+                walkMinutes: l.walk + walkOut,
+                walkOnly: false,
+                fromStation: l.from,
+                toStation: station.name_en,
+                stations: l.stations,
+                transfers: l.transfers,
+              };
             }
           }
         }
