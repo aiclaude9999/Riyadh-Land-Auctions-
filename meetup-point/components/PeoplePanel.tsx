@@ -15,9 +15,14 @@ interface Props {
   onPick: (id: string) => void;
   districts: District[];
   onDistrict: (personId: string, d: District) => void;
+  /** shared group: who may edit which entry, and how "add" works */
+  canEdit?: (personId: string) => boolean;
+  onAdd?: () => void;
+  addLabel?: string;
+  minPeople?: number;
 }
 
-export default function PeoplePanel({ state, dispatch, stations, pickingId, onPick, districts, onDistrict }: Props) {
+export default function PeoplePanel({ state, dispatch, stations, pickingId, onPick, districts, onDistrict, canEdit = () => true, onAdd, addLabel, minPeople = 2 }: Props) {
   const t = useT();
   const { people } = state;
 
@@ -29,11 +34,11 @@ export default function PeoplePanel({ state, dispatch, stations, pickingId, onPi
         </h2>
         <button
           type="button"
-          onClick={() => dispatch({ type: 'add' })}
+          onClick={() => (onAdd ? onAdd() : dispatch({ type: 'add' }))}
           disabled={people.length >= MAX_PEOPLE}
           className="rounded-lg bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-dark disabled:cursor-not-allowed disabled:bg-slate-300"
         >
-          + {t.addPerson}
+          + {addLabel ?? t.addPerson}
         </button>
       </div>
 
@@ -43,7 +48,8 @@ export default function PeoplePanel({ state, dispatch, stations, pickingId, onPi
             key={person.id}
             person={person}
             index={index}
-            canRemove={people.length > 2}
+            canRemove={people.length > minPeople}
+            readOnly={!canEdit(person.id)}
             dispatch={dispatch}
             stations={stations}
             picking={pickingId === person.id}

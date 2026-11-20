@@ -27,11 +27,14 @@ export interface PeopleState {
 
 export type PeopleAction =
   | { type: 'add' }
-  | { type: 'remove'; id: string }
+  | { type: 'remove'; id: string; force?: boolean }
   | { type: 'rename'; id: string; name: string }
   | { type: 'setMode'; id: string; mode: TravelMode }
   | { type: 'setLocation'; id: string; location: LatLng; address: string | null; source: 'pin' | 'search' | 'district'; districtId?: string | null }
-  | { type: 'clearLocation'; id: string };
+  | { type: 'clearLocation'; id: string }
+  /** shared groups: the server's list replaces ours (ids come from the server) */
+  | { type: 'replace'; people: Person[] }
+  | { type: 'addWithId'; person: Person };
 
 function newPerson(n: number): Person {
   return { id: `p${n}`, name: '', mode: 'car', location: null, address: null, locationSource: null };
@@ -52,7 +55,7 @@ export function peopleReducer(state: PeopleState, action: PeopleAction): PeopleS
       if (state.people.length >= MAX_PEOPLE) return state;
       return { people: [...state.people, newPerson(state.nextId)], nextId: state.nextId + 1 };
     case 'remove':
-      if (state.people.length <= MIN_PEOPLE) return state;
+      if (state.people.length <= MIN_PEOPLE && !action.force) return state;
       return { ...state, people: state.people.filter((p) => p.id !== action.id) };
     case 'rename':
       return patch(action.id, { name: action.name.slice(0, 40) });
@@ -62,6 +65,11 @@ export function peopleReducer(state: PeopleState, action: PeopleAction): PeopleS
       return patch(action.id, { location: action.location, address: action.address, locationSource: action.source, districtId: action.districtId ?? null });
     case 'clearLocation':
       return patch(action.id, { location: null, address: null, locationSource: null, districtId: null });
+    case 'replace':
+      return { ...state, people: action.people };
+    case 'addWithId':
+      if (state.people.length >= MAX_PEOPLE || state.people.some((p) => p.id === action.person.id)) return state;
+      return { ...state, people: [...state.people, action.person] };
   }
 }
 

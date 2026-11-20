@@ -19,13 +19,15 @@ interface Props {
   onPick: () => void;
   districts: District[];
   onDistrict: (d: District) => void;
+  /** shared group: someone else's entry */
+  readOnly?: boolean;
 }
 
 // Google address search needs the paid Google key; without it the free neighbourhood list is used.
 const HAS_GOOGLE = !!process.env.NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY;
 
 
-export default function PersonCard({ person, index, canRemove, dispatch, stations, picking, onPick, districts, onDistrict }: Props) {
+export default function PersonCard({ person, index, canRemove, dispatch, stations, picking, onPick, districts, onDistrict, readOnly = false }: Props) {
   const t = useT();
   const n = useName();
   const district = person.districtId ? districts.find((d) => d.id === person.districtId) : undefined;
@@ -55,9 +57,10 @@ export default function PersonCard({ person, index, canRemove, dispatch, station
           onChange={(e) => dispatch({ type: 'rename', id: person.id, name: e.target.value })}
           placeholder={t.namePlaceholder(index + 1)}
           maxLength={40}
+          readOnly={readOnly}
           className="min-w-0 flex-1 rounded-md border border-transparent px-2 py-1 font-medium hover:border-slate-200 focus:border-brand focus:outline-none"
         />
-        {canRemove && (
+        {canRemove && !readOnly && (
           <button
             type="button"
             onClick={() => dispatch({ type: 'remove', id: person.id })}
@@ -76,6 +79,7 @@ export default function PersonCard({ person, index, canRemove, dispatch, station
             type="button"
             role="radio"
             aria-checked={person.mode === mode}
+            disabled={readOnly}
             onClick={() => dispatch({ type: 'setMode', id: person.id, mode })}
             className={`rounded-md px-2 py-1 text-sm ${person.mode === mode ? 'bg-white font-medium shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
           >
@@ -95,13 +99,19 @@ export default function PersonCard({ person, index, canRemove, dispatch, station
                 {person.location.lat.toFixed(5)}, {person.location.lng.toFixed(5)}
               </p>
             </div>
-            <button type="button" onClick={onPick} className="text-xs text-brand hover:underline">
-              {picking ? t.cancel : t.pickOnMap}
-            </button>
-            <button type="button" onClick={() => dispatch({ type: 'clearLocation', id: person.id })} className="text-xs text-slate-400 hover:text-rose-600">
-              {t.clearLocation}
-            </button>
+            {!readOnly && (
+              <>
+                <button type="button" onClick={onPick} className="text-xs text-brand hover:underline">
+                  {picking ? t.cancel : t.pickOnMap}
+                </button>
+                <button type="button" onClick={() => dispatch({ type: 'clearLocation', id: person.id })} className="text-xs text-slate-400 hover:text-rose-600">
+                  {t.clearLocation}
+                </button>
+              </>
+            )}
           </div>
+        ) : readOnly ? (
+          <p className="mt-1 text-xs text-slate-400">{t.missingLocation}</p>
         ) : (
           <div className="mt-1 flex gap-2">
             {HAS_GOOGLE ? (
@@ -123,6 +133,7 @@ export default function PersonCard({ person, index, canRemove, dispatch, station
 
         {issues.includes('missingLocation') && !picking && <p className="mt-1 text-xs text-amber-700">{t.missingLocation}</p>}
         {issues.includes('outsideRiyadh') && <p className="mt-1 text-xs text-amber-700">{t.outsideRiyadh}</p>}
+        {readOnly && <p className="mt-1 text-[11px] text-slate-400">🔒 {t.readOnlyPerson}</p>}
         {nearest && (
           <p className="mt-1 text-xs text-slate-500">
             {t.nearestStation(n(nearest.station.name_en, nearest.station.name_ar), (nearest.meters / 1000).toFixed(1))}

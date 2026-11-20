@@ -21,11 +21,13 @@ interface Props {
   prefs: Preferences;
   onToggleFavourite: (id: string) => void;
   onHide: (id: string) => void;
+  /** shared group: votes on the top 3 */
+  voting?: { counts: Record<string, number>; mine: string | null; onVote: (venueId: string | null) => void };
 }
 
 const fmt = (m: number) => String(Math.round(m));
 
-export default function ResultsList({ response, people, stale, selectedId, onSelect, carRoutes, prefs, onToggleFavourite, onHide }: Props) {
+export default function ResultsList({ response, people, stale, selectedId, onSelect, carRoutes, prefs, onToggleFavourite, onHide, voting }: Props) {
   const t = useT();
   const n = useName();
   const { locale } = useLocale();
@@ -40,6 +42,8 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
   useEffect(() => {
     if (selectedId) refs.current.get(selectedId)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }, [selectedId]);
+
+  const topVotes = voting ? Math.max(0, ...results.slice(0, 3).map((r) => voting.counts[r.venue.id] ?? 0)) : 0;
 
   if (!results.length) return <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{t.noResults}</p>;
 
@@ -81,6 +85,23 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
                   {t.maxLabel}
                 </span>
               </div>
+
+              {voting && r.rank <= 3 && (
+                <div className="mt-2 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    aria-pressed={voting.mine === r.venue.id}
+                    onClick={() => voting.onVote(voting.mine === r.venue.id ? null : r.venue.id)}
+                    className={`rounded-full border px-3 py-0.5 text-sm ${voting.mine === r.venue.id ? 'border-brand bg-brand text-white' : 'border-slate-300 text-slate-700 hover:border-brand'}`}
+                  >
+                    👍 {voting.mine === r.venue.id ? t.voted : t.vote}
+                  </button>
+                  <span className="text-xs text-slate-600">{t.votesCount(voting.counts[r.venue.id] ?? 0)}</span>
+                  {topVotes > 0 && (voting.counts[r.venue.id] ?? 0) === topVotes && (
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">🏆 {t.mostVotes}</span>
+                  )}
+                </div>
+              )}
 
               {(r.warnings.prayer || r.warnings.metroClosed) && (
                 <div className="mt-2 space-y-1 text-xs">

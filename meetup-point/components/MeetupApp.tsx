@@ -1,10 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useReducer, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import MeetupMap from './MeetupMap';
 import PeoplePanel from './PeoplePanel';
 import PrefsPanel from './PrefsPanel';
 import ResultsList from './ResultsList';
+import SharePanel from './SharePanel';
+import { fromWire } from '@/lib/groupClient';
+import { useGroup } from '@/lib/useGroup';
 import TripOptions, { departDate, initialTrip, type TripState } from './TripOptions';
 import type { RouteState } from './TripDetails';
 import type { MetroLineCollection } from './MetroLayer';
@@ -70,10 +73,31 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
   const [prefs, updatePrefs] = usePrefs();
   const [names, setNames] = useState<Record<string, string>>({});
   const stationList = useMemo(() => toStations(stations), [stations]);
+  const group = useGroup(state, dispatch);
+  const act = group.act; // every people change goes through the group sync when sharing
+  const lastSearchSig = useRef('');
+  const seenResultsAt = useRef<string | null | undefined>(undefined);
 
   const ready = isReady(state);
   const signature = ready ? JSON.stringify(buildRequest(state.people, trip, prefs)) : '';
-  const stale = !!result && result.signature !== signature;
+  // shared group: friends cannot re-run the search, so their results are never "stale"
+  const stale = !!result && (!group.id || group.isAdmin) && result.signature !== signature;
+
+  // shared group: results arrive with the group (organiser's search, or polling for everyone else)
+  useEffect(() => {
+    const v = group.view;
+    if (!v) return;
+    const first = seenResultsAt.current === undefined;
+    if (v.resultsAt === seenResultsAt.current) return;
+    seenResultsAt.current = v.resultsAt;
+    if (!v.results) return;
+    setResult({ response: v.results, people: v.people.map(fromWire), signature: group.isAdmin ? lastSearchSig.current || signature : '' });
+    setNames((old) => ({ ...old, ...Object.fromEntries(v.results!.results.map((r) => [r.venue.id, n(r.venue.name, r.venue.nameAr)])) }));
+    setSelectedId(v.results.results[0]?.venue.id ?? null);
+    if (v.results.results[0]) setZoneMin(Math.max(10, Math.ceil(v.results.results[0].maxEta / 5) * 5));
+    if (!first || group.isAdmin) setTab('results');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [group.view?.resultsAt]);
 
   // Esc cancels "pick on map"; picking is also dropped if that person is removed.
   useEffect(() => {
@@ -146,6 +170,19 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
     setError(null);
     setPickingId(null);
     setFocusDistrict(null);
+    if (group.id) {
+      // organiser: the server searches with the group's saved people and shares the result
+      try {
+        const { people: _p, ...options } = JSON.parse(signature) as RecommendRequest;
+        lastSearchSig.current = signature;
+        await group.search(options);
+      } catch {
+        setError(t.requestFailed);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
     try {
       const res = await fetch('/api/recommend', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: signature });
       const data = (await res.json()) as RecommendResponse | RecommendError;
@@ -167,7 +204,7 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
   }
 
   function chooseDistrict(personId: string, d: District) {
-    dispatch({ type: 'setLocation', id: personId, location: d.center, address: null, source: 'district', districtId: d.id });
+    act({ type: 'setLocation', id: personId, location: d.center, address: null, source: 'district', districtId: d.id });
     setFocusDistrict(d);
     setPickingId(personId); // next tap on the map refines the spot
   }
@@ -233,14 +270,18 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
               prefs={prefs}
               onToggleFavourite={(id) => updatePrefs((p) => ({ ...p, favourites: p.favourites.includes(id) ? p.favourites.filter((x) => x !== id) : [...p.favourites, id] }))}
               onHide={(id) => updatePrefs((p) => ({ ...p, hidden: [...p.hidden, id], favourites: p.favourites.filter((x) => x !== id) }))}
+              voting={group.id && group.view ? { counts: group.view.votes, mine: group.myVote, onVote: (v) => void group.vote(v).catch(() => setError(t.requestFailed)) } : undefined}
             />
           </div>
         ) : tab === 'prefs' ? (
           <PrefsPanel prefs={prefs} update={updatePrefs} names={names} />
         ) : (
+          // share box + people scroll together, so nothing gets squeezed under the controls on phones
+          <div className="min-h-0 flex-1 overflow-y-auto">
+          <SharePanel group={group} canShare={state.people.length > 0} />
           <PeoplePanel
             state={state}
-            dispatch={dispatch}
+            dispatch={act}
             stations={stationList}
             pickingId={pickingId}
             onPick={(id) => {
@@ -249,15 +290,25 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
             }}
             districts={districts}
             onDistrict={chooseDistrict}
+            canEdit={group.canEdit}
+            minPeople={group.id ? 1 : 2}
+            {...(group.id
+              ? {
+                  onAdd: () => void group.join().catch(() => setError(t.requestFailed)),
+                  addLabel: group.isAdmin || Object.keys(group.creds?.people ?? {}).length ? t.addPerson : t.addMe,
+                }
+              : {})}
           />
+          </div>
         )}
 
         <footer className="space-y-2 border-t border-slate-200 px-4 py-3">
-          <TripOptions trip={trip} onChange={setTrip} />
+          {(!group.id || group.isAdmin) && <TripOptions trip={trip} onChange={setTrip} />}
+          {group.id && !group.isAdmin && <p className="text-xs text-slate-500">{t.onlyOrganiserSearches}</p>}
           <button
             type="button"
             onClick={find}
-            disabled={!ready || loading}
+            disabled={!ready || loading || (!!group.id && !group.isAdmin)}
             className="w-full rounded-lg bg-brand px-4 py-2.5 font-semibold text-white shadow-sm hover:bg-brand-dark disabled:cursor-not-allowed disabled:bg-slate-300"
           >
             {loading ? t.finding : t.find}
@@ -278,13 +329,14 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
           onMapPick={(location) => {
             if (!pickingId) return;
             const d = districtAt(location, districts);
-            dispatch({ type: 'setLocation', id: pickingId, location, address: null, source: 'pin', districtId: d?.id ?? null });
+            act({ type: 'setLocation', id: pickingId, location, address: null, source: 'pin', districtId: d?.id ?? null });
             setPickingId(null);
             setFocusDistrict(null);
           }}
           onDragPerson={(id, location) => {
             const d = districtAt(location, districts);
-            dispatch({ type: 'setLocation', id, location, address: null, source: 'pin', districtId: d?.id ?? null });
+            if (!group.canEdit(id)) return;
+            act({ type: 'setLocation', id, location, address: null, source: 'pin', districtId: d?.id ?? null });
           }}
           results={stale ? [] : (result?.response.results ?? [])}
           resultsKey={result?.signature ?? ''}
