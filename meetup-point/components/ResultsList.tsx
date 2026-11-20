@@ -2,8 +2,9 @@
 
 import { useEffect, useRef } from 'react';
 import TripDetails, { type RouteState } from './TripDetails';
+import { venueGroups } from '@/lib/cuisine';
 import { googleReviewsUrl } from '@/lib/directions';
-import { t } from '@/lib/i18n';
+import { useLocale, useName, useT } from './LocaleProvider';
 import { displayName, personColor, type Person } from '@/lib/people';
 import type { Preferences } from '@/lib/preferences';
 import type { RecommendResponse } from '@/lib/recommendTypes';
@@ -25,6 +26,9 @@ interface Props {
 const fmt = (m: number) => String(Math.round(m));
 
 export default function ResultsList({ response, people, stale, selectedId, onSelect, carRoutes, prefs, onToggleFavourite, onHide }: Props) {
+  const t = useT();
+  const n = useName();
+  const { locale } = useLocale();
   const refs = useRef(new Map<string, HTMLLIElement>());
   const { results, meta } = response;
   const anyEstimated = results.some((r) => r.etas.some((e) => e.source === 'estimated'));
@@ -48,7 +52,7 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
           const selected = r.venue.id === selectedId;
           // the real longest trip (the score itself also counts metro walking 1.5×)
           const longest = r.etas.reduce((a, b) => (b.minutes > a.minutes ? b : a));
-          const longestName = displayName(people[longest.person], longest.person);
+          const longestName = displayName(people[longest.person], longest.person, t.namePlaceholder);
           const fav = prefs.favourites.includes(r.venue.id);
           const googleId = r.venue.id.startsWith('g-') ? r.venue.id.slice(2) : undefined;
           return (
@@ -66,15 +70,15 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold">
                     {fav && <span className="text-amber-500">★ </span>}
-                    {r.venue.name}
+                    {n(r.venue.name, r.venue.nameAr)}
                   </p>
                   <p className="truncate text-xs text-slate-500">
-                    {[t.venueTypes[r.venue.kind], r.venue.cuisine, r.venue.rating != null ? `★ ${r.venue.rating.toFixed(1)}` : null, r.venue.address].filter(Boolean).join(' · ')}
+                    {[t.venueTypes[r.venue.kind], locale === 'ar' ? venueGroups(r.venue).filter((g) => g !== 'coffee' || r.venue.kind !== 'cafe').map((g) => t.groups[g]).join('، ') || null : r.venue.cuisine, r.venue.rating != null ? `★ ${r.venue.rating.toFixed(1)}` : null, r.venue.address].filter(Boolean).join(' · ')}
                   </p>
                 </div>
                 <span className="shrink-0 text-end text-xs text-slate-500">
-                  <span className="block text-base font-semibold text-slate-900">{fmt(r.maxEta)} min</span>
-                  max
+                  <span className="block text-base font-semibold text-slate-900">{t.minutes(r.maxEta)}</span>
+                  {t.maxLabel}
                 </span>
               </div>
 
@@ -85,7 +89,7 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
                   )}
                   {r.warnings.metroClosed && (
                     <p className="rounded-md bg-amber-50 px-2 py-1 text-amber-900">
-                      🚇 {t.metroWarn(r.warnings.metroClosed.map((i) => displayName(people[i], i)).join(', '))}
+                      🚇 {t.metroWarn(r.warnings.metroClosed.map((i) => displayName(people[i], i, t.namePlaceholder)).join(', '))}
                     </p>
                   )}
                 </div>
@@ -97,14 +101,17 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
                     <div className="flex items-baseline gap-2">
                       <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: personColor(e.person) }} aria-hidden />
                       <span className="min-w-0 flex-1 truncate">
-                        {e.mode === 'metro' ? '🚇' : '🚗'} {displayName(people[e.person], e.person)}
+                        {e.mode === 'metro' ? '🚇' : '🚗'} {displayName(people[e.person], e.person, t.namePlaceholder)}
                         {!selected && e.mode === 'metro' && e.detail && (
                           <span className="block text-xs text-slate-400">
-                            {e.detail.walkOnly ? t.walkOnly : t.metroRoute(e.detail.fromStation ?? '', e.detail.toStation ?? '', e.detail.transfers ?? 0)} · {t.walking(fmt(e.walkMinutes))}
+                            {e.detail.walkOnly
+                              ? t.walkOnly
+                              : t.metroRoute(n(e.detail.fromStation ?? '', e.detail.fromStationAr), n(e.detail.toStation ?? '', e.detail.toStationAr), e.detail.transfers ?? 0)}{' '}
+                            · {t.walking(fmt(e.walkMinutes))}
                           </span>
                         )}
                       </span>
-                      <span className="shrink-0 tabular-nums">{fmt(e.minutes)} min</span>
+                      <span className="shrink-0 tabular-nums">{t.minutes(e.minutes)}</span>
                       <span
                         className={`shrink-0 rounded px-1 text-[10px] font-medium uppercase ${e.source === 'estimated' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}
                         title={e.source === 'estimated' ? t.estimatedHelp : undefined}
@@ -126,13 +133,13 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
                   <ul className="mt-3 list-disc space-y-0.5 border-t border-slate-100 ps-5 pt-2 text-xs text-slate-600">
                     <li>{t.fairnessWhy(fmt(r.maxEta), longestName)}</li>
                     {people.length > 1 && <li>{t.spreadWhy(fmt(r.spreadMin))}</li>}
-                    {r.nearStation && <li>{t.stationWhy(r.nearStation.meters, r.nearStation.name, r.nearStation.bonusMin)}</li>}
+                    {r.nearStation && <li>{t.stationWhy(r.nearStation.meters, n(r.nearStation.name, r.nearStation.nameAr), r.nearStation.bonusMin)}</li>}
                     {r.pref?.liked.length ? <li>{t.likedWhy(r.pref.liked.map((g) => t.groups[g]).join(', '))}</li> : null}
                     {r.pref?.favourite && <li>{t.favouriteWhy}</li>}
                   </ul>
                   <div className="mt-2 flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
                     <a
-                      href={googleReviewsUrl(r.venue.name, r.venue.location, googleId)}
+                      href={googleReviewsUrl(n(r.venue.name, r.venue.nameAr), r.venue.location, googleId)}
                       target="_blank"
                       rel="noreferrer"
                       className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:border-brand hover:text-brand"

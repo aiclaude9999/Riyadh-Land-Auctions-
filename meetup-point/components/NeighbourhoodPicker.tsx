@@ -2,10 +2,12 @@
 
 import { useId, useMemo, useState } from 'react';
 import { searchDistricts, shortAr, shortEn, type District } from '@/lib/districts';
-import { t } from '@/lib/i18n';
+import { useLocale, useT } from './LocaleProvider';
 
 /** Type-ahead list of Riyadh neighbourhoods (works offline, English or Arabic spelling). */
 export default function NeighbourhoodPicker({ districts, onSelect }: { districts: District[]; onSelect: (d: District) => void }) {
+  const t = useT();
+  const { locale } = useLocale();
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
@@ -63,9 +65,9 @@ export default function NeighbourhoodPicker({ districts, onSelect }: { districts
                 onMouseEnter={() => setActive(i)}
                 className={`flex cursor-pointer items-baseline justify-between gap-3 px-3 py-1.5 text-sm ${i === active ? 'bg-brand-light' : ''}`}
               >
-                <span className="truncate font-medium">{shortEn(d)}</span>
-                <span dir="rtl" className="shrink-0 text-slate-500">
-                  {shortAr(d)}
+                <span className="truncate font-medium">{locale === 'ar' ? shortAr(d) : shortEn(d)}</span>
+                <span dir={locale === 'ar' ? 'ltr' : 'rtl'} className="shrink-0 text-slate-500">
+                  {locale === 'ar' ? shortEn(d) : shortAr(d)}
                 </span>
               </li>
             ))

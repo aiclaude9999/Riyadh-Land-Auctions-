@@ -1,8 +1,37 @@
 /**
- * UI strings. English first; add an `ar` dictionary later and switch `dir` to "rtl".
- * Components use logical Tailwind classes (ms-/me-/ps-/pe-/start-/end-) so RTL works without rewrites.
+ * UI strings in English and Arabic. Components get them with `useT()` (components/LocaleProvider.tsx).
+ * Layout uses logical Tailwind classes (ms-/me-/ps-/pe-/start-/end-) so Arabic (RTL) needs no rewrites.
  */
+export type Locale = 'en' | 'ar';
+export const LOCALES: Locale[] = ['en', 'ar'];
+export const DIR: Record<Locale, 'ltr' | 'rtl'> = { en: 'ltr', ar: 'rtl' };
+export const LOCALE_COOKIE = 'lang';
+
+export interface CarStepInfo {
+  type: string;
+  modifier?: string;
+  exit?: number;
+  road: string;
+}
+
+const EN_DIR: Record<string, string> = { left: 'left', right: 'right', 'slight left': 'slightly left', 'slight right': 'slightly right', 'sharp left': 'sharp left', 'sharp right': 'sharp right' };
+const AR_DIR: Record<string, string> = { left: 'يسارًا', right: 'يمينًا', 'slight left': 'قليلًا إلى اليسار', 'slight right': 'قليلًا إلى اليمين', 'sharp left': 'بحدّة إلى اليسار', 'sharp right': 'بحدّة إلى اليمين' };
+/** Arabic counted noun for minutes: 1 دقيقة واحدة، 2 دقيقتان، 3–10 دقائق، 11+ دقيقة. */
+export function arMin(v: number | string): string {
+  const n = Math.round(Number(v));
+  if (n === 1) return 'دقيقة واحدة';
+  if (n === 2) return 'دقيقتان';
+  if (n >= 3 && n <= 10) return `${n} دقائق`;
+  return `${n} دقيقة`;
+}
+
+const side = (m?: string) => (m?.includes('left') ? 'left' : m?.includes('right') ? 'right' : '');
+
 export const en = {
+  langName: 'English',
+  switchTo: 'العربية',
+  maxLabel: 'longest',
+  distance: (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m / 10) * 10} m`),
   appTitle: 'Riyadh Meetup Point',
   appTagline: 'Find the fairest café or restaurant for your group.',
   people: 'People',
@@ -115,10 +144,204 @@ export const en = {
   searchError: 'Search failed. Try again or use “Pick on map”.',
   noMatches: 'No matches',
   metroAttribution: 'Metro data © OpenStreetMap contributors (ODbL)',
+  mapCredits: 'Metro © OpenStreetMap (ODbL) · Neighbourhoods © Saudi Post via homaily (GPL-2.0)',
   lines: 'Lines',
   interchange: 'Interchange',
+  lineNames: { '1': 'Blue Line', '2': 'Red Line', '3': 'Orange Line', '4': 'Yellow Line', '5': 'Green Line', '6': 'Purple Line' } as Record<string, string>,
+  arriveStep: 'Arrive at the meeting place',
+  carStep(s: CarStepInfo): string {
+    const onto = s.road ? ` onto ${s.road}` : '';
+    const dir = EN_DIR[s.modifier ?? ''] ?? '';
+    const sd = side(s.modifier);
+    switch (s.type) {
+      case 'depart':
+        return s.road ? `Start on ${s.road}` : 'Start';
+      case 'arrive':
+        return 'Arrive at the meeting place';
+      case 'roundabout':
+      case 'rotary':
+        return `At the roundabout take ${s.exit ? `exit ${s.exit}` : 'the exit'}${onto}`;
+      case 'on ramp':
+        return `Take the ramp${sd ? ` on the ${sd}` : ''}${onto}`;
+      case 'off ramp':
+        return `Take the exit${sd ? ` on the ${sd}` : ''}${onto}`;
+      case 'fork':
+        return `Keep ${sd || 'straight'} at the fork${onto}`;
+      case 'merge':
+        return `Merge${onto}`;
+      case 'end of road':
+        return `At the end of the road turn ${dir || 'as signed'}${onto}`;
+      case 'continue':
+      case 'new name':
+        return `Continue${onto}`;
+      default:
+        if (s.modifier === 'straight') return `Go straight${onto}`;
+        if (s.modifier === 'uturn') return `Make a U-turn${onto}`;
+        return `Turn ${dir || 'ahead'}${onto}`;
+    }
+  },
 };
 
 export type Strings = typeof en;
-export const t: Strings = en;
-export const locale = { lang: 'en', dir: 'ltr' as 'ltr' | 'rtl' };
+
+export const ar: Strings = {
+  langName: 'العربية',
+  switchTo: 'English',
+  maxLabel: 'أطول مشوار',
+  distance: (m) => (m >= 1000 ? `${(m / 1000).toFixed(1)} كم` : `${Math.round(m / 10) * 10} م`),
+  appTitle: 'ملتقى الرياض',
+  appTagline: 'اعثر على أعدل مقهى أو مطعم يلتقي فيه أصحابك.',
+  people: 'الأشخاص',
+  peopleCount: (n, max) => `${n} من ${max}`,
+  addPerson: 'أضف شخصًا',
+  removePerson: 'احذف',
+  namePlaceholder: (n) => `الشخص ${n}`,
+  nameLabel: 'الاسم',
+  modeLabel: 'وسيلة التنقل',
+  car: 'سيارة',
+  metro: 'مترو',
+  locationLabel: 'نقطة الانطلاق',
+  searchPlaceholder: 'ابحث عن عنوان أو مكان',
+  neighbourhoodPlaceholder: 'الحي، مثل: النرجس / Al Narjis',
+  districtCentre: (name) => `وسط حي ${name}`,
+  pinnedIn: (name) => `موقع محدد في حي ${name}`,
+  refineBanner: (who, area) => `المس موقع ${who} الدقيق في حي ${area}، أو اضغط Esc لتبقى نقطة وسط الحي`,
+  districtCredit: 'الأحياء © خريطة العناوين الوطنية من البريد السعودي (عبر homaily، رخصة GPL-2.0)',
+  pickOnMap: 'حدّد على الخريطة',
+  picking: 'انقر الخريطة…',
+  pinnedOnMap: 'موقع محدد على الخريطة',
+  clearLocation: 'امسح',
+  missingLocation: 'لم تُحدَّد نقطة الانطلاق بعد',
+  outsideRiyadh: 'هذه النقطة خارج الرياض، وقد لا تصلح النتائج.',
+  nearestStation: (name, km) => `أقرب محطة مترو: ${name} (${km} كم في خط مستقيم)`,
+  pickBanner: (name) => `انقر الخريطة لتحدد نقطة انطلاق ${name}`,
+  cancel: 'إلغاء',
+  dragHint: 'تلميح: اسحب الدبوس لتضبط الموقع.',
+  readyCount: (ready, total) => `حُدِّدت نقطة الانطلاق لـ ${ready} من ${total}`,
+  tabPeople: 'الأشخاص',
+  tabResults: 'النتائج',
+  tabPrefs: 'التفضيلات',
+  prefsIntro: 'تُحفظ في هذا المتصفح وحده، وتعين على ترتيب الأماكن لمجموعتك.',
+  likesLabel: 'نحب',
+  avoidsLabel: 'استبعد الأماكن التي لا تقدّم إلا',
+  favouritesLabel: 'الأماكن المفضّلة',
+  hiddenLabel: 'الأماكن المخفية',
+  noneYet: 'لا شيء بعد. استعمل ☆ أو «أخفِ» في النتائج.',
+  remove: 'احذف',
+  unhide: 'أظهِر',
+  clearAll: 'امسح التفضيلات كلها',
+  groups: { coffee: 'القهوة', arabic: 'المأكولات العربية والسعودية', italian: 'البيتزا والإيطالي', burger: 'البرغر والوجبات السريعة', asian: 'الآسيوي والهندي', dessert: 'الحلويات', sandwich: 'الفطور والساندويتشات', grill: 'المشويات والمأكولات البحرية' },
+  prefsNote: 'لا يذكر نوعَ الطعام إلا أربعة أماكن من كل عشرة في خريطة OpenStreetMap، فلا تنفع تفضيلات الطعام إلا معها.',
+  favourite: 'أضف للمفضلة',
+  unfavourite: 'أزل من المفضلة',
+  hide: 'أخفِ',
+  likedWhy: (groups) => `يقدّم طعامًا تحبونه: ${groups} (−2 دقيقة).`,
+  favouriteWhy: 'من أماكنكم المفضلة (−3 دقائق).',
+  reviews: 'التقييمات في خرائط Google',
+  directions: 'الاتجاهات',
+  tripTitle: 'تفاصيل الرحلة',
+  showSteps: 'الخطوات',
+  hideSteps: 'أخفِ الخطوات',
+  loadingRoute: 'يُحمَّل المسار…',
+  routeFailed: 'تعذّر تحميل مسار السيارة. استعمل زر «الاتجاهات».',
+  carSummary: (km, min) => `${km} كم · نحو ${arMin(min)} بلا زحام`,
+  stepWalkToStation: (min, station) => `امشِ ${arMin(min)} إلى محطة ${station}`,
+  stepWait: (min) => `انتظر القطار نحو ${arMin(min)}`,
+  stepRide: (line, toward, stops) => `اركب ${line} باتجاه ${toward} · ${stops} ${stops === 1 ? 'محطة' : stops === 2 ? 'محطتان' : stops <= 10 ? 'محطات' : 'محطة'}`,
+  stepGetOff: (station) => `انزل في محطة ${station}`,
+  stepTransfer: (station, line) => `بدّل القطار في ${station} إلى ${line} (نحو 5 دقائق)`,
+  stepWalkToVenue: (min) => `امشِ ${arMin(min)} إلى مكان اللقاء`,
+  stepWalkAll: (min) => `امشِ ${arMin(min)} إلى مكان اللقاء`,
+  venueTypeLabel: 'المكان',
+  venueTypes: { cafe: 'مقهى', restaurant: 'مطعم', both: 'كلاهما' },
+  departLabel: 'الانطلاق',
+  departNow: 'الآن',
+  departLater: 'لاحقًا',
+  dayToday: 'اليوم',
+  dayTomorrow: 'غدًا',
+  weekdays: ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'],
+  timeLabel: 'الوقت',
+  trafficLevels: { light: 'زحام خفيف', moderate: 'زحام متوسط', heavy: 'زحام شديد' },
+  filtersLabel: 'التصفية',
+  nearMetroOnly: 'قرب محطة مترو',
+  anyFood: 'أي طعام',
+  typicalTraffic: 'زحام معتاد',
+  trafficNote: (when, factor) => `تشمل أوقات السيارة الزحام المعتاد في الرياض يوم ${when} (×${factor} من وقت الطريق الخالي، بحسب متوسطات TomTom لعام 2025)، لا الزحام الحي.`,
+  prayerWarn: (name, time) => `ستصلون قرب صلاة ${name} (${time})، وقد يوقف بعض الأماكن الخدمة نحو 20–30 دقيقة.`,
+  metroWarn: (names) => `قد لا يعمل المترو لـ ${names} في هذا الوقت (من السبت إلى الخميس 5:30–24:00، والجمعة 10:00–24:00، ويختلف في رمضان). تحقق من تطبيق «درب».`,
+  zoneToggle: 'أظهِر المنطقة التي لا يتجاوز فيها أحدٌ',
+  zoneLegend: 'المنطقة الخضراء: لا يطول فيها مشوار أحد عن هذه المدة (تقريبًا).',
+  prayers: { Fajr: 'الفجر', Dhuhr: 'الظهر', Asr: 'العصر', Maghrib: 'المغرب', Isha: 'العشاء' },
+  find: 'اعثر على مكان اللقاء',
+  finding: 'جارٍ البحث…',
+  needLocations: 'حدّد نقطة انطلاق كل شخص أولًا.',
+  staleResults: 'غيّرت المدخلات. اضغط «اعثر على مكان اللقاء» مرة أخرى لتحديث النتائج.',
+  noResults: 'لم نجد مكانًا لهذه المجموعة. جرّب «كلاهما» أو حرّك الدبابيس.',
+  requestFailed: 'حدث خطأ. أعد المحاولة بعد دقيقة.',
+  topPlaces: (n) => `أفضل ${n} أماكن`,
+  longestTrip: (min, who) => `أطول مشوار ${arMin(min)} (${who})`,
+  fairnessWhy: (min, who) => `أعدل خيار: لا يزيد مشوار أحد على ${arMin(min)}، وأطولها مشوار ${who}.`,
+  spreadWhy: (min) => `لا يزيد الفرق بين المشاوير على ${arMin(min)}.`,
+  stationWhy: (m, name, bonus) => (bonus ? `يبعد ${m} م عن محطة ${name} (خُصمت ${arMin(bonus)}).` : `يبعد ${m} م عن محطة ${name}.`),
+  metroRoute: (from, to, transfers) => `${from} ← ${to}${transfers ? `، ${transfers === 1 ? 'تبديل واحد' : `${transfers} تبديلات`}` : ''}`,
+  walkOnly: 'مشيًا طوال الطريق',
+  walking: (min) => `${arMin(min)} مشيًا`,
+  estimated: 'تقديري',
+  live: 'مباشر',
+  noTraffic: 'بلا زحام',
+  estimatedHelp: '«تقديري» = حسبه التطبيق، لا خدمة توجيه.',
+  sourceFree: 'بيانات مجانية: الأماكن من OpenStreetMap (بلا تقييمات)، وأوقات السيارة من شبكة الطرق مع الزحام المعتاد لا الحي.',
+  sourceGoogle: 'بيانات Google: أماكن مقيّمة، وأوقات سيارة بالزحام الحي، والمترو من Google للنقل العام.',
+  carEstimated: 'لم تستجب خدمة توجيه السيارات، فأوقات السيارة تقديرية.',
+  metroEstimatedNote: 'يقدّر التطبيق أوقات المترو هكذا: المشي إلى أقرب محطة بسرعة 5 كم/س، وانتظار 4 دقائق، و1.5 دقيقة لكل محطة، و5 دقائق لكل تبديل. ويُحسب المشي مرة ونصفًا لحرارة الجو.',
+  minutes: (m) => arMin(m),
+  openInMaps: 'افتح في خرائط Google',
+  metroLayer: 'خطوط المترو',
+  searchNoKey: 'البحث بالعنوان معطّل لأن GOOGLE_MAPS_API_KEY غير مضبوط في الخادم. استعمل «حدّد على الخريطة».',
+  searchError: 'تعذّر البحث. أعد المحاولة أو استعمل «حدّد على الخريطة».',
+  noMatches: 'لا نتائج مطابقة',
+  metroAttribution: 'بيانات المترو © المساهمون في OpenStreetMap (ODbL)',
+  mapCredits: 'المترو © OpenStreetMap (ODbL) · الأحياء © البريد السعودي عبر homaily (GPL-2.0)',
+  lines: 'المسارات',
+  interchange: 'محطة تبديل',
+  lineNames: { '1': 'المسار الأزرق', '2': 'المسار الأحمر', '3': 'المسار البرتقالي', '4': 'المسار الأصفر', '5': 'المسار الأخضر', '6': 'المسار البنفسجي' },
+  arriveStep: 'تصل إلى مكان اللقاء',
+  carStep(s: CarStepInfo): string {
+    const onto = s.road ? ` إلى ${s.road}` : '';
+    const inRoad = s.road ? ` في ${s.road}` : '';
+    const dir = AR_DIR[s.modifier ?? ''] ?? '';
+    const sd = side(s.modifier) === 'left' ? 'يسارًا' : side(s.modifier) === 'right' ? 'يمينًا' : '';
+    switch (s.type) {
+      case 'depart':
+        return `انطلق${inRoad}`;
+      case 'arrive':
+        return 'تصل إلى مكان اللقاء';
+      case 'roundabout':
+      case 'rotary':
+        return `عند الدوّار اسلك ${s.exit ? `المخرج ${s.exit}` : 'المخرج'}${onto}`;
+      case 'on ramp':
+        return `اسلك المنحدر${sd ? ` ${sd}` : ''}${onto}`;
+      case 'off ramp':
+        return `اسلك المخرج${sd ? ` ${sd}` : ''}${onto}`;
+      case 'fork':
+        return `عند التفرّع الزم ${side(s.modifier) === 'left' ? 'اليسار' : side(s.modifier) === 'right' ? 'اليمين' : 'الطريق المستقيم'}${onto}`;
+      case 'merge':
+        return `اندمج${onto}`;
+      case 'end of road':
+        return `في نهاية الطريق انعطف ${dir || 'بحسب اللوحات'}${onto}`;
+      case 'continue':
+      case 'new name':
+        return `تابع${inRoad}`;
+      default:
+        if (s.modifier === 'straight') return `تابع مباشرةً${inRoad}`;
+        if (s.modifier === 'uturn') return `استدر عائدًا${onto}`;
+        return `انعطف ${dir || 'إلى الأمام'}${onto}`;
+    }
+  },
+};
+
+export const STRINGS: Record<Locale, Strings> = { en, ar };
+
+export function isLocale(x: unknown): x is Locale {
+  return x === 'en' || x === 'ar';
+}

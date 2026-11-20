@@ -3,9 +3,10 @@
  * Street names come from OpenStreetMap and are mostly Arabic.
  */
 import type { LatLng } from './geo';
+import { en, type CarStepInfo } from './i18n';
 
-export interface CarStep {
-  text: string;
+/** One driving instruction; the text is written in the UI language (`carStep` in lib/i18n.ts). */
+export interface CarStep extends CarStepInfo {
   meters: number;
 }
 
@@ -23,49 +24,18 @@ interface OsrmStep {
   maneuver: { type: string; modifier?: string; exit?: number };
 }
 
-const DIR: Record<string, string> = {
-  left: 'left',
-  right: 'right',
-  'slight left': 'slightly left',
-  'slight right': 'slightly right',
-  'sharp left': 'sharp left',
-  'sharp right': 'sharp right',
-  straight: 'straight',
-  uturn: 'U-turn',
-};
-
-/** One OSRM maneuver → "Turn right onto شارع العليا". */
+/** English text of one OSRM step (tests, logs). */
 export function stepText(s: OsrmStep): string {
-  const road = s.name?.trim() || s.ref?.trim() || '';
-  const onto = road ? ` onto ${road}` : '';
-  const on = road ? ` on ${road}` : '';
-  const dir = DIR[s.maneuver.modifier ?? ''] ?? '';
-  switch (s.maneuver.type) {
-    case 'depart':
-      return `Start${on}`;
-    case 'arrive':
-      return 'Arrive at the meeting place';
-    case 'roundabout':
-    case 'rotary':
-      return `At the roundabout take exit ${s.maneuver.exit ?? ''}${onto}`.replace('exit  ', 'the exit ');
-    case 'on ramp':
-      return `Take the ramp${dir && dir !== 'straight' ? ` on the ${dir.replace('slightly ', '')}` : ''}${onto}`;
-    case 'off ramp':
-      return `Take the exit${dir && dir !== 'straight' ? ` on the ${dir.replace('slightly ', '')}` : ''}${onto}`;
-    case 'fork':
-      return `Keep ${dir.replace('slightly ', '') || 'straight'} at the fork${onto}`;
-    case 'merge':
-      return `Merge${onto}`;
-    case 'end of road':
-      return `At the end of the road turn ${dir || 'as signed'}${onto}`;
-    case 'continue':
-    case 'new name':
-      return `Continue${onto}`;
-    default:
-      if (dir === 'straight') return `Go straight${onto}`;
-      if (dir === 'U-turn') return `Make a U-turn${onto}`;
-      return `Turn ${dir || 'ahead'}${onto}`;
-  }
+  return en.carStep(toInfo(s));
+}
+
+function toInfo(s: OsrmStep): CarStepInfo {
+  return {
+    type: s.maneuver.type,
+    ...(s.maneuver.modifier ? { modifier: s.maneuver.modifier } : {}),
+    ...(s.maneuver.exit ? { exit: s.maneuver.exit } : {}),
+    road: s.name?.trim() || s.ref?.trim() || '',
+  };
 }
 
 /** Parses an OSRM route reply; consecutive steps on the same road are merged to keep the list short. */
@@ -84,7 +54,7 @@ export function parseOsrmRoute(json: {
       steps[steps.length - 1].meters += s.distance; // same road (or unnamed link): fold into previous step
       continue;
     }
-    steps.push({ text: stepText(s), meters: s.distance });
+    steps.push({ ...toInfo(s), meters: s.distance });
     if (road) lastRoad = road;
   }
   return {

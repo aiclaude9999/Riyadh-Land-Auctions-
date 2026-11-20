@@ -1,7 +1,7 @@
 'use client';
 
 import { CUISINE_GROUPS, type CuisineGroup } from '@/lib/cuisine';
-import { t } from '@/lib/i18n';
+import { useT } from './LocaleProvider';
 import { EMPTY_PREFS, type Preferences } from '@/lib/preferences';
 
 interface Props {
@@ -14,6 +14,7 @@ interface Props {
 const toggle = <T,>(list: T[], x: T) => (list.includes(x) ? list.filter((y) => y !== x) : [...list, x]);
 
 export default function PrefsPanel({ prefs, update, names }: Props) {
+  const t = useT();
   const chip = (active: boolean, tone: 'like' | 'avoid') =>
     `rounded-full border px-2.5 py-1 text-xs ${active ? (tone === 'like' ? 'border-brand bg-brand-light text-brand-dark' : 'border-rose-300 bg-rose-50 text-rose-700') : 'border-slate-300 text-slate-600 hover:border-slate-400'}`;
 

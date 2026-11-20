@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { googleDirectionsUrl, googleReviewsUrl, parseOsrmRoute, stepText } from '@/lib/directions';
+import { ar, en } from '@/lib/i18n';
 
 const fx = JSON.parse(readFileSync(path.join(__dirname, 'fixtures/osrm-route.json'), 'utf8'));
 
@@ -15,9 +16,11 @@ describe('parseOsrmRoute (real reply)', () => {
   });
   it('merges repeated steps on the same road and ends with arrival', () => {
     expect(r.steps.length).toBeLessThan(16);
-    expect(r.steps[0].text).toMatch(/^Start on/);
-    expect(r.steps.at(-1)!.text).toBe('Arrive at the meeting place');
-    expect(r.steps.some((s) => s.text === 'Turn left onto طريق العروبة')).toBe(true);
+    const texts = r.steps.map((s) => en.carStep(s));
+    expect(texts[0]).toMatch(/^Start on/);
+    expect(texts.at(-1)).toBe('Arrive at the meeting place');
+    expect(texts).toContain('Turn left onto طريق العروبة');
+    expect(r.steps.map((s) => ar.carStep(s))).toContain('انعطف يسارًا إلى طريق العروبة');
     const total = r.steps.reduce((s, x) => s + x.meters, 0);
     expect(total).toBeCloseTo(18623.1, 0); // folding keeps the total distance
   });

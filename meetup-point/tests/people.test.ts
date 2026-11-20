@@ -68,3 +68,10 @@ describe('helpers', () => {
     expect(isReady(s)).toBe(true);
   });
 });
+
+import { arMin } from '@/lib/i18n';
+describe('arMin (Arabic counted minutes)', () => {
+  it('uses the right form for each number', () => {
+    expect([1, 2, 3, 10, 11, 25].map(arMin)).toEqual(['دقيقة واحدة', 'دقيقتان', '3 دقائق', '10 دقائق', '11 دقيقة', '25 دقيقة']);
+  });
+});

@@ -153,7 +153,7 @@ export async function recommend(req: RecommendRequest, deps: RecommendDeps): Pro
       const est = estimator.from(req.people[pi].location);
       venues.forEach((v, vi) => {
         const local: MetroEstimate = est(v.location);
-        const detail = { fromStation: local.fromStation, toStation: local.toStation, transfers: local.transfers, walkOnly: local.walkOnly, legs: local.legs };
+        const detail = { fromStation: local.fromStation, fromStationAr: local.fromStationAr, toStation: local.toStation, toStationAr: local.toStationAr, transfers: local.transfers, walkOnly: local.walkOnly, legs: local.legs };
         const api = transit?.[row]?.[vi];
         if (api != null) usedApi = true;
         // Google's matrix has no walking breakdown, so the heat penalty uses our walking estimate.

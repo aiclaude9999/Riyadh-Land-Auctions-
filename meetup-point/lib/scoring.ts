@@ -122,7 +122,7 @@ export interface Eta {
   source: 'api' | 'estimated';
   /** Minutes on foot inside this trip (metro users; used for the heat penalty). */
   walkMinutes: number;
-  detail?: { fromStation?: string; toStation?: string; transfers?: number; walkOnly?: boolean; legs?: import('./estimator').MetroLeg[] };
+  detail?: { fromStation?: string; fromStationAr?: string; toStation?: string; toStationAr?: string; transfers?: number; walkOnly?: boolean; legs?: import('./estimator').MetroLeg[] };
 }
 
 export interface ScoredEta extends Eta {
@@ -139,7 +139,7 @@ export interface ScoredVenue {
   sumEta: number;
   worstPerson: number;
   spreadMin: number;
-  nearStation?: { name: string; meters: number; bonusMin: number };
+  nearStation?: { name: string; nameAr: string; meters: number; bonusMin: number };
   /** Group preferences (liked food / favourite place). */
   pref?: VenueBonus;
   etas: ScoredEta[];
@@ -180,7 +180,7 @@ export function scoreVenues(
       worstPerson: worst.person,
       spreadMin: Math.max(...raw) - Math.min(...raw),
       ...(pref && pref.bonusMin ? { pref } : {}),
-      ...(near && near.meters <= 800 ? { nearStation: { name: near.station.name_en, meters: Math.round(near.meters), bonusMin: bonus } } : {}),
+      ...(near && near.meters <= 800 ? { nearStation: { name: near.station.name_en, nameAr: near.station.name_ar || near.station.name_en, meters: Math.round(near.meters), bonusMin: bonus } } : {}),
       etas: list,
     });
   });

@@ -5,9 +5,9 @@ import { useEffect } from 'react';
 import { AdvancedMarker, APIProvider, Map, Pin, useMap, type MapMouseEvent } from '@vis.gl/react-google-maps';
 import MetroLayer, { type MetroLineCollection } from './MetroLayer';
 import { RIYADH_CENTER, type LatLng } from '@/lib/geo';
-import { t } from '@/lib/i18n';
+import { useT } from './LocaleProvider';
 import type { StationCollection } from '@/lib/metro';
-import { displayName, personColor, type Person } from '@/lib/people';
+import { displayName, personColor, personInitial, type Person } from '@/lib/people';
 import type { ScoredVenue } from '@/lib/scoring';
 import type { Overlay } from '@/lib/overlays';
 
@@ -101,6 +101,7 @@ function GoogleFit({ people, results, resultsKey, selectedVenueId }: Pick<MapVie
 }
 
 export default function MeetupMap(props: MapViewProps) {
+  const t = useT();
   if (!BROWSER_KEY) return <FreeMap {...props} />;
 
   const { people, pickingId } = props;
@@ -131,7 +132,7 @@ export default function MeetupMap(props: MapViewProps) {
             <AdvancedMarker
               key={p.id}
               position={p.location}
-              title={displayName(p, i)}
+              title={displayName(p, i, t.namePlaceholder)}
               draggable
               zIndex={100 + i}
               onDragEnd={(e) => {
@@ -139,7 +140,7 @@ export default function MeetupMap(props: MapViewProps) {
                 if (ll) props.onDragPerson(p.id, { lat: ll.lat(), lng: ll.lng() });
               }}
             >
-              <Pin background={personColor(i)} borderColor="#ffffff" glyphColor="#ffffff" glyph={(displayName(p, i)[0] ?? '?').toUpperCase()} />
+              <Pin background={personColor(i)} borderColor="#ffffff" glyphColor="#ffffff" glyph={personInitial(p, i)} />
             </AdvancedMarker>
           ) : null,
         )}
@@ -159,11 +160,11 @@ export default function MeetupMap(props: MapViewProps) {
         <GoogleFit people={people} results={props.results} resultsKey={props.resultsKey} selectedVenueId={props.selectedVenueId} />
       </Map>
 
-      <label className="absolute end-3 top-3 z-10 flex cursor-pointer items-center gap-2 rounded-lg bg-white/95 px-3 py-1.5 text-sm shadow">
+      <label className="absolute right-3 top-3 z-10 flex cursor-pointer items-center gap-2 rounded-lg bg-white/95 px-3 py-1.5 text-sm shadow">
         <input type="checkbox" checked={props.showMetro} onChange={props.onToggleMetro} className="accent-brand" />
         {t.metroLayer}
       </label>
-      <p className="pointer-events-none absolute bottom-6 start-2 z-10 rounded bg-white/80 px-1.5 text-[11px] text-slate-600">{t.metroAttribution}</p>
+      <p className="pointer-events-none absolute bottom-6 left-2 z-10 rounded bg-white/80 px-1.5 text-[10px] text-slate-600">{t.metroAttribution}</p>
     </APIProvider>
   );
 }

@@ -9,13 +9,28 @@ import TripOptions, { departDate, initialTrip, type TripState } from './TripOpti
 import type { RouteState } from './TripDetails';
 import type { MetroLineCollection } from './MetroLayer';
 import type { CarRoute } from '@/lib/directions';
-import { districtAt, shortEn, type District } from '@/lib/districts';
-import { t } from '@/lib/i18n';
+import { districtAt, shortAr, shortEn, type District } from '@/lib/districts';
+import { useLocale, useName, useT } from './LocaleProvider';
 import { toStations, type StationCollection } from '@/lib/metro';
 import type { Overlay } from '@/lib/overlays';
 import { displayName, initialPeopleState, isReady, peopleReducer, personColor, type Person } from '@/lib/people';
 import type { RecommendError, RecommendRequest, RecommendResponse } from '@/lib/recommendTypes';
 import { usePrefs } from '@/lib/usePrefs';
+
+/** Switches English ⇄ Arabic (remembered in a cookie). */
+function LangButton() {
+  const { locale, t, setLocale } = useLocale();
+  return (
+    <button
+      type="button"
+      onClick={() => setLocale(locale === 'ar' ? 'en' : 'ar')}
+      lang={locale === 'ar' ? 'en' : 'ar'}
+      className="shrink-0 rounded-full border border-slate-300 px-3 py-0.5 text-sm text-slate-700 hover:border-brand hover:text-brand"
+    >
+      {t.switchTo}
+    </button>
+  );
+}
 
 interface SearchResult {
   response: RecommendResponse;
@@ -36,6 +51,9 @@ function buildRequest(people: Person[], trip: TripState, prefs: RecommendRequest
 }
 
 export default function MeetupApp({ stations, lines, districts }: { stations: StationCollection; lines: MetroLineCollection; districts: District[] }) {
+  const t = useT();
+  const n = useName();
+  const { locale } = useLocale();
   const [state, dispatch] = useReducer(peopleReducer, undefined, initialPeopleState);
   const [pickingId, setPickingId] = useState<string | null>(null);
   const [focusDistrict, setFocusDistrict] = useState<District | null>(null);
@@ -136,7 +154,7 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
         return;
       }
       setResult({ response: data, people: state.people, signature });
-      setNames((n) => ({ ...n, ...Object.fromEntries(data.results.map((r) => [r.venue.id, r.venue.name])) }));
+      setNames((old) => ({ ...old, ...Object.fromEntries(data.results.map((r) => [r.venue.id, n(r.venue.name, r.venue.nameAr)])) }));
       setSelectedId(data.results[0]?.venue.id ?? null);
       // start the zone slider at the best place's longest trip, rounded up to 5 min
       if (data.results[0]) setZoneMin(Math.max(10, Math.ceil(data.results[0].maxEta / 5) * 5));
@@ -149,24 +167,28 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
   }
 
   function chooseDistrict(personId: string, d: District) {
-    dispatch({ type: 'setLocation', id: personId, location: d.center, address: t.districtCentre(shortEn(d)), source: 'district' });
+    dispatch({ type: 'setLocation', id: personId, location: d.center, address: null, source: 'district', districtId: d.id });
     setFocusDistrict(d);
     setPickingId(personId); // next tap on the map refines the spot
   }
 
   const pickingIndex = state.people.findIndex((p) => p.id === pickingId);
-  const pickingName = pickingIndex >= 0 ? displayName(state.people[pickingIndex], pickingIndex) : null;
+  const pickingName = pickingIndex >= 0 ? displayName(state.people[pickingIndex], pickingIndex, t.namePlaceholder) : null;
   const readyCount = state.people.filter((p) => p.location).length;
   const tabClass = (active: boolean) => `flex-1 border-b-2 px-2 py-2 text-sm font-medium ${active ? 'border-brand text-brand-dark' : 'border-transparent text-slate-500 hover:text-slate-700'}`;
 
   return (
     <div className="flex h-dvh flex-col md:flex-row">
-      <header className="border-b border-slate-200 bg-white px-4 py-2 md:hidden">
+      <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2 md:hidden">
         <h1 className="text-base font-semibold text-brand-dark">{t.appTitle}</h1>
+        <LangButton />
       </header>
       <aside className="order-2 flex min-h-0 flex-1 flex-col border-slate-200 bg-white md:order-1 md:w-[420px] md:flex-none md:border-e">
         <header className="hidden border-b border-slate-200 px-4 py-3 md:block">
-          <h1 className="text-lg font-semibold text-brand-dark">{t.appTitle}</h1>
+          <div className="flex items-start justify-between gap-2">
+            <h1 className="text-lg font-semibold text-brand-dark">{t.appTitle}</h1>
+            <LangButton />
+          </div>
           <p className="text-sm text-slate-500">{t.appTagline}</p>
         </header>
 
@@ -190,7 +212,7 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
                 <label className="flex cursor-pointer items-center gap-2">
                   <input type="checkbox" checked={zoneOn} onChange={(e) => setZoneOn(e.target.checked)} className="accent-emerald-600" />
                   <span>
-                    {t.zoneToggle} <strong className="tabular-nums">{zoneMin} min</strong>
+                    {t.zoneToggle} <strong className="tabular-nums">{t.minutes(zoneMin)}</strong>
                   </span>
                 </label>
                 {zoneOn && (
@@ -256,13 +278,13 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
           onMapPick={(location) => {
             if (!pickingId) return;
             const d = districtAt(location, districts);
-            dispatch({ type: 'setLocation', id: pickingId, location, address: d ? t.pinnedIn(shortEn(d)) : null, source: 'pin' });
+            dispatch({ type: 'setLocation', id: pickingId, location, address: null, source: 'pin', districtId: d?.id ?? null });
             setPickingId(null);
             setFocusDistrict(null);
           }}
           onDragPerson={(id, location) => {
             const d = districtAt(location, districts);
-            dispatch({ type: 'setLocation', id, location, address: d ? t.pinnedIn(shortEn(d)) : null, source: 'pin' });
+            dispatch({ type: 'setLocation', id, location, address: null, source: 'pin', districtId: d?.id ?? null });
           }}
           results={stale ? [] : (result?.response.results ?? [])}
           resultsKey={result?.signature ?? ''}
@@ -276,7 +298,7 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
         />
         {pickingName && (
           <div className="pointer-events-auto absolute inset-x-0 top-3 z-[1100] mx-auto flex w-fit max-w-[calc(100%-2rem)] items-center gap-3 rounded-full bg-slate-900/90 px-4 py-2 text-sm text-white shadow-lg">
-            <span>{focusDistrict ? t.refineBanner(pickingName, shortEn(focusDistrict)) : t.pickBanner(pickingName)}</span>
+            <span>{focusDistrict ? t.refineBanner(pickingName, n(shortEn(focusDistrict), shortAr(focusDistrict))) : t.pickBanner(pickingName)}</span>
             <button
               type="button"
               className="shrink-0 rounded-full bg-white/15 px-3 py-0.5 hover:bg-white/25"
@@ -285,7 +307,7 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
                 setFocusDistrict(null);
               }}
             >
-              {focusDistrict ? 'OK' : t.cancel}
+              {focusDistrict ? (locale === 'ar' ? 'تم' : 'OK') : t.cancel}
             </button>
           </div>
         )}

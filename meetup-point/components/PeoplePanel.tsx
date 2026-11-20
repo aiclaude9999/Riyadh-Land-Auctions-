@@ -2,7 +2,7 @@
 
 import type { Dispatch } from 'react';
 import PersonCard from './PersonCard';
-import { t } from '@/lib/i18n';
+import { useT } from './LocaleProvider';
 import type { District } from '@/lib/districts';
 import type { Station } from '@/lib/metro';
 import { MAX_PEOPLE, type PeopleAction, type PeopleState } from '@/lib/people';
@@ -18,6 +18,7 @@ interface Props {
 }
 
 export default function PeoplePanel({ state, dispatch, stations, pickingId, onPick, districts, onDistrict }: Props) {
+  const t = useT();
   const { people } = state;
 
   return (

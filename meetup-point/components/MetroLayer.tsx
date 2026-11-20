@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useMap } from '@vis.gl/react-google-maps';
-import { t } from '@/lib/i18n';
+import { useName, useT } from './LocaleProvider';
 import type { StationCollection, StationLine } from '@/lib/metro';
 
 export interface MetroLineCollection {
@@ -23,6 +23,8 @@ function escapeHtml(s: string): string {
  * without touching map.data). Clicking a station opens an info window with its lines.
  */
 export default function MetroLayer({ stations, lines, visible, clickable }: { stations: StationCollection; lines: MetroLineCollection; visible: boolean; clickable: boolean }) {
+  const t = useT();
+  const n = useName();
   const map = useMap();
   const layerRef = useRef<google.maps.Data | null>(null);
 
@@ -35,16 +37,18 @@ export default function MetroLayer({ stations, lines, visible, clickable }: { st
 
     const listener = layer.addListener('click', (e: google.maps.Data.MouseEvent) => {
       if (e.feature.getGeometry()?.getType() !== 'Point') return;
-      const name = String(e.feature.getProperty('name_en') ?? '');
-      const nameAr = String(e.feature.getProperty('name_ar') ?? '');
+      const enName = String(e.feature.getProperty('name_en') ?? '');
+      const arName = String(e.feature.getProperty('name_ar') ?? '');
+      const name = n(enName, arName);
+      const nameAr = name === arName ? enName : arName;
       const stLines = (e.feature.getProperty('lines') ?? []) as StationLine[];
       const chips = stLines
-        .map((l) => `<span style="display:inline-flex;align-items:center;gap:4px;margin-inline-end:8px"><span style="width:10px;height:10px;border-radius:9999px;background:${escapeHtml(l.color)}"></span>${escapeHtml(l.name)}</span>`)
+        .map((l) => `<span style="display:inline-flex;align-items:center;gap:4px;margin-inline-end:8px"><span style="width:10px;height:10px;border-radius:9999px;background:${escapeHtml(l.color)}"></span>${escapeHtml(t.lineNames[l.ref] ?? l.name)}</span>`)
         .join('');
       info.setContent(
         `<div style="font:13px system-ui,sans-serif;min-width:160px">` +
           `<div style="font-weight:600">${escapeHtml(name)}</div>` +
-          (nameAr ? `<div dir="rtl" style="color:#64748b">${escapeHtml(nameAr)}</div>` : '') +
+          (nameAr && nameAr !== name ? `<div dir="auto" style="color:#64748b">${escapeHtml(nameAr)}</div>` : '') +
           `<div style="margin-top:6px">${chips}</div>` +
           (stLines.length > 1 ? `<div style="margin-top:4px;color:#0f766e">${escapeHtml(t.interchange)}</div>` : '') +
           `</div>`,
@@ -60,7 +64,7 @@ export default function MetroLayer({ stations, lines, visible, clickable }: { st
       layer.setMap(null);
       layerRef.current = null;
     };
-  }, [map, stations, lines]);
+  }, [map, stations, lines, t, n]);
 
   useEffect(() => {
     const layer = layerRef.current;
@@ -72,7 +76,7 @@ export default function MetroLayer({ stations, lines, visible, clickable }: { st
         return {
           clickable,
           zIndex: interchange ? 3 : 2,
-          title: String(f.getProperty('name_en') ?? ''),
+          title: n(String(f.getProperty('name_en') ?? ''), String(f.getProperty('name_ar') ?? '')),
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
             scale: interchange ? 6 : 4.5,
@@ -86,7 +90,7 @@ export default function MetroLayer({ stations, lines, visible, clickable }: { st
       return { clickable: false, strokeColor: String(f.getProperty('color') ?? '#555'), strokeWeight: 4, strokeOpacity: 0.85, zIndex: 1 };
     });
     layer.setMap(visible ? map : null);
-  }, [map, visible, clickable, stations, lines]);
+  }, [map, visible, clickable, stations, lines, n]);
 
   return null;
 }

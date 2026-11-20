@@ -5,8 +5,8 @@ import L from 'leaflet';
 import { useEffect, useRef } from 'react';
 import { venueMarkerHtml, type MapViewProps } from './MeetupMap';
 import { RIYADH_BOUNDS, RIYADH_CENTER } from '@/lib/geo';
-import { t } from '@/lib/i18n';
-import { displayName, personColor } from '@/lib/people';
+import { useName, useT } from './LocaleProvider';
+import { displayName, personColor, personInitial } from '@/lib/people';
 
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
@@ -30,6 +30,8 @@ function personIcon(color: string, letter: string): L.DivIcon {
  * OSM's tile policy allows light use like this prototype; a busy public site needs its own tile provider.
  */
 export default function FreeMap(props: MapViewProps) {
+  const t = useT();
+  const n = useName();
   const { people, pickingId, showMetro, stationsGeoJson, linesGeoJson, results, resultsKey, selectedVenueId, overlays, focusBounds } = props;
   const el = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -81,8 +83,10 @@ export default function FreeMap(props: MapViewProps) {
     for (const f of stationsGeoJson.features) {
       const s = f.properties;
       const interchange = s.lines.length > 1;
+      const main = n(s.name_en, s.name_ar);
+      const other = main === s.name_en ? s.name_ar : s.name_en;
       const chips = s.lines
-        .map((l) => `<span style="display:inline-flex;align-items:center;gap:4px;margin-inline-end:8px"><span style="width:10px;height:10px;border-radius:9999px;background:${escapeHtml(l.color)}"></span>${escapeHtml(l.name)}</span>`)
+        .map((l) => `<span style="display:inline-flex;align-items:center;gap:4px;margin-inline-end:8px"><span style="width:10px;height:10px;border-radius:9999px;background:${escapeHtml(l.color)}"></span>${escapeHtml(t.lineNames[l.ref] ?? l.name)}</span>`)
         .join('');
       L.circleMarker([f.geometry.coordinates[1], f.geometry.coordinates[0]], {
         radius: interchange ? 6 : 4.5,
@@ -92,10 +96,10 @@ export default function FreeMap(props: MapViewProps) {
         fillOpacity: 1,
         bubblingMouseEvents: false,
       })
-        .bindTooltip(escapeHtml(s.name_en))
+        .bindTooltip(escapeHtml(main))
         .bindPopup(
-          `<div style="font:13px system-ui,sans-serif;min-width:160px"><div style="font-weight:600">${escapeHtml(s.name_en)}</div>` +
-            (s.name_ar ? `<div dir="rtl" style="color:#64748b">${escapeHtml(s.name_ar)}</div>` : '') +
+          `<div dir="auto" style="font:13px system-ui,sans-serif;min-width:160px"><div style="font-weight:600">${escapeHtml(main)}</div>` +
+            (other && other !== main ? `<div dir="auto" style="color:#64748b">${escapeHtml(other)}</div>` : '') +
             `<div style="margin-top:6px">${chips}</div>` +
             (interchange ? `<div style="margin-top:4px;color:#0f766e">${escapeHtml(t.interchange)}</div>` : '') +
             `</div>`,
@@ -114,7 +118,7 @@ export default function FreeMap(props: MapViewProps) {
       group.remove();
       metroRef.current = null;
     };
-  }, [stationsGeoJson, linesGeoJson]);
+  }, [stationsGeoJson, linesGeoJson, t, n]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -122,7 +126,7 @@ export default function FreeMap(props: MapViewProps) {
     if (!map || !group) return;
     if (showMetro) group.addTo(map);
     else group.remove();
-  }, [showMetro, stationsGeoJson, linesGeoJson]);
+  }, [showMetro, stationsGeoJson, linesGeoJson, t, n]);
 
   // person pins (draggable)
   useEffect(() => {
@@ -131,12 +135,12 @@ export default function FreeMap(props: MapViewProps) {
     group.clearLayers();
     people.forEach((p, i) => {
       if (!p.location) return;
-      const name = displayName(p, i);
+      const name = displayName(p, i, t.namePlaceholder);
       L.marker([p.location.lat, p.location.lng], {
         draggable: true,
         title: name,
         zIndexOffset: 1000 + i,
-        icon: personIcon(personColor(i), (name[0] ?? '?').toUpperCase()),
+        icon: personIcon(personColor(i), personInitial(p, i)),
       })
         .on('dragend', (e) => {
           const ll = (e.target as L.Marker).getLatLng();
@@ -144,7 +148,7 @@ export default function FreeMap(props: MapViewProps) {
         })
         .addTo(group);
     });
-  }, [people]);
+  }, [people, t]);
 
   // ranked venues (numbered squares); click selects
   useEffect(() => {
@@ -217,16 +221,14 @@ export default function FreeMap(props: MapViewProps) {
 
   return (
     <>
-      <div ref={el} className="h-full w-full" />
-      <label className="absolute end-3 top-3 z-[1000] flex cursor-pointer items-center gap-2 rounded-lg bg-white/95 px-3 py-1.5 text-sm shadow">
+      {/* Leaflet expects a left-to-right container even when the page is Arabic */}
+      <div ref={el} dir="ltr" className="h-full w-full" />
+      {/* the map is always left-to-right: keep controls on the right, away from the zoom buttons */}
+      <label className="absolute right-3 top-3 z-[1000] flex cursor-pointer items-center gap-2 rounded-lg bg-white/95 px-3 py-1.5 text-sm shadow">
         <input type="checkbox" checked={showMetro} onChange={props.onToggleMetro} className="accent-brand" />
         {t.metroLayer}
       </label>
-      <p className="pointer-events-none absolute bottom-6 start-2 z-[1000] rounded bg-white/80 px-1.5 text-[11px] leading-tight text-slate-600">
-        {t.metroAttribution}
-        <br />
-        {t.districtCredit}
-      </p>
+      <p className="pointer-events-none absolute bottom-6 left-2 z-[1000] max-w-[70%] rounded bg-white/80 px-1.5 text-[10px] leading-tight text-slate-600">{t.mapCredits}</p>
     </>
   );
 }

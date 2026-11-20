@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
-import { t } from '@/lib/i18n';
+import { useT } from './LocaleProvider';
 import type { LatLng } from '@/lib/geo';
 
 interface Suggestion {
@@ -14,6 +14,7 @@ type Status = 'idle' | 'loading' | 'no_key' | 'error';
 
 /** Address / place search through our own /api/places routes (the server key never reaches the browser). */
 export default function PlaceSearch({ onSelect }: { onSelect: (place: { location: LatLng; label: string }) => void }) {
+  const t = useT();
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [open, setOpen] = useState(false);

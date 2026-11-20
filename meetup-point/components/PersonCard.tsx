@@ -4,9 +4,10 @@ import type { Dispatch } from 'react';
 import NeighbourhoodPicker from './NeighbourhoodPicker';
 import PlaceSearch from './PlaceSearch';
 import type { District } from '@/lib/districts';
-import { t } from '@/lib/i18n';
+import { useName, useT } from './LocaleProvider';
+import { shortAr, shortEn } from '@/lib/districts';
 import { nearestStations, type Station } from '@/lib/metro';
-import { displayName, personColor, personIssues, type PeopleAction, type Person, type TravelMode } from '@/lib/people';
+import { personInitial, displayName, personColor, personIssues, type PeopleAction, type Person, type TravelMode } from '@/lib/people';
 
 interface Props {
   person: Person;
@@ -23,12 +24,17 @@ interface Props {
 // Google address search needs the paid Google key; without it the free neighbourhood list is used.
 const HAS_GOOGLE = !!process.env.NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY;
 
-const MODES: { mode: TravelMode; label: string; icon: string }[] = [
-  { mode: 'car', label: t.car, icon: '🚗' },
-  { mode: 'metro', label: t.metro, icon: '🚇' },
-];
 
 export default function PersonCard({ person, index, canRemove, dispatch, stations, picking, onPick, districts, onDistrict }: Props) {
+  const t = useT();
+  const n = useName();
+  const district = person.districtId ? districts.find((d) => d.id === person.districtId) : undefined;
+  const districtName = district ? n(shortEn(district), shortAr(district)) : '';
+  const label = person.locationSource === 'district' && district ? t.districtCentre(districtName) : person.locationSource === 'pin' && district ? t.pinnedIn(districtName) : (person.address ?? t.pinnedOnMap);
+  const MODES: { mode: TravelMode; label: string; icon: string }[] = [
+    { mode: 'car', label: t.car, icon: '🚗' },
+    { mode: 'metro', label: t.metro, icon: '🚇' },
+  ];
   const color = personColor(index);
   const issues = personIssues(person);
   const nearest = person.mode === 'metro' && person.location ? nearestStations(person.location, stations, 1)[0] : undefined;
@@ -38,7 +44,7 @@ export default function PersonCard({ person, index, canRemove, dispatch, station
     <li className={`rounded-xl border bg-white p-3 shadow-sm transition ${picking ? 'border-brand ring-2 ring-brand/30' : 'border-slate-200'}`}>
       <div className="flex items-center gap-2">
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style={{ background: color }} aria-hidden>
-          {(displayName(person, index)[0] ?? '?').toUpperCase()}
+          {personInitial(person, index)}
         </span>
         <label htmlFor={nameId} className="sr-only">
           {t.nameLabel}
@@ -56,7 +62,7 @@ export default function PersonCard({ person, index, canRemove, dispatch, station
             type="button"
             onClick={() => dispatch({ type: 'remove', id: person.id })}
             className="rounded-md px-2 py-1 text-xs text-slate-400 hover:bg-rose-50 hover:text-rose-600"
-            aria-label={`${t.removePerson} ${displayName(person, index)}`}
+            aria-label={`${t.removePerson} ${displayName(person, index, t.namePlaceholder)}`}
           >
             {t.removePerson}
           </button>
@@ -84,7 +90,7 @@ export default function PersonCard({ person, index, canRemove, dispatch, station
           <div className="mt-1 flex items-start gap-2 rounded-lg bg-slate-50 px-2 py-1.5 text-sm">
             <span className="mt-0.5" aria-hidden>📍</span>
             <div className="min-w-0 flex-1">
-              <p className="truncate">{person.address ?? t.pinnedOnMap}</p>
+              <p className="truncate">{label}</p>
               <p className="text-xs text-slate-400">
                 {person.location.lat.toFixed(5)}, {person.location.lng.toFixed(5)}
               </p>
@@ -119,7 +125,7 @@ export default function PersonCard({ person, index, canRemove, dispatch, station
         {issues.includes('outsideRiyadh') && <p className="mt-1 text-xs text-amber-700">{t.outsideRiyadh}</p>}
         {nearest && (
           <p className="mt-1 text-xs text-slate-500">
-            {t.nearestStation(nearest.station.name_en, (nearest.meters / 1000).toFixed(1))}
+            {t.nearestStation(n(nearest.station.name_en, nearest.station.name_ar), (nearest.meters / 1000).toFixed(1))}
           </p>
         )}
       </div>

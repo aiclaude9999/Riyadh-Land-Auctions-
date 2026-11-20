@@ -56,7 +56,7 @@ describe('metro estimator (spec fallback formula)', () => {
     expect(r.legs.map((l) => l.kind)).toEqual(['walk', 'wait', 'ride', 'transfer', 'ride', 'walk']);
     const [, , ride1, transfer, ride2] = r.legs;
     expect(ride1).toMatchObject({ kind: 'ride', line: 'A', from: 'A0', to: 'X', toward: 'X', stops: 2 });
-    expect(transfer).toMatchObject({ kind: 'transfer', at: 'X', toLine: 'B' });
+    expect(transfer).toMatchObject({ kind: 'transfer', at: 'X', toLine: 'B', toLineRef: 'B', atAr: 'X' });
     expect(ride2).toMatchObject({ kind: 'ride', line: 'B', from: 'X', to: 'B2', toward: 'B2', stops: 2 });
     if (ride1.kind === 'ride') expect(ride1.path).toHaveLength(3);
     const sum = r.legs.reduce((s, l) => s + l.minutes, 0);

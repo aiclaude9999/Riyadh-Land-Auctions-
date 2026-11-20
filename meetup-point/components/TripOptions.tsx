@@ -1,7 +1,7 @@
 'use client';
 
 import { CUISINE_GROUPS, type CuisineGroup } from '@/lib/cuisine';
-import { t } from '@/lib/i18n';
+import { useT } from './LocaleProvider';
 import { riyadhClock, riyadhDate, trafficFactor, trafficLevel } from '@/lib/timing';
 import type { VenueType } from '@/lib/venues';
 
@@ -31,6 +31,7 @@ const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${St
 const segment = (active: boolean) => `rounded-md px-2 py-1 text-sm ${active ? 'bg-white font-medium shadow-sm' : 'text-slate-500 hover:text-slate-700'}`;
 
 export default function TripOptions({ trip, onChange }: { trip: TripState; onChange: (t: TripState) => void }) {
+  const t = useT();
   const today = riyadhClock(new Date()).day;
   const dayName = (offset: number) => (offset === 0 ? t.dayToday : offset === 1 ? t.dayTomorrow : t.weekdays[(today + offset) % 7]);
   const when = departDate(trip) ?? new Date();

@@ -10,6 +10,8 @@ export interface Person {
   /** Human-readable label: the searched address, or "Pinned on map". */
   address: string | null;
   locationSource: 'pin' | 'search' | 'district' | null;
+  /** neighbourhood the point is in (label is written in the UI language) */
+  districtId?: string | null;
 }
 
 export const MIN_PEOPLE = 2;
@@ -28,7 +30,7 @@ export type PeopleAction =
   | { type: 'remove'; id: string }
   | { type: 'rename'; id: string; name: string }
   | { type: 'setMode'; id: string; mode: TravelMode }
-  | { type: 'setLocation'; id: string; location: LatLng; address: string | null; source: 'pin' | 'search' | 'district' }
+  | { type: 'setLocation'; id: string; location: LatLng; address: string | null; source: 'pin' | 'search' | 'district'; districtId?: string | null }
   | { type: 'clearLocation'; id: string };
 
 function newPerson(n: number): Person {
@@ -57,9 +59,9 @@ export function peopleReducer(state: PeopleState, action: PeopleAction): PeopleS
     case 'setMode':
       return patch(action.id, { mode: action.mode });
     case 'setLocation':
-      return patch(action.id, { location: action.location, address: action.address, locationSource: action.source });
+      return patch(action.id, { location: action.location, address: action.address, locationSource: action.source, districtId: action.districtId ?? null });
     case 'clearLocation':
-      return patch(action.id, { location: null, address: null, locationSource: null });
+      return patch(action.id, { location: null, address: null, locationSource: null, districtId: null });
   }
 }
 
@@ -69,8 +71,14 @@ export function personColor(index: number): string {
 }
 
 /** Name to show when the field is still empty: "Person 1", "Person 2", … */
-export function displayName(person: Person, index: number): string {
-  return person.name.trim() || `Person ${index + 1}`;
+export function displayName(person: Person, index: number, fallback: (n: number) => string = (n) => `Person ${n}`): string {
+  return person.name.trim() || fallback(index + 1);
+}
+
+/** Letter on the person's pin: first letter of the name, or the number when unnamed. */
+export function personInitial(person: Person, index: number): string {
+  const n = person.name.trim();
+  return n ? n[0].toUpperCase() : String(index + 1);
 }
 
 export type PersonIssue = 'missingLocation' | 'outsideRiyadh';

@@ -57,7 +57,9 @@ async function main() {
         const rawAr = n.tags?.['name:ar'] ?? n.tags?.name ?? '';
         const nameEn = n.tags?.['name:en'] ?? n.tags?.name ?? rawAr;
         // keep only real Arabic names (OSM sometimes has Latin text or just "محطة" = "station")
-        const nameAr = /[\u0600-\u06FF]/.test(rawAr) && rawAr.trim() !== 'محطة' ? rawAr.trim() : '';
+        // drop a leading "محطة" ("station"): the UI already says "محطة …"
+        const cleanAr = rawAr.trim().replace(/^محطة\s+/, '');
+        const nameAr = /[\u0600-\u06FF]/.test(cleanAr) && cleanAr !== 'محطة' ? cleanAr : '';
         const key = nameEn || nameAr;
         if (!key || seen.includes(key)) continue; // other platform / direction of the same station
         const seq = seen.push(key) - 1;
