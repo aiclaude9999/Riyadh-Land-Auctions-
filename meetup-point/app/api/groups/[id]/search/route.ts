@@ -17,7 +17,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const b = (await body(req)) as Record<string, unknown>;
     let request;
     try {
-      request = parseRequest({ ...b, people: people.map((p) => ({ name: p.name, mode: p.mode, location: p.location, access: p.access })) });
+      request = parseRequest({ ...b, people: people.map((p) => ({ name: p.name, mode: p.mode, location: p.location, access: p.access, likes: p.likes, avoids: p.avoids })) });
     } catch (e) {
       if (e instanceof BadRequest) throw new GroupError(400, 'bad_request', e.message);
       throw e;

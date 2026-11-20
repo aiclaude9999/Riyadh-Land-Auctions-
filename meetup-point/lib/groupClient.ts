@@ -57,10 +57,10 @@ async function call<T>(method: string, url: string, body?: unknown, token?: stri
   return data;
 }
 
-export const toWire = (p: Person) => ({ name: p.name, mode: p.mode, location: p.location, districtId: p.districtId ?? null, access: p.access ?? 'walk' });
+export const toWire = (p: Person) => ({ name: p.name, mode: p.mode, location: p.location, districtId: p.districtId ?? null, access: p.access ?? 'walk', likes: p.likes ?? [], avoids: p.avoids ?? [] });
 
 export function fromWire(p: GroupPerson): Person {
-  return { id: p.id, name: p.name, mode: p.mode, location: p.location, address: null, locationSource: p.location ? 'pin' : null, districtId: p.districtId, access: p.access ?? 'walk' };
+  return { id: p.id, name: p.name, mode: p.mode, location: p.location, address: null, locationSource: p.location ? 'pin' : null, districtId: p.districtId, access: p.access ?? 'walk', likes: p.likes ?? [], avoids: p.avoids ?? [] };
 }
 
 export const groupApi = {

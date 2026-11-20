@@ -6,6 +6,7 @@ import PlaceSearch from './PlaceSearch';
 import type { District } from '@/lib/districts';
 import { useName, useT } from './LocaleProvider';
 import { shortAr, shortEn } from '@/lib/districts';
+import { CUISINE_GROUPS } from '@/lib/cuisine';
 import { nearestStations, type Station } from '@/lib/metro';
 import { personInitial, displayName, personColor, personIssues, type PeopleAction, type Person, type TravelMode } from '@/lib/people';
 
@@ -105,6 +106,39 @@ export default function PersonCard({ person, index, canRemove, dispatch, station
           ))}
         </div>
       )}
+
+      <details className="mt-1.5 text-xs">
+        <summary className="cursor-pointer select-none text-slate-500">
+          🍽 {t.tasteLabel}
+          {(person.likes?.length || person.avoids?.length) ? <span className="ms-1 text-brand-dark">({(person.likes?.length ?? 0) + (person.avoids?.length ?? 0)})</span> : null}
+        </summary>
+        <p className="mt-1 text-[11px] text-slate-400">{t.tasteHint}</p>
+        <div className="mt-1 flex flex-wrap gap-1">
+          {CUISINE_GROUPS.map((g) => {
+            const liked = person.likes?.includes(g);
+            const avoided = person.avoids?.includes(g);
+            return (
+              <button
+                key={g}
+                type="button"
+                disabled={readOnly}
+                onClick={() => {
+                  // none → like → avoid → none
+                  const likes = (person.likes ?? []).filter((x) => x !== g);
+                  const avoids = (person.avoids ?? []).filter((x) => x !== g);
+                  if (!liked && !avoided) likes.push(g);
+                  else if (liked) avoids.push(g);
+                  dispatch({ type: 'setTaste', id: person.id, likes, avoids });
+                }}
+                className={`rounded-full border px-2 py-0.5 ${liked ? 'border-brand bg-brand-light text-brand-dark' : avoided ? 'border-rose-300 bg-rose-50 text-rose-700 line-through' : 'border-slate-300 text-slate-600'}`}
+              >
+                {liked ? '♥ ' : avoided ? '✕ ' : ''}
+                {t.groups[g]}
+              </button>
+            );
+          })}
+        </div>
+      </details>
 
       <div className="mt-2">
         <span className="text-xs font-medium text-slate-500">{t.locationLabel}</span>

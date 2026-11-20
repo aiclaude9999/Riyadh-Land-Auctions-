@@ -68,7 +68,8 @@ export function cleanPerson(raw: unknown): Omit<GroupPerson, 'id'> {
   }
   const districtId = typeof r.districtId === 'string' && /^d\d{1,4}$/.test(r.districtId) ? r.districtId : null;
   const access = r.access === 'car' ? 'car' : 'walk';
-  return { name, mode, location, districtId, access };
+  const groups = (x: unknown) => (Array.isArray(x) ? [...new Set(x.filter((g): g is string => typeof g === 'string' && /^[a-z]{3,12}$/.test(g)))].slice(0, 8) : []);
+  return { name, mode, location, districtId, access, likes: groups(r.likes), avoids: groups(r.avoids) };
 }
 
 function view(doc: GroupDoc, version: number): GroupView {
@@ -158,7 +159,7 @@ export async function updatePerson(store: Store, id: string, personId: string, t
   const { view: v } = await mutate(store, id, (doc) => {
     const p = canEdit(doc, personId, token);
     const r = (raw ?? {}) as Record<string, unknown>;
-    const c = cleanPerson({ name: p.name, mode: p.mode, location: p.location, districtId: p.districtId, access: p.access, ...r });
+    const c = cleanPerson({ name: p.name, mode: p.mode, location: p.location, districtId: p.districtId, access: p.access, likes: p.likes, avoids: p.avoids, ...r });
     Object.assign(p, c);
   });
   return v;

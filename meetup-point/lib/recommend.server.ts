@@ -13,7 +13,9 @@ import { venueGroups, CUISINE_GROUPS, type CuisineGroup } from './cuisine';
 import { haversineMeters } from './geo';
 import { nearestStations } from './metro';
 import type { Filters, RecommendRequest, RecommendResponse, ResultVenue, Zone } from './recommendTypes';
-import { directionFactor, metroRunning, metroWaitMin, prayerOverlap, trafficFactor } from './timing';
+import { directionFactor, metroRunning, metroWaitMin, prayerOverlap, riyadhClock, trafficFactor } from './timing';
+import { rankStyles, tasteMatch, type Match } from './matching';
+import { isOpen } from './openingHours';
 import { DEFAULT_SCORING, pickCandidates, scoreVenues, searchArea, type Eta, type ScoredVenue, type ScoringParams } from './scoring';
 import { allowedByPrefs, prefBonus, sanitizePrefs } from './preferences';
 import { matchesType, type Venue, type VenueType } from './venues';
@@ -61,7 +63,8 @@ export function parseRequest(body: unknown): RecommendRequest {
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new BadRequest(`person ${i + 1} has no location`);
     if (Math.abs(lat - 24.7) > 2 || Math.abs(lng - 46.7) > 2) throw new BadRequest(`person ${i + 1} is too far from Riyadh`);
     if (p.mode !== 'car' && p.mode !== 'metro') throw new BadRequest(`person ${i + 1}: mode must be car or metro`);
-    return { name: String(p.name ?? '').slice(0, 40), mode: p.mode, location: { lat, lng }, access: p.access === 'car' ? ('car' as const) : ('walk' as const) };
+    const groups = (x: unknown) => (Array.isArray(x) ? x.filter((g): g is CuisineGroup => CUISINE_GROUPS.includes(g as CuisineGroup)) : []);
+    return { name: String(p.name ?? '').slice(0, 40), mode: p.mode, location: { lat, lng }, access: p.access === 'car' ? ('car' as const) : ('walk' as const), likes: groups(p.likes), avoids: groups(p.avoids) };
   });
   const venueType = b.venueType ?? 'both';
   if (!['cafe', 'restaurant', 'both'].includes(venueType)) throw new BadRequest('venueType must be cafe, restaurant or both');
@@ -151,8 +154,10 @@ export async function recommend(req: RecommendRequest, deps: RecommendDeps): Pro
 
   const prefs = sanitizePrefs(req.prefs);
   const filters = req.filters ?? {};
-  const allowed = (v: Venue) => allowedByPrefs(v, prefs) && passesFilters(v, filters, deps.stations);
   const leaveAt = req.departAt ? new Date(req.departAt) : (deps.now?.() ?? new Date());
+  // places that are clearly closed around the time the group arrives (≈ 30 min after leaving) are dropped
+  const arriveClock = riyadhClock(new Date(leaveAt.getTime() + 30 * 60_000));
+  const allowed = (v: Venue) => allowedByPrefs(v, prefs) && passesFilters(v, filters, deps.stations) && isOpen(v.openingHours, arriveClock.day, arriveClock.minutes) !== false;
   // free mode has no live traffic: scale road times by the typical slowdown at that hour
   const factor = deps.google ? 1 : trafficFactor(leaveAt);
   const calib = deps.calibration ?? { car: 1, metro: 1 };
@@ -197,7 +202,7 @@ export async function recommend(req: RecommendRequest, deps: RecommendDeps): Pro
     calibration: calib,
     notes,
   };
-  if (!venues.length) return { results: [], meta, zone };
+  if (!venues.length) return { results: [], styles: { fair: [], quick: [], best: [] }, meta, zone };
 
   // Stage 3: travel times — one routing request per mode group (batched)
   const etas: (Eta | null)[][] = venues.map(() => req.people.map(() => null));
@@ -271,20 +276,30 @@ export async function recommend(req: RecommendRequest, deps: RecommendDeps): Pro
       notes.push('walking_refined');
     }
   }
-  scored = scored.slice(0, p.topN);
+  // phase 2: how well each place suits the group, and three rankings (fair / quick / best match)
+  const tastes = req.people.map((x) => ({ likes: x.likes, avoids: x.avoids }));
+  const withMatch = scored.map((r) => ({ ...r, match: tasteMatch(r.venue, tastes, req.people.some((x) => x.mode === 'metro') ? (r.nearStation?.meters ?? 2000) : null, prefs) }));
+  const styles = rankStyles(withMatch, p.topN);
+  const keep = new Set([...styles.fair, ...styles.quick, ...styles.best]);
+  scored = withMatch.filter((r) => keep.has(r.venue.id));
 
   // time warnings (prayer pause on arrival, metro outside hours)
   const at = (min: number) => new Date(leaveAt.getTime() + min * 60_000);
-  const results: ResultVenue[] = scored.map((r) => {
+  const results: ResultVenue[] = (scored as (ScoredVenue & { match: Match })[]).map((r) => {
     const mins = r.etas.map((e) => e.minutes);
     const prayer = prayerOverlap(at(Math.min(...mins)), at(Math.max(...mins)));
     const metroClosed = r.etas
       .filter((e) => e.mode === 'metro' && !e.detail?.walkOnly && (!metroRunning(leaveAt) || !metroRunning(at(e.minutes))))
       .map((e) => e.person);
     const longWalk = r.etas.filter((e) => e.mode === 'metro' && e.detail?.legs?.[0]?.kind === 'walk' && !e.detail.walkOnly && e.detail.legs[0].minutes > 20).map((e) => e.person);
-    return { ...r, warnings: { ...(prayer ? { prayer } : {}), ...(metroClosed.length ? { metroClosed } : {}), ...(longWalk.length ? { longWalk } : {}) } };
+    const arrive = riyadhClock(at(Math.max(...mins)));
+    return {
+      ...r,
+      openAtArrival: isOpen(r.venue.openingHours, arrive.day, arrive.minutes),
+      warnings: { ...(prayer ? { prayer } : {}), ...(metroClosed.length ? { metroClosed } : {}), ...(longWalk.length ? { longWalk } : {}) },
+    };
   });
-  return { results, meta, zone };
+  return { results, styles, meta, zone };
 }
 
 /**

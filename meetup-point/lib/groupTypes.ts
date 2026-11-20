@@ -10,6 +10,8 @@ export interface GroupPerson {
   location: LatLng | null;
   districtId: string | null;
   access?: 'walk' | 'car';
+  likes?: string[];
+  avoids?: string[];
 }
 
 export interface GroupView {

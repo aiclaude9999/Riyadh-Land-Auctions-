@@ -10,6 +10,8 @@ import { useLocale, useName, useT } from './LocaleProvider';
 import { displayName, personColor, type Person } from '@/lib/people';
 import type { Preferences } from '@/lib/preferences';
 import type { RecommendResponse } from '@/lib/recommendTypes';
+import type { Style } from '@/lib/matching';
+import { orderedResults } from '@/lib/styleOrder';
 import { riyadhClock, riyadhTimeLabel } from '@/lib/timing';
 
 interface Props {
@@ -29,16 +31,22 @@ interface Props {
   onHide: (id: string) => void;
   /** shared group: votes on the top 3 */
   voting?: { counts: Record<string, number>; mine: string | null; onVote: (venueId: string | null) => void };
+  style: Style;
+  onStyle: (s: Style) => void;
 }
 
 const fmt = (m: number) => String(Math.round(m));
 
-export default function ResultsList({ response, people, stale, selectedId, onSelect, routes, onShowRoute, onZoom, prefs, onToggleFavourite, onHide, voting }: Props) {
+export default function ResultsList({ response, people, stale, selectedId, onSelect, routes, onShowRoute, onZoom, prefs, onToggleFavourite, onHide, voting, style, onStyle }: Props) {
   const t = useT();
   const n = useName();
   const { locale } = useLocale();
   const refs = useRef(new Map<string, HTMLLIElement>());
-  const { results, meta } = response;
+  const { meta } = response;
+  const results = orderedResults(response, style);
+  // votes are on the fairest top 3 (what everyone in the group sees first)
+  const votable = new Set((response.styles?.fair ?? response.results.map((r) => r.venue.id)).slice(0, 3));
+  const anyTaste = people.some((p) => (p.likes?.length ?? 0) + (p.avoids?.length ?? 0) > 0);
   const anyEstimated = results.some((r) => r.etas.some((e) => e.source === 'estimated'));
   const anyMetro = results.some((r) => r.etas.some((e) => e.mode === 'metro'));
   const anyCar = results.some((r) => r.etas.some((e) => e.mode === 'car'));
@@ -49,14 +57,28 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
     if (selectedId) refs.current.get(selectedId)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }, [selectedId]);
 
-  const topVotes = voting ? Math.max(0, ...results.filter((r) => r.rank >= 1 && r.rank <= 3).map((r) => voting.counts[r.venue.id] ?? 0)) : 0;
+  const topVotes = voting ? Math.max(0, ...[...votable].map((id) => voting.counts[id] ?? 0)) : 0;
 
   if (!results.length) return <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{t.noResults}</p>;
 
   return (
     <div className={stale ? 'opacity-60' : ''}>
       {stale && <p className="mb-2 rounded-lg bg-amber-50 p-2 text-xs text-amber-900">{t.staleResults}</p>}
-      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">{t.topPlaces(results.filter((r) => r.rank >= 1).length)}</h2>
+      <div role="tablist" className="mb-1 grid grid-cols-3 gap-1 rounded-lg bg-slate-100 p-1">
+        {(['fair', 'quick', 'best'] as const).map((s) => (
+          <button
+            key={s}
+            type="button"
+            role="tab"
+            aria-selected={style === s}
+            onClick={() => onStyle(s)}
+            className={`rounded-md px-2 py-1 text-sm ${style === s ? 'bg-white font-medium shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            {s === 'fair' ? `⚖️ ${t.styleFair}` : s === 'quick' ? `⚡ ${t.styleQuick}` : `⭐ ${t.styleBest}`}
+          </button>
+        ))}
+      </div>
+      <p className="mb-2 text-xs text-slate-500">{style === 'fair' ? t.styleFairHelp : style === 'quick' ? t.styleQuickHelp : t.styleBestHelp}</p>
       <ol className="space-y-2">
         {results.map((r) => {
           const selected = r.venue.id === selectedId;
@@ -93,7 +115,16 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
                 </span>
               </div>
 
-              {voting && r.rank >= 1 && r.rank <= 3 && (
+              <div className="mt-1.5 flex flex-wrap gap-1 text-[11px]">
+                {r.match && anyTaste && (
+                  <span className={`rounded-full px-2 py-0.5 ${r.match.against ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-800'}`}>👥 {t.fits(r.match.fits, r.match.people)}</span>
+                )}
+                {r.match && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{t.placeScore(r.match.score)}</span>}
+                {r.openAtArrival === false && <span className="rounded-full bg-rose-50 px-2 py-0.5 text-rose-700">⚠️ {t.closedAtArrival}</span>}
+                {r.openAtArrival === true && <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-800">🕒 {t.openAtArrival}</span>}
+              </div>
+
+              {voting && votable.has(r.venue.id) && r.rank !== 0 && (
                 <div className="mt-2 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                   <button
                     type="button"
@@ -200,6 +231,7 @@ export default function ResultsList({ response, people, stale, selectedId, onSel
 
       <div className="mt-3 space-y-1 text-xs text-slate-500">
         <p>{meta.dataSource === 'google' ? t.sourceGoogle : t.sourceFree}</p>
+        <p>{t.matchNote}</p>
         {anyCar && meta.traffic.kind === 'typical' && <p>{t.trafficNote(leaveLabel, meta.traffic.factor.toFixed(1))}</p>}
         {meta.carSource === 'estimate' && <p className="text-amber-700">{t.carEstimated}</p>}
         {anyMetro && meta.metroSource !== 'google-transit' && <p>{t.metroEstimatedNote}</p>}

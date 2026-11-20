@@ -4,7 +4,7 @@ import type { ScoredVenue } from './scoring';
 import type { VenueType } from './venues';
 
 export interface RecommendRequest {
-  people: { name: string; mode: 'car' | 'metro'; location: LatLng; access?: 'walk' | 'car' }[];
+  people: { name: string; mode: 'car' | 'metro'; location: LatLng; access?: 'walk' | 'car'; likes?: import('./cuisine').CuisineGroup[]; avoids?: import('./cuisine').CuisineGroup[] }[];
   venueType: VenueType;
   /** ISO time; omitted = leave now. */
   departAt?: string;
@@ -35,7 +35,7 @@ export interface VenueWarnings {
   longWalk?: number[];
 }
 
-export type ResultVenue = ScoredVenue & { warnings: VenueWarnings };
+export type ResultVenue = ScoredVenue & { warnings: VenueWarnings; match: import('./matching').Match; openAtArrival?: boolean | null };
 
 /** Grid of points with the longest trip from the group; the UI shades cells ≤ the chosen minutes. */
 export interface Zone {
@@ -46,7 +46,10 @@ export interface Zone {
 }
 
 export interface RecommendResponse {
+  /** places of all three rankings (fair ones first, in order) */
   results: ResultVenue[];
+  /** venue ids per ranking style: fairest / quickest overall / best match */
+  styles?: Record<import('./matching').Style, string[]>;
   zone?: Zone;
   meta: {
     dataSource: 'free' | 'google';

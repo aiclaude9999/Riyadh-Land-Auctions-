@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { venueGroups } from '@/lib/cuisine';
+import { venueGroups, type CuisineGroup } from '@/lib/cuisine';
 import { fromCompact, type CompactVenue } from '@/lib/venueLayer';
 import { matchesType, type Venue } from '@/lib/venues';
 import MeetupMap from './MeetupMap';
@@ -11,6 +11,8 @@ import ResultsList from './ResultsList';
 import SharePanel from './SharePanel';
 import { fromWire } from '@/lib/groupClient';
 import { useGroup } from '@/lib/useGroup';
+import type { Style } from '@/lib/matching';
+import { orderedResults } from '@/lib/styleOrder';
 import TripOptions, { departDate, initialTrip, type TripState } from './TripOptions';
 import type { RouteState } from './TripDetails';
 import type { MetroLineCollection } from './MetroLayer';
@@ -51,7 +53,7 @@ type Tab = 'people' | 'results' | 'prefs';
 
 function buildRequest(people: Person[], trip: TripState, prefs: RecommendRequest['prefs']): RecommendRequest {
   return {
-    people: people.map((p, i) => ({ name: displayName(p, i), mode: p.mode, location: p.location!, access: p.mode === 'metro' ? (p.access ?? 'walk') : undefined })),
+    people: people.map((p, i) => ({ name: displayName(p, i), mode: p.mode, location: p.location!, access: p.mode === 'metro' ? (p.access ?? 'walk') : undefined, likes: p.likes as CuisineGroup[] | undefined, avoids: p.avoids as CuisineGroup[] | undefined })),
     venueType: trip.venueType,
     ...(trip.departMode === 'later' ? { departAt: departDate(trip)!.toISOString() } : {}),
     prefs,
@@ -80,6 +82,7 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
   const [fitTo, setFitTo] = useState<FitTarget | null>(null);
   const [showAllVenues, setShowAllVenues] = useState(false);
   const [venuesAll, setVenuesAll] = useState<Venue[] | null>(null);
+  const [style, setStyle] = useState<Style>('fair');
   const [prefs, updatePrefs] = usePrefs();
   const [names, setNames] = useState<Record<string, string>>({});
   const stationList = useMemo(() => toStations(stations), [stations]);
@@ -125,6 +128,13 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
   // Routes for the selected place, loaded on demand (cached here and on the server for 10 min):
   // car = road route; metro = walking legs along the streets (rides follow the metro track).
   const selected = result?.response.results.find((r) => r.venue.id === selectedId);
+  // switching ranking style selects that style's first place
+  useEffect(() => {
+    if (!result) return;
+    const first = orderedResults(result.response, style)[0];
+    if (first) setSelectedId(first.venue.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [style]);
   const tracks = useMemo(() => new Map(lines.features.map((f) => [f.properties.ref, buildTrack(f)] as const)), [lines]);
   const neededRoutes = useMemo(() => (result && selected ? routeRequests(selected, result.people) : []), [result, selected]);
   useEffect(() => {
@@ -339,6 +349,8 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
               prefs={prefs}
               onToggleFavourite={(id) => updatePrefs((p) => ({ ...p, favourites: p.favourites.includes(id) ? p.favourites.filter((x) => x !== id) : [...p.favourites, id] }))}
               onHide={(id) => updatePrefs((p) => ({ ...p, hidden: [...p.hidden, id], favourites: p.favourites.filter((x) => x !== id) }))}
+              style={style}
+              onStyle={setStyle}
               voting={group.id && group.view ? { counts: group.view.votes, mine: group.myVote, onVote: (v) => void group.vote(v).catch(() => setError(t.requestFailed)) } : undefined}
             />
           </div>
@@ -407,7 +419,7 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
             if (!group.canEdit(id)) return;
             act({ type: 'setLocation', id, location, address: null, source: 'pin', districtId: d?.id ?? null });
           }}
-          results={stale ? [] : (result?.response.results ?? [])}
+          results={stale || !result ? [] : orderedResults(result.response, style)}
           resultsKey={result?.signature ?? ''}
           selectedVenueId={selectedId}
           onSelectVenue={(id) => {

@@ -16,6 +16,9 @@ export interface Person {
   districtId?: string | null;
   /** metro users: walk to the station (default) or get a car/taxi drop-off */
   access?: StationAccess;
+  /** this person's food taste (groups from lib/cuisine.ts) */
+  likes?: string[];
+  avoids?: string[];
 }
 
 export const MIN_PEOPLE = 2;
@@ -35,6 +38,7 @@ export type PeopleAction =
   | { type: 'rename'; id: string; name: string }
   | { type: 'setMode'; id: string; mode: TravelMode }
   | { type: 'setAccess'; id: string; access: StationAccess }
+  | { type: 'setTaste'; id: string; likes: string[]; avoids: string[] }
   | { type: 'setLocation'; id: string; location: LatLng; address: string | null; source: 'pin' | 'search' | 'district'; districtId?: string | null }
   | { type: 'clearLocation'; id: string }
   /** shared groups: the server's list replaces ours (ids come from the server) */
@@ -68,6 +72,8 @@ export function peopleReducer(state: PeopleState, action: PeopleAction): PeopleS
       return patch(action.id, { mode: action.mode });
     case 'setAccess':
       return patch(action.id, { access: action.access });
+    case 'setTaste':
+      return patch(action.id, { likes: action.likes, avoids: action.avoids });
     case 'setLocation':
       return patch(action.id, { location: action.location, address: action.address, locationSource: action.source, districtId: action.districtId ?? null });
     case 'clearLocation':
