@@ -45,7 +45,7 @@ function Compare() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-xl font-bold">مقارنة العقارات</h1>
+          <h1 className="text-2xl font-bold">مقارنة العقارات</h1>
           <p className="muted text-sm">اختر حتى 4 عقارات من صفحة العقارات (مربع "قارن") ثم افتح هذه الصفحة.</p>
         </div>
         {cmp.ids.length > 0 && <button className="btn" onClick={cmp.clear}>مسح الاختيار</button>}

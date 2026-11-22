@@ -62,7 +62,7 @@ function Calculator() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold">حاسبة المزايدة</h1>
+        <h1 className="text-2xl font-bold">حاسبة المزايدة</h1>
         <p className="muted text-sm">كم يكلفك سعر الترسية فعلياً؟ النسب الافتراضية شائعة في المزادات العقارية — راجع كراسة شروط كل مزاد.</p>
       </div>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

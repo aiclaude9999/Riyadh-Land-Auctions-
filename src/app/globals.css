@@ -4,24 +4,42 @@
 
 :root {
   --font-ar: 'IBM Plex Sans Arabic';
-  --bg: #f5f7f6; --card: #ffffff; --text: #14201b; --muted: #5d6b65; --border: #e2e8e5;
+  /* limestone ground, white sheets, green-black ink; one accent (brand green) for selection and actions */
+  --bg: #f3f2ee; --card: #ffffff; --sunk: #f7f6f3; --text: #16211c; --muted: #5a6560; --border: #e3e1db; --border-strong: #cfccc4;
+  --accent: #0f6b4c; --accent-ink: #ffffff; --accent-soft: #e6f2ec; --danger: #b42318;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #0d1412; --card: #151f1c; --text: #e7efeb; --muted: #93a39c; --border: #24312d; }
+  :root { --bg: #0e1412; --card: #151d1a; --sunk: #111816; --text: #e8eeeb; --muted: #97a59f; --border: #25302c; --border-strong: #34413c;
+    --accent: #3fae84; --accent-ink: #06231a; --accent-soft: #12352a; --danger: #f97066; }
 }
 html, body { background: var(--bg); color: var(--text); }
+body { font-size: 15px; line-height: 1.55; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
 @layer components {
-.card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
+a.card, button.card { transition: border-color .15s; }
+a.card:hover, button.card:not(:disabled):hover { border-color: var(--border-strong); }
 .muted { color: var(--muted); }
-.input { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: .45rem .6rem; font-size: .875rem; width: 100%; }
-.input:focus { outline: 2px solid #16825d55; border-color: #16825d; }
-.btn { display:inline-flex; align-items:center; gap:.4rem; border-radius: 10px; padding: .5rem .9rem; font-size: .875rem; font-weight: 600; border: 1px solid var(--border); background: var(--card); }
-.btn:hover { border-color: #16825d; }
-.btn-primary { background: #0f6b4c; color: #fff; border-color: #0f6b4c; }
-.btn-primary:hover { background: #0b543c; }
+.input { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: .5rem .65rem; font-size: .875rem; width: 100%; min-height: 2.5rem; }
+.input:hover { border-color: var(--border-strong); }
+.input:focus { outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent); outline-offset: 0; border-color: var(--accent); }
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:.4rem; border-radius: 8px; padding: .5rem .9rem; min-height: 2.5rem; font-size: .875rem; font-weight: 600; border: 1px solid var(--border); background: var(--card); transition: border-color .15s, background-color .15s, transform .1s; }
+.btn:hover { border-color: var(--border-strong); }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn-primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn-primary:hover { background: color-mix(in srgb, var(--accent) 85%, black); border-color: transparent; }
 .btn:disabled { opacity: .55; cursor: not-allowed; }
 .chip { display:inline-flex; align-items:center; gap:.25rem; border-radius: 999px; padding: .1rem .55rem; font-size: .72rem; font-weight: 600; }
+.chip-quiet { background: var(--sunk); color: var(--muted); border: 1px solid var(--border); }
 .num { font-variant-numeric: tabular-nums; }
+/* segmented control: one accent for the chosen option everywhere */
+.seg { display:inline-flex; gap:2px; padding:3px; border-radius: 10px; background: var(--sunk); border: 1px solid var(--border); }
+.seg > button, .seg > a { border-radius: 7px; padding: .4rem .8rem; font-size: .85rem; font-weight: 600; color: var(--muted); white-space: nowrap; transition: color .15s, background-color .15s; }
+.seg > button:hover, .seg > a:hover { color: var(--text); }
+.seg > [aria-pressed="true"], .seg > [aria-current="page"] { background: var(--card); color: var(--accent); box-shadow: 0 0 0 1px var(--border); }
+.link { color: var(--accent); font-weight: 600; }
+.link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.label { font-size: .75rem; color: var(--muted); }
 }
 
 /* Leaflet layer switcher: readable in RTL and dark mode */

@@ -31,12 +31,12 @@ export default function MarketPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold">السوق</h1>
+        <h1 className="text-2xl font-bold">السوق</h1>
         <p className="muted text-sm">{TABS.find((t) => t.v === tab)!.hint}</p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <div className="card flex flex-wrap p-1 text-sm">
-          {TABS.map((t) => <button key={t.v} onClick={() => setTab(t.v)} className={`rounded-lg px-3 py-1.5 font-medium ${tab === t.v ? 'bg-brand-600 text-white' : 'muted'}`}>{t.l}</button>)}
+        <div className="seg flex-wrap">
+          {TABS.map((t) => <button key={t.v} onClick={() => setTab(t.v)} aria-pressed={tab === t.v}>{t.l}</button>)}
         </div>
         {tab !== 'platforms' && (
           <>

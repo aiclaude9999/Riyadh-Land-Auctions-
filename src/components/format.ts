@@ -4,10 +4,11 @@ export { formatRiyadh } from '@/lib/time';
 export const catLabel = (c: string) => CATEGORY_LABELS[c as Category] ?? c;
 export const statusLabel = (s: string) => STATUS_LABELS[s as Status] ?? s;
 
+// status is the one place besides the accent that carries colour: live = green, upcoming = ink outline, ended = grey
 export const STATUS_STYLE: Record<string, string> = {
-  live: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200',
-  upcoming: 'bg-sky-100 text-sky-800 dark:bg-sky-900/60 dark:text-sky-200',
-  ended: 'bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
+  live: 'bg-[var(--accent)] text-[var(--accent-ink)]',
+  upcoming: 'bg-[var(--card)] text-[var(--text)] ring-1 ring-inset ring-[var(--border-strong)]',
+  ended: 'bg-[var(--sunk)] text-[var(--muted)] ring-1 ring-inset ring-[var(--border)]',
 };
 
 export const CAT_ICON: Record<string, string> = { real_estate: '🏠', vehicle: '🚗', equipment: '🏗️', scrap: '♻️', collectible: '💎', other: '📦' };

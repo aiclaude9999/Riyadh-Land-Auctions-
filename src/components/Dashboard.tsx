@@ -7,8 +7,8 @@ import { CATEGORY_LABELS, PROPERTY_LABELS, USAGE_LABELS } from '@/lib/normalize'
 type Geo = 'riyadh_city' | 'riyadh_region' | 'all';
 type Focus = 'land' | 'real_estate' | 'all';
 const FOCUS: { v: Focus; label: string }[] = [
-  { v: 'land', label: '🟫 الأراضي' },
-  { v: 'real_estate', label: '🏠 كل العقارات' },
+  { v: 'land', label: 'الأراضي' },
+  { v: 'real_estate', label: 'كل العقارات' },
   { v: 'all', label: 'كل الأنواع' },
 ];
 const GEO: { v: Geo; label: string }[] = [
@@ -129,49 +129,45 @@ export function Dashboard({ savedOnly = false }: { savedOnly?: boolean }) {
   const pages = data ? Math.max(1, Math.ceil(data.total / pageSize)) : 1;
   const okSources = stats?.sources.filter((s) => s.status === 'ok').length ?? 0;
 
-  const StatCard = ({ label, value, k, accent }: { label: string; value?: number; k?: typeof quick; accent?: string }) => (
-    <button onClick={() => { setQuick(quick === k ? '' : k ?? ''); setPage(1); }} disabled={k === undefined}
-      className={`card p-3 text-right transition ${k !== undefined ? 'hover:border-brand-500' : ''} ${quick === k && k ? 'ring-2 ring-brand-500' : ''}`}>
-      <div className="muted text-xs">{label}</div>
-      <div className={`num mt-1 text-2xl font-bold ${accent ?? ''}`}>{value ?? '—'}</div>
+  const Stat = ({ label, value, k, alert }: { label: string; value?: number; k: typeof quick; alert?: boolean }) => (
+    <button onClick={() => { setQuick(quick === k ? '' : k); setPage(1); }} aria-pressed={quick === k && !!k}
+      className={`flex min-w-0 flex-col items-start gap-0.5 px-4 py-3 text-right transition-colors hover:bg-[var(--sunk)] ${quick === k && k ? 'bg-[var(--accent-soft)]' : ''}`}>
+      <span className="label truncate">{label}</span>
+      <span className={`num text-[26px] font-bold leading-tight ${alert && value ? 'text-[var(--danger)]' : quick === k && k ? 'text-[var(--accent)]' : ''}`}>{value ?? '—'}</span>
     </button>
   );
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold">{savedOnly ? 'المزادات المحفوظة' : focus === 'land' ? 'مزادات الأراضي' : focus === 'real_estate' ? 'المزادات العقارية' : 'لوحة المزادات'}</h1>
-          <p className="muted text-xs">آخر تحديث ناجح: <span className="num">{stats?.lastUpdate ? `${formatRiyadh(stats.lastUpdate)} (${timeAgo(stats.lastUpdate)})` : '—'}</span> · بتوقيت الرياض</p>
+          <h1 className="text-2xl font-bold">{savedOnly ? 'المزادات المحفوظة' : focus === 'land' ? 'مزادات الأراضي' : focus === 'real_estate' ? 'المزادات العقارية' : 'لوحة المزادات'}</h1>
+          <p className="muted text-sm">آخر تحديث <span className="num">{stats?.lastUpdate ? `${timeAgo(stats.lastUpdate)} · ${formatRiyadh(stats.lastUpdate)}` : '—'}</span> بتوقيت الرياض</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="card flex p-1 text-sm">
-            {FOCUS.map((f) => (
-              <button key={f.v} onClick={() => chooseFocus(f.v)} className={`rounded-lg px-3 py-1.5 font-medium ${focus === f.v ? 'bg-amber-700 text-white' : 'muted'}`}>{f.label}</button>
-            ))}
+          <div className="seg" role="group" aria-label="نوع المزادات">
+            {FOCUS.map((f) => <button key={f.v} onClick={() => chooseFocus(f.v)} aria-pressed={focus === f.v}>{f.label}</button>)}
           </div>
-          <div className="card flex p-1 text-sm">
-            {GEO.map((g) => (
-              <button key={g.v} onClick={() => chooseGeo(g.v)} className={`rounded-lg px-3 py-1.5 font-medium ${geo === g.v ? 'bg-brand-600 text-white' : 'muted'}`}>{g.label}</button>
-            ))}
+          <div className="seg" role="group" aria-label="النطاق الجغرافي">
+            {GEO.map((g) => <button key={g.v} onClick={() => chooseGeo(g.v)} aria-pressed={geo === g.v}>{g.label}</button>)}
           </div>
-          <button className="btn btn-primary" onClick={refreshNow} disabled={refreshing}>{refreshing ? '...' : '⟳'} تحديث الآن</button>
+          <button className="btn btn-primary" onClick={refreshNow} disabled={refreshing}>{refreshing ? 'جاري الطلب…' : 'تحديث الآن'}</button>
         </div>
       </div>
 
       {!savedOnly && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          <StatCard label="إجمالي المزادات النشطة" value={stats?.total} k="" />
-          <StatCard label="الجارية" value={stats?.live} k="live" accent="text-emerald-600" />
-          <StatCard label="القادمة" value={stats?.upcoming} k="upcoming" accent="text-sky-600" />
-          <StatCard label="تنتهي اليوم" value={stats?.endingToday} k="endingToday" accent="text-red-600" />
-          <StatCard label="جديدة (24 ساعة)" value={stats?.new24h} k="new24h" accent="text-amber-600" />
-          <a href="/sources" className="card p-3 hover:border-brand-500">
-            <div className="muted text-xs">حالة المصادر</div>
-            <div className="num mt-1 text-2xl font-bold">{okSources}<span className="muted text-sm">/{stats?.sources.length ?? 0}</span></div>
-            <div className="mt-1 flex gap-1">
-              {stats?.sources.map((s) => <span key={s.id} title={`${s.name}: ${SOURCE_STATUS[s.status]?.label ?? s.status}`} className={`h-2 w-2 rounded-full ${SOURCE_STATUS[s.status]?.cls ?? 'bg-zinc-400'}`} />)}
-            </div>
+        <div className="card grid grid-cols-2 divide-[var(--border)] overflow-hidden sm:grid-cols-3 lg:grid-cols-6 lg:divide-x lg:divide-x-reverse">
+          <Stat label="المزادات النشطة" value={stats?.total} k="" />
+          <Stat label="جارية الآن" value={stats?.live} k="live" />
+          <Stat label="قادمة" value={stats?.upcoming} k="upcoming" />
+          <Stat label="تنتهي اليوم" value={stats?.endingToday} k="endingToday" alert />
+          <Stat label="جديدة خلال 24 ساعة" value={stats?.new24h} k="new24h" />
+          <a href="/sources" className="flex flex-col items-start gap-0.5 px-4 py-3 transition-colors hover:bg-[var(--sunk)]">
+            <span className="label">المنصات تعمل</span>
+            <span className="num text-[26px] font-bold leading-tight">{okSources}<span className="muted text-base font-semibold"> من {stats?.sources.length ?? 0}</span></span>
+            <span className="flex gap-1" aria-hidden="true">
+              {stats?.sources.map((s) => <span key={s.id} title={`${s.name}: ${SOURCE_STATUS[s.status]?.label ?? s.status}`} className={`h-1.5 w-1.5 rounded-full ${SOURCE_STATUS[s.status]?.cls ?? 'bg-zinc-400'}`} />)}
+            </span>
           </a>
         </div>
       )}
@@ -193,7 +189,7 @@ export function Dashboard({ savedOnly = false }: { savedOnly?: boolean }) {
           <select className="input w-auto" value={sort} onChange={(e) => chooseSort(e.target.value)}>
             {SORTS.map((s) => <option key={s.v} value={s.v}>ترتيب: {s.label}</option>)}
           </select>
-          <button className="btn" onClick={() => setShowFilters((v) => !v)}>فلاتر متقدمة {activeFilterCount > 0 && <span className="chip bg-brand-600 text-white">{activeFilterCount}</span>}</button>
+          <button className="btn" onClick={() => setShowFilters((v) => !v)}>فلاتر متقدمة {activeFilterCount > 0 && <span className="num chip bg-[var(--accent)] text-[var(--accent-ink)]">{activeFilterCount}</span>}</button>
           {activeFilterCount > 0 && <button className="btn" onClick={() => { setFilters(EMPTY_FILTERS); setPage(1); }}>مسح</button>}
         </div>
         {showFilters && (
@@ -238,8 +234,7 @@ export function Dashboard({ savedOnly = false }: { savedOnly?: boolean }) {
 
       {data && data.items.length === 0 ? (
         <div className="card p-10 text-center">
-          <div className="text-4xl">🔍</div>
-          <p className="mt-2 font-semibold">لا توجد مزادات مطابقة</p>
+          <p className="font-semibold">لا توجد مزادات مطابقة</p>
           <p className="muted text-sm">{stats?.total === 0 && !savedOnly ? 'لم يتم جلب بيانات بعد — اضغط "تحديث الآن" أو شغّل الـ worker.' : 'جرّب توسيع النطاق الجغرافي أو تغيير الفلاتر.'}</p>
         </div>
       ) : (

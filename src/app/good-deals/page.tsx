@@ -21,13 +21,13 @@ export default function GoodDealsPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold">فرص أقل من السوق</h1>
+        <h1 className="text-2xl font-bold">فرص أقل من السوق</h1>
         <p className="muted text-sm">أراضي مدينة الرياض في المزادات، مقارنة بوسيط سعر متر الأراضي في نفس الحي (صفقات وزارة العدل). الأقل سعراً أولاً.</p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <div className="card flex p-1 text-sm">
-          <button onClick={() => setVerdict('below')} className={`rounded-lg px-3 py-1.5 font-medium ${verdict === 'below' ? 'bg-brand-600 text-white' : 'muted'}`}>🟢 أقل من السوق فقط</button>
-          <button onClick={() => setVerdict('all')} className={`rounded-lg px-3 py-1.5 font-medium ${verdict === 'all' ? 'bg-brand-600 text-white' : 'muted'}`}>كل الأراضي المسعّرة</button>
+        <div className="seg flex-wrap">
+          <button onClick={() => setVerdict('below')} aria-pressed={verdict === 'below'}>🟢 أقل من السوق فقط</button>
+          <button onClick={() => setVerdict('all')} aria-pressed={verdict === 'all'}>كل الأراضي المسعّرة</button>
         </div>
         <select className="input w-auto" value={status} onChange={(e) => setStatus(e.target.value)} aria-label="الحالة">
           <option value="">النشطة (جاري + قادم)</option><option value="live">جاري</option><option value="upcoming">قادم</option><option value="all">الكل</option>

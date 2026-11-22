@@ -25,7 +25,7 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl space-y-4">
-      <h1 className="text-xl font-bold">الإعدادات</h1>
+      <h1 className="text-2xl font-bold">الإعدادات</h1>
       <div className="card space-y-3 p-4">
         <h2 className="font-semibold">فترات التحديث التلقائي</h2>
         {s.scheduler === 'github' && <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-900 dark:bg-amber-950 dark:text-amber-100">في الاستضافة المجانية يتم جمع المزادات تلقائياً كل 30 دقيقة عبر GitHub Actions، لذلك لا تنطبق فترات المزادات أدناه. فترة تحديث الواجهة تعمل.</p>}

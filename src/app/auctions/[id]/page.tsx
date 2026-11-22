@@ -56,7 +56,7 @@ export default function AuctionPage({ params }: { params: Promise<{ id: string }
             ) : <div className="grid h-48 place-items-center text-6xl opacity-50">{CAT_ICON[a.category]}</div>}
             <div className="space-y-2 p-4">
               <div className="flex items-start justify-between gap-3">
-                <h1 className="text-xl font-bold">{a.title}</h1>
+                <h1 className="text-2xl font-bold">{a.title}</h1>
                 <button className="btn" onClick={toggle}>{a.saved ? '★ محفوظ' : '☆ حفظ'}</button>
               </div>
               {a.status === 'live' && a.endAt && <div className="text-sm">يغلق خلال: <Countdown to={a.endAt} /></div>}

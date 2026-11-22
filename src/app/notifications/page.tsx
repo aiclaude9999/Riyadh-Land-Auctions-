@@ -26,7 +26,7 @@ export default function NotificationsPage() {
     <div className="grid gap-4 lg:grid-cols-3">
       <div className="space-y-3 lg:col-span-2">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold">الإشعارات {data?.unread ? <span className="chip bg-red-600 text-white">{data.unread} جديد</span> : null}</h1>
+          <h1 className="text-2xl font-bold">الإشعارات {data?.unread ? <span className="chip bg-red-600 text-white">{data.unread} جديد</span> : null}</h1>
           <button className="btn" onClick={markAll} disabled={!data?.unread}>تعليم الكل كمقروء</button>
         </div>
         {data?.items.length === 0 && <div className="card muted p-6 text-center text-sm">لا توجد إشعارات بعد.</div>}

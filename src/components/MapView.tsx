@@ -259,11 +259,11 @@ export default function MapView() {
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold">خريطة الأصول</h1>
+          <h1 className="text-2xl font-bold">خريطة الأصول</h1>
           <p className="muted text-xs">كل أصل له موقع على الخريطة (غالباً من مباشر والسعودية للمزادات ومزادات). اضغط على النقطة للتفاصيل.</p>
         </div>
-        <div className="card flex p-1 text-sm">
-          {GEO.map((g) => <button key={g.v} onClick={() => setGeo(g.v)} className={`rounded-lg px-3 py-1.5 font-medium ${geo === g.v ? 'bg-brand-600 text-white' : 'muted'}`}>{g.l}</button>)}
+        <div className="seg flex-wrap">
+          {GEO.map((g) => <button key={g.v} onClick={() => setGeo(g.v)} aria-pressed={geo === g.v}>{g.l}</button>)}
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -274,7 +274,7 @@ export default function MapView() {
           <option value="">النشطة (جاري + قادم)</option><option value="live">جاري</option><option value="upcoming">قادم</option><option value="all">الكل</option>
         </select>
         {Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([t, n]) => (
-          <button key={t} onClick={() => toggle(t)} className={`chip border px-3 py-1.5 text-sm ${types.has(t) ? 'text-white' : ''}`}
+          <button key={t} onClick={() => toggle(t)} className={`chip min-h-[2.25rem] border px-3 text-sm ${types.has(t) ? 'text-white' : ''}`}
             style={{ borderColor: TYPE_COLORS[t] ?? '#6b7280', background: types.has(t) ? TYPE_COLORS[t] ?? '#6b7280' : undefined }}>
             <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: TYPE_COLORS[t] ?? '#6b7280' }} />
             {propertyLabel(t) === '—' ? 'غير محدد' : propertyLabel(t)} <span className="num opacity-75">{n}</span>
@@ -290,8 +290,8 @@ export default function MapView() {
             {[...deals.quarters].reverse().map((q) => <option key={q.q} value={q.q}>{qLabel(q.q)} ({q.mapped} صفقة)</option>)}
           </select>
         )}
-        <button onClick={toggleMetro} className={`chip border px-3 py-1.5 text-sm ${showMetro ? 'border-sky-600 bg-sky-600 text-white' : ''}`} aria-pressed={showMetro}>
-          🚇 مترو الرياض
+        <button onClick={toggleMetro} className={`chip min-h-[2.25rem] border px-3 text-sm ${showMetro ? 'border-[var(--text)] bg-[var(--text)] text-[var(--card)]' : 'border-[var(--border-strong)]'}`} aria-pressed={showMetro}>
+          مترو الرياض
         </button>
         <span className="muted text-sm">{pins ? `${shown.length} أصل على الخريطة` : err ? `تعذر التحميل: ${err}` : 'جاري التحميل…'}</span>
       </div>

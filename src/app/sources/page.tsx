@@ -21,7 +21,7 @@ export default function SourcesPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-xl font-bold">مصادر البيانات</h1><p className="muted text-xs">حالة الاتصال، مدة آخر تحديث، وسجل الأخطاء لكل منصة. فشل أي مصدر لا يمسح بياناته السابقة.</p></div>
+        <div><h1 className="text-2xl font-bold">مصادر البيانات</h1><p className="muted text-xs">حالة الاتصال، مدة آخر تحديث، وسجل الأخطاء لكل منصة. فشل أي مصدر لا يمسح بياناته السابقة.</p></div>
         <button className="btn btn-primary" onClick={() => refresh()}>⟳ تحديث الكل الآن</button>
       </div>
       {msg && <div className="card p-3 text-sm">{msg}</div>}

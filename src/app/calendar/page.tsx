@@ -44,12 +44,12 @@ export default function CalendarPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold">تقويم المزادات</h1>
+          <h1 className="text-2xl font-bold">تقويم المزادات</h1>
           <p className="muted text-sm">🟢 يفتح · 🔴 يغلق (بتوقيت الرياض). اضغط على يوم لعرض مزاداته.</p>
         </div>
-        <div className="card flex p-1 text-sm">
+        <div className="seg flex-wrap">
           {[['riyadh_city', 'مدينة الرياض'], ['riyadh_region', 'منطقة الرياض'], ['all', 'كل المملكة']].map(([v, l]) => (
-            <button key={v} onClick={() => setGeo(v)} className={`rounded-lg px-3 py-1.5 font-medium ${geo === v ? 'bg-brand-600 text-white' : 'muted'}`}>{l}</button>
+            <button key={v} onClick={() => setGeo(v)} aria-pressed={geo === v}>{l}</button>
           ))}
         </div>
       </div>
