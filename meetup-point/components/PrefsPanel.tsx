@@ -2,6 +2,7 @@
 
 import { CUISINE_GROUPS, type CuisineGroup } from '@/lib/cuisine';
 import { useT } from './LocaleProvider';
+import ThemePicker from './ThemePicker';
 import { EMPTY_PREFS, type Preferences } from '@/lib/preferences';
 import type { Meetup } from '@/lib/history';
 
@@ -69,6 +70,7 @@ export default function PrefsPanel({ prefs, update, names, history, onHistory }:
   return (
     <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
       <p className="text-xs text-slate-500">{t.prefsIntro}</p>
+      <ThemePicker />
       {group(t.likesLabel, 'likes', 'like')}
       {group(t.avoidsLabel, 'avoids', 'avoid')}
       {list(t.favouritesLabel, 'favourites', t.remove)}

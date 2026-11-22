@@ -9,7 +9,8 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: { DEFAULT: '#1F6F5C', dark: '#17574A', light: '#E1F0EA' },
+        // brand follows the chosen colour theme (lib/themes.ts); defaults in app/globals.css
+        brand: { DEFAULT: 'rgb(var(--brand) / <alpha-value>)', dark: 'rgb(var(--brand-dark) / <alpha-value>)', light: 'rgb(var(--brand-light) / <alpha-value>)', accent: 'rgb(var(--brand-accent) / <alpha-value>)' },
         sand: { DEFAULT: '#F6F0E6', dark: '#E9DFCF', deep: '#B88A4A' },
         sky: { DEFAULT: '#2F80C3', light: '#E4F0FA' },
         ink: { DEFAULT: '#1C2430', soft: '#5B6573' },

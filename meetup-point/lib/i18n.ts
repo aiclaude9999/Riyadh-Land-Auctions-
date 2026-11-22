@@ -30,6 +30,8 @@ const side = (m?: string) => (m?.includes('left') ? 'left' : m?.includes('right'
 export const en = {
   langName: 'English',
   kindDistrict: 'Neighbourhood',
+  themeTitle: 'App colours',
+  themeNote: 'Club colours only, not official logos. Saved on this device.',
   landmarkKinds: { area: 'Area', mall: 'Mall', hotel: 'Hotel', university: 'University', hospital: 'Hospital', park: 'Park', stadium: 'Stadium', museum: 'Museum', airport: 'Airport', station: 'Station', embassy: 'Embassy' } as Record<string, string>,
   myLocation: 'My location',
   locating: 'Finding you…',
@@ -292,6 +294,8 @@ export type Strings = typeof en;
 export const ar: Strings = {
   langName: 'العربية',
   kindDistrict: 'حي',
+  themeTitle: 'ألوان التطبيق',
+  themeNote: 'ألوان الأندية فقط، بدون الشعارات الرسمية. يُحفظ اختيارك في جهازك.',
   landmarkKinds: { area: 'منطقة', mall: 'مركز تجاري', hotel: 'فندق', university: 'جامعة', hospital: 'مستشفى', park: 'حديقة', stadium: 'ملعب', museum: 'متحف', airport: 'مطار', station: 'محطة', embassy: 'سفارة' },
   myLocation: 'موقعي',
   locating: 'نحدد موقعك…',

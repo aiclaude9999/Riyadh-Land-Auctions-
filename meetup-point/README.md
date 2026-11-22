@@ -38,6 +38,8 @@ Google mode is written to the documented API shapes and unit-tested with fakes, 
 
 **User-testing fixes (Nov 2026, see [docs/USER_TESTING.md](./docs/USER_TESTING.md)):** the start-point search now finds neighbourhoods **and** well-known areas, malls, hotels, universities, hospitals… (`data/landmarks-riyadh.json`, 1,576 places from Overture Maps, CDLA-Permissive-2.0, built by `scripts/overture/extract_landmarks.py`; `lib/places.ts`, `/api/landmarks`), a **📍 My location** button (phone GPS), a **Change** button on a chosen start point, ≥ 44 px tap targets (`app/globals.css`), a one-line "how it works" with sharing below the people, **Send on WhatsApp** (place, map link, each person's leave time), and an opening-hours line: "open when you arrive" when hours are known, otherwise "hours unknown — check on Google Maps" (highlighted late at night). Chain hours are not guessed.
 
+**Club colours (Nov 2026):** *Preferences → App colours*: the default Riyadh green or the colours of 11 popular Saudi clubs (Al Hilal, Al Nassr, Al Ittihad, Al Ahli, Al Shabab, Al Ettifaq, Al Qadsiah, Al Taawoun, Al Fateh, Al Raed, Al Fayha). Colours only, with a simple shield and initial; **official logos are not included** (registered trademarks). With a club's written permission, put its logo at `public/clubs/<id>.png` and set `logo: true` in `lib/themes.ts`. The theme sets CSS variables used by Tailwind's `brand` colours, is kept in a `theme` cookie so the server paints it first, and tests check white text stays readable (WCAG AA).
+
 ## Run it on your computer
 
 **Windows, easiest:** open the `meetup-point` folder and double-click `start-windows.bat`. Keep the black window open; the browser opens at http://localhost:3000.

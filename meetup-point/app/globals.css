@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* default colour theme (Riyadh green); a club theme overrides these on <html> */
+:root {
+  --brand: 31 111 92;
+  --brand-dark: 23 87 74;
+  --brand-light: 225 240 234;
+  --brand-accent: 246 240 230;
+}
+
 html,
 body {
   height: 100%;
