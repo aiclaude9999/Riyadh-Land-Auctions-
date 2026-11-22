@@ -11,4 +11,6 @@ export type Overlay =
 export interface FitTarget {
   points: LatLng[];
   key: string;
+  /** zoom for a single point (default 17) */
+  zoom?: number;
 }

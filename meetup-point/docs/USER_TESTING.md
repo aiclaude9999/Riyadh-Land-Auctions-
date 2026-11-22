@@ -67,12 +67,12 @@ No information on whether places are **open late for suhoor**.
 | Priority | Problem | Who | Proposed fix | Free? |
 |---|---|---|---|---|
 | ✅ Done | Crash: taxi-to-station trips without a ride | Yousef | Fixed + test | ✓ |
-| 🔴 High | Can't change a starting point without "Clear" | Faisal | Show "Change" next to the location; reopen the search in place | ✓ |
-| 🔴 High | Famous areas, malls and hotels not found; no "my location" | Ahmed, Mariam | Add **"📍 Use my location"**; add area aliases (Al Batha, Hittin…) and **landmarks** (malls, hotels, universities) from the venue/OSM data to the search | ✓ |
-| 🟠 Medium | Buttons too small | Khalid | Minimum 44 px tap height; bigger mode switches | ✓ |
-| 🟠 Medium | Busy first screen | Khalid | People first; sharing box after the first search or collapsed; one-line "how it works" | ✓ |
-| 🟠 Medium | Send the result to the group | Noura | **"Send on WhatsApp"**: place, map link and each person's leave time | ✓ |
-| 🟠 Medium | Open late? / opening hours | Yousef | Hours for big chains (Starbucks, Dunkin, Kudu, Al Baik…), "open late" filter, "hours unknown" label | ✓ (partly) |
+| ✅ Done | Can't change a starting point without "Clear" | Faisal | **Change** button next to the location; the search opens in place, the old point stays until a new one is chosen | ✓ |
+| ✅ Done | Famous areas, malls and hotels not found; no "my location" | Ahmed, Mariam | **📍 My location** button; 1,576 areas and landmarks searchable in English and Arabic (Al Batha, Hittin, Kingdom Centre, Four Seasons, Riyadh Park, Boulevard…) | ✓ |
+| ✅ Done | Buttons too small | Khalid | Tap targets now 44 px (small chips 40 px). First screen: 0 of 21 controls under 40 px (was 28 of 31) | ✓ |
+| ✅ Done | Busy first screen | Khalid | One-line "how it works"; people first, sharing box moved below them | ✓ |
+| ✅ Done | Send the result to the group | Noura | **Send on WhatsApp** on the winner card: place, map link, longest trip, each person's mode, leave time and minutes (English/Arabic) | ✓ |
+| ✅ Done (partly) | Open late? / opening hours | Yousef | "Open when you arrive" when hours are listed; otherwise "hours unknown — check on Google Maps", highlighted after 23:00. **Chain hours are not guessed** (branches differ, Ramadan changes them); real hours for all places need the Google key | ✓ |
 | 🟡 Later | Family section, parking, price | Abdullah, Ahmed | No free data. Options: let users tag places (👍 family section / parking / price ﷼–﷼﷼﷼) and show the tags; or Google data | users / Google |
 | 🟡 Later | Ratings and booking | Lina | "Reviews on Google Maps" link exists; ratings inside the app need the Google key; booking link when a website exists | Google |
 | 🟡 Later | Riyadh buses | Faisal | Add bus routes if official open data exists | check |
@@ -80,3 +80,13 @@ No information on whether places are **open late for suhoor**.
 
 **What testers liked most:** fairness bars (Noura), taste matching / Best match (Lina), Ramadan mode (Yousef),
 "no line change" metro badge (Ahmed), clear Arabic text (Khalid). Searches took about **3–4 seconds**.
+
+## Re-test after the fixes (22 Nov 2026)
+
+Same testers, same tasks, in the browser:
+- **Mariam**: "Four Seasons" → Four Seasons Hotel Kingdom Tower; "Kingdom Centre", "Boulevard", "Riyadh Park" all found; **My location** works.
+- **Faisal**: taps **Change**, types "Al Malaz", done; no "Clear" needed.
+- **Ahmed**: "Al Batha" / «البطحاء» found (shown as an area).
+- **Khalid**: first screen starts with the "how it works" line, then the people; every control is at least 40 px tall (most 44 px).
+- **Noura**: **Send on WhatsApp** opens WhatsApp with the place, the map link and each person's leave time, in Arabic or English.
+- **Yousef**: at 23:30 the card says "It is late — check the place is open before you go" with a Google Maps link.

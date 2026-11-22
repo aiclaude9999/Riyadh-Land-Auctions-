@@ -22,3 +22,29 @@ body {
   bottom: var(--inset-bottom, 0px);
   transition: bottom 220ms ease;
 }
+
+/* comfortable tap targets (≥ 44 px, Apple/Google guidance) in the side panel and the phone sheet */
+@layer components {
+  aside button:not(.compact),
+  aside a.rounded-xl,
+  aside summary,
+  aside select,
+  aside input[type='text'],
+  aside input[type='search'],
+  aside input[type='datetime-local'],
+  aside input[type='time'],
+  aside input[type='date'] {
+    min-height: 44px;
+  }
+  aside summary:not([class*='flex']) {
+    display: flex;
+    align-items: center;
+  }
+  aside summary[class*='inline-flex'] {
+    align-items: center;
+  }
+  /* small chips (tastes, quick options) stay a little lighter */
+  aside button.rounded-full:not(.compact) {
+    min-height: 40px;
+  }
+}

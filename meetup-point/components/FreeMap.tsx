@@ -256,7 +256,7 @@ export default function FreeMap(props: MapViewProps) {
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !fitTo?.points.length) return;
-    if (fitTo.points.length === 1) map.setView([fitTo.points[0].lat, fitTo.points[0].lng], 17, { animate: true });
+    if (fitTo.points.length === 1) map.setView([fitTo.points[0].lat, fitTo.points[0].lng], fitTo.zoom ?? 17, { animate: true });
     // extra room at the bottom for the route card
     else map.fitBounds(L.latLngBounds(fitTo.points.map((p) => [p.lat, p.lng] as [number, number])), { paddingTopLeft: [50, 60], paddingBottomRight: [50, 60 + (insetRef.current || 70)], maxZoom: 16, animate: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps

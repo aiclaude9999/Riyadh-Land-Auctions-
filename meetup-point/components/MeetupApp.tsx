@@ -510,8 +510,14 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
         <TripOptions trip={trip} onChange={setTrip} />
       </div>
     ) : (
-      <div className="-mx-4">
-        <SharePanel group={group} canShare={state.people.length > 0} />
+      <div
+        className="-mx-4"
+        onFocus={(e) => {
+          // typing a place on the phone: raise the panel so the suggestions are visible
+          if (mobile && e.target.getAttribute('role') === 'combobox') setSnap('full');
+        }}
+      >
+        <p className="px-4 pb-1 text-sm text-ink-soft">{t.howItWorks}</p>
         <PeoplePanel
           state={state}
           dispatch={act}
@@ -523,8 +529,13 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
             if (mobile) setSnap('peek');
           }}
           districts={districts}
-          onDistrict={(pid, d) => {
-            chooseDistrict(pid, d);
+          onPlace={(pid, hit) => {
+            if (hit.type === 'district') chooseDistrict(pid, hit.district);
+            else {
+              // a landmark or well-known area: put the pin there and show it
+              act({ type: 'setLocation', id: pid, location: hit.center, address: n(hit.en, hit.ar), source: 'search', districtId: districtAt(hit.center, districts)?.id ?? null });
+              setFitTo({ points: [hit.center], key: `lm-${Date.now()}`, zoom: 15 });
+            }
             if (mobile) setSnap('peek');
           }}
           canEdit={group.canEdit}
@@ -536,6 +547,7 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
               }
             : {})}
         />
+        <SharePanel group={group} canShare={state.people.length > 0} />
       </div>
     );
 

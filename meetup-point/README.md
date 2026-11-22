@@ -36,6 +36,8 @@ Google mode is written to the documented API shapes and unit-tested with fakes, 
 
 **Heat penalty:** the spec says "+1.5× walking minutes". It is implemented as *walking minutes count 1.5×*, so a metro user's walking adds 0.5× on top of the trip time (`heatFactor` in `lib/scoring.ts`).
 
+**User-testing fixes (Nov 2026, see [docs/USER_TESTING.md](./docs/USER_TESTING.md)):** the start-point search now finds neighbourhoods **and** well-known areas, malls, hotels, universities, hospitals… (`data/landmarks-riyadh.json`, 1,576 places from Overture Maps, CDLA-Permissive-2.0, built by `scripts/overture/extract_landmarks.py`; `lib/places.ts`, `/api/landmarks`), a **📍 My location** button (phone GPS), a **Change** button on a chosen start point, ≥ 44 px tap targets (`app/globals.css`), a one-line "how it works" with sharing below the people, **Send on WhatsApp** (place, map link, each person's leave time), and an opening-hours line: "open when you arrive" when hours are known, otherwise "hours unknown — check on Google Maps" (highlighted late at night). Chain hours are not guessed.
+
 ## Run it on your computer
 
 **Windows, easiest:** open the `meetup-point` folder and double-click `start-windows.bat`. Keep the black window open; the browser opens at http://localhost:3000.

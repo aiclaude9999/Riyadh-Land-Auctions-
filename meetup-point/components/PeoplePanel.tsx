@@ -4,6 +4,7 @@ import type { Dispatch } from 'react';
 import PersonCard from './PersonCard';
 import { useT } from './LocaleProvider';
 import type { District } from '@/lib/districts';
+import type { PlaceHit } from '@/lib/places';
 import type { Station } from '@/lib/metro';
 import { MAX_PEOPLE, type PeopleAction, type PeopleState } from '@/lib/people';
 
@@ -14,7 +15,7 @@ interface Props {
   pickingId: string | null;
   onPick: (id: string) => void;
   districts: District[];
-  onDistrict: (personId: string, d: District) => void;
+  onPlace: (personId: string, hit: PlaceHit) => void;
   /** shared group: who may edit which entry, and how "add" works */
   canEdit?: (personId: string) => boolean;
   onAdd?: () => void;
@@ -22,7 +23,7 @@ interface Props {
   minPeople?: number;
 }
 
-export default function PeoplePanel({ state, dispatch, stations, pickingId, onPick, districts, onDistrict, canEdit = () => true, onAdd, addLabel, minPeople = 2 }: Props) {
+export default function PeoplePanel({ state, dispatch, stations, pickingId, onPick, districts, onPlace, canEdit = () => true, onAdd, addLabel, minPeople = 2 }: Props) {
   const t = useT();
   const { people } = state;
 
@@ -55,7 +56,7 @@ export default function PeoplePanel({ state, dispatch, stations, pickingId, onPi
             picking={pickingId === person.id}
             onPick={() => onPick(person.id)}
             districts={districts}
-            onDistrict={(d) => onDistrict(person.id, d)}
+            onPlace={(hit) => onPlace(person.id, hit)}
           />
         ))}
       </ol>

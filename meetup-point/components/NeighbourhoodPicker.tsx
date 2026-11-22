@@ -1,23 +1,61 @@
 'use client';
 
+import { BedDouble, GraduationCap, Hospital, Landmark as LandmarkIcon, MapPin, Plane, ShoppingBag, TrainFront, Trees, Trophy, Flag } from 'lucide-react';
 import { useId, useMemo, useState } from 'react';
-import { searchDistricts, shortAr, shortEn, type District } from '@/lib/districts';
 import { useLocale, useT } from './LocaleProvider';
+import type { District } from '@/lib/districts';
+import { searchPlaces, type Landmark, type LandmarkKind, type PlaceHit } from '@/lib/places';
 
-/** Type-ahead list of Riyadh neighbourhoods (works offline, English or Arabic spelling). */
-export default function NeighbourhoodPicker({ districts, onSelect }: { districts: District[]; onSelect: (d: District) => void }) {
+const ICONS: Record<LandmarkKind | 'district', typeof MapPin> = {
+  district: MapPin,
+  area: MapPin,
+  mall: ShoppingBag,
+  hotel: BedDouble,
+  university: GraduationCap,
+  hospital: Hospital,
+  park: Trees,
+  stadium: Trophy,
+  museum: LandmarkIcon,
+  airport: Plane,
+  station: TrainFront,
+  embassy: Flag,
+};
+
+// shared by every person's search box: one download, then all boxes are told
+let landmarkCache: Landmark[] | null = null;
+let landmarkLoad: Promise<Landmark[]> | null = null;
+function loadLandmarks(): Promise<Landmark[]> {
+  landmarkLoad ??= fetch('/api/landmarks')
+    .then((r) => r.json() as Promise<{ landmarks: Landmark[] }>)
+    .then((d) => (landmarkCache = d.landmarks))
+    .catch(() => {
+      landmarkLoad = null;
+      return [];
+    });
+  return landmarkLoad;
+}
+
+/** Type-ahead for a starting point: neighbourhoods, well-known areas, malls, hotels, universities… (offline). */
+export default function NeighbourhoodPicker({ districts, onSelect, autoFocus = false }: { districts: District[]; onSelect: (hit: PlaceHit) => void; autoFocus?: boolean }) {
   const t = useT();
   const { locale } = useLocale();
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
+  const [landmarks, setLandmarks] = useState<Landmark[]>(landmarkCache ?? []);
   const listId = useId();
-  const matches = useMemo(() => searchDistricts(query, districts), [query, districts]);
 
-  function choose(d: District) {
+  function ensureLandmarks() {
+    if (landmarks.length) return;
+    void loadLandmarks().then((l) => l.length && setLandmarks(l));
+  }
+
+  const matches = useMemo(() => searchPlaces(query, districts, landmarks), [query, districts, landmarks]);
+
+  function choose(h: PlaceHit) {
     setQuery('');
     setOpen(false);
-    onSelect(d);
+    onSelect(h);
   }
 
   return (
@@ -25,6 +63,7 @@ export default function NeighbourhoodPicker({ districts, onSelect }: { districts
       <input
         type="text"
         role="combobox"
+        autoFocus={autoFocus}
         aria-expanded={open && matches.length > 0}
         aria-controls={listId}
         aria-autocomplete="list"
@@ -34,7 +73,10 @@ export default function NeighbourhoodPicker({ districts, onSelect }: { districts
           setActive(0);
           setOpen(true);
         }}
-        onFocus={() => setOpen(true)}
+        onFocus={() => {
+          ensureLandmarks();
+          setOpen(true);
+        }}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         onKeyDown={(e) => {
           if (!matches.length) return;
@@ -46,34 +88,44 @@ export default function NeighbourhoodPicker({ districts, onSelect }: { districts
           e.preventDefault();
         }}
         placeholder={t.neighbourhoodPlaceholder}
-        className="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:border-brand focus:outline-none"
+        className="w-full rounded-xl border border-sand-dark bg-white px-3 py-2 text-sm focus:border-brand focus:outline-none"
       />
       {open && query.trim() && (
-        <ul id={listId} role="listbox" className="absolute inset-x-0 top-full z-20 mt-1 max-h-64 overflow-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+        <ul id={listId} role="listbox" className="absolute inset-x-0 top-full z-30 mt-1 max-h-72 overflow-auto rounded-xl border border-sand-dark bg-white py-1 shadow-card">
           {matches.length === 0 ? (
-            <li className="px-3 py-2 text-sm text-slate-400">{t.noMatches}</li>
+            <li className="px-3 py-2 text-sm text-ink-soft">{t.noMatches}</li>
           ) : (
-            matches.map((d, i) => (
-              <li
-                key={d.id}
-                role="option"
-                aria-selected={i === active}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  choose(d);
-                }}
-                onMouseEnter={() => setActive(i)}
-                className={`flex cursor-pointer items-baseline justify-between gap-3 px-3 py-1.5 text-sm ${i === active ? 'bg-brand-light' : ''}`}
-              >
-                <span className="truncate font-medium">{locale === 'ar' ? shortAr(d) : shortEn(d)}</span>
-                <span dir={locale === 'ar' ? 'ltr' : 'rtl'} className="shrink-0 text-slate-500">
-                  {locale === 'ar' ? shortEn(d) : shortAr(d)}
-                </span>
-              </li>
-            ))
+            matches.map((h, i) => {
+              const Icon = ICONS[h.type === 'district' ? 'district' : h.kind];
+              const main = locale === 'ar' ? h.ar || h.en : h.en;
+              const other = locale === 'ar' ? h.en : h.ar !== h.en ? h.ar : '';
+              return (
+                <li
+                  key={h.type + h.id}
+                  role="option"
+                  aria-selected={i === active}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    choose(h);
+                  }}
+                  onMouseEnter={() => setActive(i)}
+                  className={`flex min-h-11 cursor-pointer items-center gap-2 px-3 py-1.5 text-sm ${i === active ? 'bg-brand-light' : ''}`}
+                >
+                  <Icon size={16} className="shrink-0 text-ink-soft" aria-hidden />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium">{main}</span>
+                    <span className="block truncate text-xs text-ink-soft">
+                      {h.type === 'district' ? t.kindDistrict : t.landmarkKinds[h.kind]}
+                      {other ? ` · ${other}` : ''}
+                    </span>
+                  </span>
+                </li>
+              );
+            })
           )}
         </ul>
       )}
     </div>
   );
 }
+

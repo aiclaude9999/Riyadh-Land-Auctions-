@@ -1,6 +1,6 @@
 'use client';
 
-import { Car, ChevronDown, Heart, MapPinned, Star, ThumbsUp, TrainFront, Trophy, EyeOff, CheckCircle2, Navigation } from 'lucide-react';
+import { Car, ChevronDown, Heart, MapPinned, Star, ThumbsUp, TrainFront, Trophy, EyeOff, CheckCircle2, Navigation, Clock, Send } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import FairnessBars from './FairnessBars';
 import TripDetails, { type RouteState } from './TripDetails';
@@ -188,6 +188,20 @@ function HeroCard({ r, response, people, routes, onShowRoute, onZoom, prefs, onT
     r.warnings.metroClosed && `🚇 ${t.metroWarn(r.warnings.metroClosed.map((i) => displayName(people[i], i, t.namePlaceholder)).join(', '))}`,
     r.openAtArrival === false && `⚠️ ${t.closedAtArrival}`,
   ].filter(Boolean) as string[];
+  const mapsLink = `https://www.google.com/maps/search/?api=1&query=${r.venue.location.lat},${r.venue.location.lng}`;
+  // arrival in Riyadh time: late night / early morning = remind to check the place is open
+  const arrival = riyadhClock(new Date(Date.parse(meta.leaveAt) + r.maxEta * 60_000)).minutes;
+  const lateArrival = arrival >= 23 * 60 || arrival < 6 * 60;
+  const leaveOf = (minutes: number) => {
+    const at = Date.parse(meta.leaveAt) + (r.maxEta - minutes) * 60_000;
+    return at <= Date.now() + 60_000 ? t.leaveNow : t.leaveAt(riyadhTimeLabel(new Date(at)));
+  };
+  const waText = t.waResult(
+    n(r.venue.name, r.venue.nameAr),
+    mapsLink,
+    Math.round(r.maxEta),
+    r.etas.map((e) => t.waLine(displayName(people[e.person], e.person, t.namePlaceholder), e.mode === 'metro' ? t.metro : t.car, leaveOf(e.minutes), Math.round(e.minutes))).join('\n'),
+  );
 
   return (
     <article className="rounded-2xl border border-brand/30 bg-white p-4 shadow-card">
@@ -228,6 +242,19 @@ function HeroCard({ r, response, people, routes, onShowRoute, onZoom, prefs, onT
       <div className="mt-3">
         <FairnessBars etas={r.etas} people={people} scale={scale} />
       </div>
+
+      {r.openAtArrival === true ? (
+        <p className="mt-3 flex items-center gap-1.5 text-xs text-emerald-700">
+          <Clock size={14} aria-hidden /> {t.openAtArrival}
+        </p>
+      ) : r.openAtArrival == null ? (
+        <p className={`mt-3 flex flex-wrap items-center gap-1.5 text-xs ${lateArrival ? 'rounded-xl bg-amber-50 p-2 text-amber-900' : 'text-ink-soft'}`}>
+          <Clock size={14} aria-hidden /> {lateArrival ? t.lateCheck : `${t.hoursUnknown} —`}{' '}
+          <a href={googleReviewsUrl(n(r.venue.name, r.venue.nameAr), r.venue.location, googleId)} target="_blank" rel="noreferrer" className="font-medium underline">
+            {t.checkHours}
+          </a>
+        </p>
+      ) : null}
 
       {warnings.length > 0 && (
         <details className="mt-3 rounded-xl bg-amber-50 p-2 text-xs text-amber-900">
@@ -307,6 +334,14 @@ function HeroCard({ r, response, people, routes, onShowRoute, onZoom, prefs, onT
           <CheckCircle2 size={16} aria-hidden /> {saved ? t.saved : t.weGo.replace(/^✅\s*/, '')}
         </button>
         <a
+          href={`https://wa.me/?text=${encodeURIComponent(waText)}`}
+          target="_blank"
+          rel="noreferrer"
+          className="col-span-2 inline-flex items-center justify-center gap-1.5 rounded-xl border border-emerald-600 px-3 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
+        >
+          <Send size={16} aria-hidden /> {t.sendWhatsApp}
+        </a>
+        <a
           href={googleReviewsUrl(n(r.venue.name, r.venue.nameAr), r.venue.location, googleId)}
           target="_blank"
           rel="noreferrer"
@@ -315,7 +350,7 @@ function HeroCard({ r, response, people, routes, onShowRoute, onZoom, prefs, onT
           <Star size={14} aria-hidden /> {t.reviews}
         </a>
         <a
-          href={`https://www.google.com/maps/search/?api=1&query=${r.venue.location.lat},${r.venue.location.lng}`}
+          href={mapsLink}
           target="_blank"
           rel="noreferrer"
           className="inline-flex items-center justify-center gap-1 rounded-xl border border-sand-dark px-2 py-1.5 text-xs text-ink hover:border-brand"

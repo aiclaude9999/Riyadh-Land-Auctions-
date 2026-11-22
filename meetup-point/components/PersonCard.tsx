@@ -6,7 +6,10 @@ import PlaceSearch from './PlaceSearch';
 import type { District } from '@/lib/districts';
 import { useName, useT } from './LocaleProvider';
 import { shortAr, shortEn } from '@/lib/districts';
-import { Car, Footprints, TrainFront } from 'lucide-react';
+import { Car, Footprints, LocateFixed, MapPin, MousePointerClick, TrainFront } from 'lucide-react';
+import { useState } from 'react';
+import { districtAt } from '@/lib/districts';
+import type { PlaceHit } from '@/lib/places';
 import { CUISINE_GROUPS } from '@/lib/cuisine';
 import { nearestStations, type Station } from '@/lib/metro';
 import { personInitial, displayName, personColor, personIssues, type PeopleAction, type Person, type TravelMode } from '@/lib/people';
@@ -20,7 +23,7 @@ interface Props {
   picking: boolean;
   onPick: () => void;
   districts: District[];
-  onDistrict: (d: District) => void;
+  onPlace: (hit: PlaceHit) => void;
   /** shared group: someone else's entry */
   readOnly?: boolean;
 }
@@ -29,9 +32,31 @@ interface Props {
 const HAS_GOOGLE = !!process.env.NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY;
 
 
-export default function PersonCard({ person, index, canRemove, dispatch, stations, picking, onPick, districts, onDistrict, readOnly = false }: Props) {
+export default function PersonCard({ person, index, canRemove, dispatch, stations, picking, onPick, districts, onPlace, readOnly = false }: Props) {
   const t = useT();
   const n = useName();
+  const [editing, setEditing] = useState(false);
+  const [locating, setLocating] = useState(false);
+  const [locError, setLocError] = useState(false);
+  // "My location": the phone's GPS (needs permission; works on https or localhost)
+  function locateMe() {
+    if (!navigator.geolocation) return setLocError(true);
+    setLocating(true);
+    setLocError(false);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        dispatch({ type: 'setLocation', id: person.id, location, address: t.myLocation, source: 'search', districtId: districtAt(location, districts)?.id ?? null });
+        setLocating(false);
+        setEditing(false);
+      },
+      () => {
+        setLocating(false);
+        setLocError(true);
+      },
+      { enableHighAccuracy: true, timeout: 10_000 },
+    );
+  }
   const district = person.districtId ? districts.find((d) => d.id === person.districtId) : undefined;
   const districtName = district ? n(shortEn(district), shortAr(district)) : '';
   const label = person.locationSource === 'district' && district ? t.districtCentre(districtName) : person.locationSource === 'pin' && district ? t.pinnedIn(districtName) : (person.address ?? t.pinnedOnMap);
@@ -144,44 +169,58 @@ export default function PersonCard({ person, index, canRemove, dispatch, station
 
       <div className="mt-2">
         <span className="text-xs font-medium text-slate-500">{t.locationLabel}</span>
-        {person.location ? (
-          <div className="mt-1 flex items-start gap-2 rounded-lg bg-slate-50 px-2 py-1.5 text-sm">
-            <span className="mt-0.5" aria-hidden>📍</span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate">{label}</p>
-              <p className="text-xs text-slate-400">
-                {person.location.lat.toFixed(5)}, {person.location.lng.toFixed(5)}
-              </p>
-            </div>
+        {person.location && !editing ? (
+          <div className="mt-1 flex items-center gap-2 rounded-xl bg-sand px-2.5 py-2 text-sm">
+            <MapPin size={16} className="shrink-0 text-brand" aria-hidden />
+            <p className="min-w-0 flex-1 truncate">{label}</p>
             {!readOnly && (
-              <>
-                <button type="button" onClick={onPick} className="text-xs text-brand hover:underline">
-                  {picking ? t.cancel : t.pickOnMap}
-                </button>
-                <button type="button" onClick={() => dispatch({ type: 'clearLocation', id: person.id })} className="text-xs text-slate-400 hover:text-rose-600">
-                  {t.clearLocation}
-                </button>
-              </>
+              <button type="button" onClick={() => setEditing(true)} className="shrink-0 rounded-lg px-2 font-medium text-brand hover:bg-brand-light">
+                {t.changeLocation}
+              </button>
             )}
           </div>
         ) : readOnly ? (
-          <p className="mt-1 text-xs text-slate-400">{t.missingLocation}</p>
+          <p className="mt-1 text-xs text-ink-soft">{t.missingLocation}</p>
         ) : (
-          <div className="mt-1 flex gap-2">
+          <div className="mt-1 space-y-2">
             {HAS_GOOGLE ? (
               <PlaceSearch
-                onSelect={(place) => dispatch({ type: 'setLocation', id: person.id, location: place.location, address: place.label, source: 'search' })}
+                onSelect={(place) => {
+                  dispatch({ type: 'setLocation', id: person.id, location: place.location, address: place.label, source: 'search' });
+                  setEditing(false);
+                }}
               />
             ) : (
-              <NeighbourhoodPicker districts={districts} onSelect={onDistrict} />
+              <NeighbourhoodPicker
+                autoFocus={editing}
+                districts={districts}
+                onSelect={(hit) => {
+                  onPlace(hit);
+                  setEditing(false);
+                }}
+              />
             )}
-            <button
-              type="button"
-              onClick={onPick}
-              className={`shrink-0 self-start rounded-lg border px-2.5 py-1.5 text-sm ${picking ? 'border-brand bg-brand text-white' : 'border-slate-300 text-slate-700 hover:border-brand hover:text-brand'}`}
-            >
-              {picking ? t.picking : t.pickOnMap}
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={locateMe} disabled={locating} className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-sand-dark bg-white px-3 text-sm text-ink hover:border-brand">
+                <LocateFixed size={16} aria-hidden /> {locating ? t.locating : t.myLocation}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onPick();
+                  setEditing(false);
+                }}
+                className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border px-3 text-sm ${picking ? 'border-brand bg-brand text-white' : 'border-sand-dark bg-white text-ink hover:border-brand'}`}
+              >
+                <MousePointerClick size={16} aria-hidden /> {picking ? t.picking : t.pickOnMap}
+              </button>
+              {editing && (
+                <button type="button" onClick={() => setEditing(false)} className="rounded-xl px-3 text-sm text-ink-soft hover:bg-sand">
+                  {t.cancel}
+                </button>
+              )}
+            </div>
+            {locError && <p className="text-xs text-amber-700">{t.locationDenied}</p>}
           </div>
         )}
 

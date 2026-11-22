@@ -125,7 +125,7 @@ function GoogleOverlays({ overlays, fitTo }: Pick<MapViewProps, 'overlays' | 'fi
     if (!map || !fitTo?.points.length) return;
     if (fitTo.points.length === 1) {
       map.panTo(fitTo.points[0]);
-      map.setZoom(17);
+      map.setZoom(fitTo.zoom ?? 17);
       return;
     }
     const b = new google.maps.LatLngBounds();
