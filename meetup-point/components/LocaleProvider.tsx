@@ -15,6 +15,11 @@ const LocaleContext = createContext<Ctx>({ locale: 'en', t: STRINGS.en, setLocal
 export default function LocaleProvider({ initial, children }: { initial: Locale; children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(initial);
 
+  // register the service worker (install on phone + quick start); production only
+  useEffect(() => {
+    if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }, []);
+
   useEffect(() => {
     document.documentElement.lang = locale;
     document.documentElement.dir = DIR[locale];

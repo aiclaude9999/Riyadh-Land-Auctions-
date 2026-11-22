@@ -8,6 +8,10 @@ import MeetupMap from './MeetupMap';
 import PeoplePanel from './PeoplePanel';
 import PrefsPanel from './PrefsPanel';
 import ResultsList from './ResultsList';
+import BottomSheet, { sheetPx, useIsMobile, type Snap } from './BottomSheet';
+import InstallButton from './InstallButton';
+import Logo from './Logo';
+import { ArrowLeft, ArrowRight, Check, Navigation, Pencil, Search, Settings2 } from 'lucide-react';
 import SharePanel from './SharePanel';
 import { fromWire } from '@/lib/groupClient';
 import { useGroup } from '@/lib/useGroup';
@@ -38,7 +42,7 @@ function LangButton() {
       type="button"
       onClick={() => setLocale(locale === 'ar' ? 'en' : 'ar')}
       lang={locale === 'ar' ? 'en' : 'ar'}
-      className="shrink-0 rounded-full border border-slate-300 px-3 py-0.5 text-sm text-slate-700 hover:border-brand hover:text-brand"
+      className="shrink-0 rounded-full border border-sand-dark bg-white px-2.5 py-1 text-xs font-medium text-ink hover:border-brand hover:text-brand"
     >
       {t.switchTo}
     </button>
@@ -51,7 +55,7 @@ interface SearchResult {
   signature: string;
 }
 
-type Tab = 'people' | 'results' | 'prefs';
+type Tab = 'people' | 'when' | 'results' | 'prefs';
 
 function buildRequest(people: Person[], trip: TripState, prefs: RecommendRequest['prefs'], weights?: number[]): RecommendRequest {
   return {
@@ -77,6 +81,8 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
   const [zoneOn, setZoneOn] = useState(false);
   const [zoneMin, setZoneMin] = useState(30);
   const [tab, setTab] = useState<Tab>('people');
+  const mobile = useIsMobile();
+  const [snap, setSnap] = useState<Snap>('half');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SearchResult | null>(null);
@@ -319,6 +325,7 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
       setResult({ response: data, people: state.people, signature });
       setNames((old) => ({ ...old, ...Object.fromEntries(data.results.map((r) => [r.venue.id, n(r.venue.name, r.venue.nameAr)])) }));
       setSelectedId(data.results[0]?.venue.id ?? null);
+      setSnap('half');
       // start the zone slider at the best place's longest trip, rounded up to 5 min
       if (data.results[0]) setZoneMin(Math.max(10, Math.ceil(data.results[0].maxEta / 5) * 5));
       setTab('results');
@@ -339,126 +346,206 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
   const pickingIndex = state.people.findIndex((p) => p.id === pickingId);
   const pickingName = pickingIndex >= 0 ? displayName(state.people[pickingIndex], pickingIndex, t.namePlaceholder) : null;
   const readyCount = state.people.filter((p) => p.location).length;
-  const tabClass = (active: boolean) => `flex-1 border-b-2 px-2 py-2 text-sm font-medium ${active ? 'border-brand text-brand-dark' : 'border-transparent text-slate-500 hover:text-slate-700'}`;
+  const friendOnly = !!group.id && !group.isAdmin;
 
-  return (
-    <div className="flex h-dvh flex-col md:flex-row">
-      <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2 md:hidden">
-        <h1 className="text-base font-semibold text-brand-dark">{t.appTitle}</h1>
+  // steps: 1 Who → 2 When & what → 3 Results (Preferences from the header)
+  const steps: { id: Tab; label: string; enabled: boolean }[] = [
+    { id: 'people', label: t.stepWho, enabled: true },
+    { id: 'when', label: t.stepWhen, enabled: !friendOnly },
+    { id: 'results', label: t.stepResults, enabled: !!result },
+  ];
+
+  const top = (
+    <div className="shrink-0 px-4 pb-2 pt-1 md:pt-4">
+      <div className="flex items-center gap-2">
+        <Logo size={mobile ? 28 : 34} />
+        <div className="min-w-0 flex-1">
+          <h1 className={`truncate font-bold text-ink md:text-lg ${mobile ? 'sr-only' : 'text-base'}`}>{t.appTitle}</h1>
+          <p className="hidden truncate text-xs text-ink-soft md:block">{t.appTagline}</p>
+        </div>
+        <InstallButton />
+        <button
+          type="button"
+          aria-label={t.settings}
+          aria-pressed={tab === 'prefs'}
+          onClick={() => setTab(tab === 'prefs' ? (result ? 'results' : 'people') : 'prefs')}
+          className={`rounded-full p-1.5 ${tab === 'prefs' ? 'bg-brand text-white' : 'text-ink-soft hover:bg-sand-dark'}`}
+        >
+          <Settings2 size={18} aria-hidden />
+        </button>
         <LangButton />
-      </header>
-      <aside className="order-2 flex min-h-0 flex-1 flex-col border-slate-200 bg-white md:order-1 md:w-[420px] md:flex-none md:border-e">
-        <header className="hidden border-b border-slate-200 px-4 py-3 md:block">
-          <div className="flex items-start justify-between gap-2">
-            <h1 className="text-lg font-semibold text-brand-dark">{t.appTitle}</h1>
-            <LangButton />
-          </div>
-          <p className="text-sm text-slate-500">{t.appTagline}</p>
-        </header>
+      </div>
+      <nav aria-label="steps" className="mt-3 grid grid-cols-3 gap-1.5">
+        {steps.map((st, i) => {
+          const active = tab === st.id;
+          const done = steps.findIndex((x) => x.id === tab) > i;
+          return (
+            <button
+              key={st.id}
+              type="button"
+              disabled={!st.enabled}
+              onClick={() => {
+                setTab(st.id);
+                if (mobile) setSnap(st.id === 'results' ? 'half' : 'full');
+              }}
+              className={`flex items-center gap-1.5 rounded-xl px-2 py-1.5 text-xs font-medium transition disabled:opacity-40 ${active ? 'bg-brand text-white shadow-card' : done ? 'bg-brand-light text-brand-dark' : 'bg-white text-ink-soft'}`}
+            >
+              <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs ${active ? 'bg-white/20' : 'bg-sand-dark/60'}`}>{done ? <Check size={12} aria-hidden /> : i + 1}</span>
+              <span className="truncate">{st.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+    </div>
+  );
 
-        <div role="tablist" className="flex border-b border-slate-200">
-          <button type="button" role="tab" aria-selected={tab === 'people'} className={tabClass(tab === 'people')} onClick={() => setTab('people')}>
-            {t.tabPeople} ({state.people.length})
+  const primary = 'inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand px-4 py-3 text-base font-semibold text-white shadow-card hover:bg-brand-dark disabled:cursor-not-allowed disabled:bg-ink/20';
+  const secondary = 'inline-flex items-center justify-center gap-1 rounded-xl border border-sand-dark bg-white px-3 py-3 text-sm font-medium text-ink hover:border-brand';
+  const footer = (
+    <div className="space-y-1.5">
+      {tab === 'people' && (
+        <>
+          {friendOnly ? (
+            <p className="text-xs text-ink-soft">{t.onlyOrganiserSearches}</p>
+          ) : (
+            <button type="button" disabled={!ready} onClick={() => { setTab('when'); if (mobile) setSnap('full'); }} className={primary + ' w-full'}>
+              {t.next} <ArrowRight size={18} className="rtl:rotate-180" aria-hidden />
+            </button>
+          )}
+          {friendOnly && result && (
+            <button type="button" onClick={() => { setTab('results'); if (mobile) setSnap('half'); }} className={primary + ' w-full'}>
+              {t.stepResults}
+            </button>
+          )}
+          <p className={`text-xs ${ready ? 'text-ink-soft' : 'text-amber-700'}`}>{ready ? t.readyCount(readyCount, state.people.length) : t.needLocations}</p>
+        </>
+      )}
+      {tab === 'when' && (
+        <div className="flex gap-2">
+          <button type="button" onClick={() => setTab('people')} className={secondary}>
+            <ArrowLeft size={16} className="rtl:rotate-180" aria-hidden /> {t.back}
           </button>
-          <button type="button" role="tab" aria-selected={tab === 'results'} disabled={!result} className={`${tabClass(tab === 'results')} disabled:opacity-40`} onClick={() => setTab('results')}>
-            {t.tabResults}
-            {result ? ` (${result.response.results.length})` : ''}
-          </button>
-          <button type="button" role="tab" aria-selected={tab === 'prefs'} className={tabClass(tab === 'prefs')} onClick={() => setTab('prefs')}>
-            {t.tabPrefs}
+          <button type="button" onClick={find} disabled={!ready || loading} className={primary}>
+            <Search size={18} aria-hidden /> {loading ? t.finding : t.find}
           </button>
         </div>
+      )}
+      {tab === 'results' && (
+        <div className="flex gap-2">
+          <button type="button" onClick={() => { setTab('people'); if (mobile) setSnap('full'); }} className={secondary + (stale && !friendOnly ? '' : ' flex-1')}>
+            <Pencil size={15} aria-hidden /> {t.change}
+          </button>
+          {!friendOnly && stale && (
+            <button type="button" onClick={find} disabled={!ready || loading} className={primary}>
+              <Search size={18} aria-hidden /> {loading ? t.finding : t.find}
+            </button>
+          )}
+        </div>
+      )}
+      {tab === 'prefs' && (
+        <button type="button" onClick={() => setTab(result ? 'results' : 'people')} className={secondary + ' w-full'}>
+          <ArrowLeft size={16} className="rtl:rotate-180" aria-hidden /> {t.back}
+        </button>
+      )}
+      {error && <p className="text-xs text-rose-600">{error}</p>}
+    </div>
+  );
 
-        {tab === 'results' && result ? (
-          <div className="min-h-0 flex-1 overflow-y-auto p-4">
-            {result.response.zone && !stale && (
-              <div className="mb-3 rounded-lg border border-emerald-200 bg-emerald-50/60 p-2.5 text-sm">
-                <label className="flex cursor-pointer items-center gap-2">
-                  <input type="checkbox" checked={zoneOn} onChange={(e) => setZoneOn(e.target.checked)} className="accent-emerald-600" />
-                  <span>
-                    {t.zoneToggle} <strong className="tabular-nums">{t.minutes(zoneMin)}</strong>
-                  </span>
-                </label>
-                <label className="mt-1 flex cursor-pointer items-center gap-2">
-                  <input type="checkbox" checked={reachOn} onChange={(e) => setReachOn(e.target.checked)} className="accent-emerald-600" />
-                  <span>{t.reachToggle}</span>
-                </label>
-                {reachOn && <p className="text-xs text-slate-500">{t.reachLegend}</p>}
-                {(zoneOn || reachOn) && (
-                  <>
-                    <input type="range" min={10} max={90} step={5} value={zoneMin} onChange={(e) => setZoneMin(Number(e.target.value))} aria-label={t.zoneToggle} className="mt-1 w-full accent-emerald-600" />
-                    <p className="text-xs text-slate-500">{t.zoneLegend}</p>
-                  </>
-                )}
-              </div>
+  const body =
+    tab === 'results' && result ? (
+      <div className="pt-1">
+        <ResultsList
+          response={result.response}
+          people={result.people}
+          stale={stale}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+          routes={routes}
+          onShowRoute={(pi) => {
+            showRoute(pi);
+            if (mobile) setSnap('peek');
+          }}
+          onZoom={(points) => {
+            setFitTo({ points, key: `step-${Date.now()}` });
+            if (mobile) setSnap('peek');
+          }}
+          prefs={prefs}
+          onToggleFavourite={(id) => updatePrefs((p) => ({ ...p, favourites: p.favourites.includes(id) ? p.favourites.filter((x) => x !== id) : [...p.favourites, id] }))}
+          onHide={(id) => updatePrefs((p) => ({ ...p, hidden: [...p.hidden, id], favourites: p.favourites.filter((x) => x !== id) }))}
+          style={style}
+          onStyle={setStyle}
+          onUseTime={!friendOnly ? applyTime : undefined}
+          onWeGo={weGo}
+          savedIds={history.map((h) => h.venue)}
+          fairnessNames={state.people.filter((_, i) => (weights[i] ?? 1) > 1.04).map((p) => displayName(p, state.people.indexOf(p), t.namePlaceholder))}
+          voting={group.id && group.view ? { counts: group.view.votes, mine: group.myVote, onVote: (v) => void group.vote(v).catch(() => setError(t.requestFailed)) } : undefined}
+        />
+        {result.response.zone && !stale && (
+          <div className="mt-4 rounded-2xl border border-sand-dark bg-white p-3 text-sm shadow-card">
+            <label className="flex cursor-pointer items-center gap-2">
+              <input type="checkbox" checked={zoneOn} onChange={(e) => setZoneOn(e.target.checked)} className="accent-brand" />
+              <span>
+                {t.zoneToggle} <strong className="tabular-nums">{t.minutes(zoneMin)}</strong>
+              </span>
+            </label>
+            <label className="mt-1 flex cursor-pointer items-center gap-2">
+              <input type="checkbox" checked={reachOn} onChange={(e) => setReachOn(e.target.checked)} className="accent-brand" />
+              <span>{t.reachToggle}</span>
+            </label>
+            {(zoneOn || reachOn) && (
+              <>
+                <input type="range" min={10} max={90} step={5} value={zoneMin} onChange={(e) => setZoneMin(Number(e.target.value))} aria-label={t.zoneToggle} className="mt-1 w-full accent-brand" />
+                <p className="text-xs text-ink-soft">{reachOn ? t.reachLegend : t.zoneLegend}</p>
+              </>
             )}
-            <ResultsList
-              response={result.response}
-              people={result.people}
-              stale={stale}
-              selectedId={selectedId}
-              onSelect={setSelectedId}
-              routes={routes}
-              onShowRoute={showRoute}
-              onZoom={(points) => setFitTo({ points, key: `step-${Date.now()}` })}
-              prefs={prefs}
-              onToggleFavourite={(id) => updatePrefs((p) => ({ ...p, favourites: p.favourites.includes(id) ? p.favourites.filter((x) => x !== id) : [...p.favourites, id] }))}
-              onHide={(id) => updatePrefs((p) => ({ ...p, hidden: [...p.hidden, id], favourites: p.favourites.filter((x) => x !== id) }))}
-              style={style}
-              onStyle={setStyle}
-              onUseTime={!group.id || group.isAdmin ? applyTime : undefined}
-              onWeGo={weGo}
-              savedIds={history.map((h) => h.venue)}
-              fairnessNames={state.people.filter((_, i) => (weights[i] ?? 1) > 1.04).map((p) => displayName(p, state.people.indexOf(p), t.namePlaceholder))}
-              voting={group.id && group.view ? { counts: group.view.votes, mine: group.myVote, onVote: (v) => void group.vote(v).catch(() => setError(t.requestFailed)) } : undefined}
-            />
-          </div>
-        ) : tab === 'prefs' ? (
-          <PrefsPanel prefs={prefs} update={updatePrefs} names={names} history={history} onHistory={(h: Meetup[]) => { setHistory(h); saveHistory(h); }} />
-        ) : (
-          // share box + people scroll together, so nothing gets squeezed under the controls on phones
-          <div className="min-h-0 flex-1 overflow-y-auto">
-          <SharePanel group={group} canShare={state.people.length > 0} />
-          <PeoplePanel
-            state={state}
-            dispatch={act}
-            stations={stationList}
-            pickingId={pickingId}
-            onPick={(id) => {
-              setFocusDistrict(null);
-              setPickingId((cur) => (cur === id ? null : id));
-            }}
-            districts={districts}
-            onDistrict={chooseDistrict}
-            canEdit={group.canEdit}
-            minPeople={group.id ? 1 : 2}
-            {...(group.id
-              ? {
-                  onAdd: () => void group.join().catch(() => setError(t.requestFailed)),
-                  addLabel: group.isAdmin || Object.keys(group.creds?.people ?? {}).length ? t.addPerson : t.addMe,
-                }
-              : {})}
-          />
           </div>
         )}
+      </div>
+    ) : tab === 'prefs' ? (
+      <div className="-mx-4">
+        <PrefsPanel prefs={prefs} update={updatePrefs} names={names} history={history} onHistory={(h: Meetup[]) => { setHistory(h); saveHistory(h); }} />
+      </div>
+    ) : tab === 'when' ? (
+      <div className="rounded-2xl border border-sand-dark bg-white p-3 shadow-card">
+        <TripOptions trip={trip} onChange={setTrip} />
+      </div>
+    ) : (
+      <div className="-mx-4">
+        <SharePanel group={group} canShare={state.people.length > 0} />
+        <PeoplePanel
+          state={state}
+          dispatch={act}
+          stations={stationList}
+          pickingId={pickingId}
+          onPick={(id) => {
+            setFocusDistrict(null);
+            setPickingId((cur) => (cur === id ? null : id));
+            if (mobile) setSnap('peek');
+          }}
+          districts={districts}
+          onDistrict={(pid, d) => {
+            chooseDistrict(pid, d);
+            if (mobile) setSnap('peek');
+          }}
+          canEdit={group.canEdit}
+          minPeople={group.id ? 1 : 2}
+          {...(group.id
+            ? {
+                onAdd: () => void group.join().catch(() => setError(t.requestFailed)),
+                addLabel: group.isAdmin || Object.keys(group.creds?.people ?? {}).length ? t.addPerson : t.addMe,
+              }
+            : {})}
+        />
+      </div>
+    );
 
-        <footer className="space-y-2 border-t border-slate-200 px-4 py-3">
-          {(!group.id || group.isAdmin) && <TripOptions trip={trip} onChange={setTrip} />}
-          {group.id && !group.isAdmin && <p className="text-xs text-slate-500">{t.onlyOrganiserSearches}</p>}
-          <button
-            type="button"
-            onClick={find}
-            disabled={!ready || loading || (!!group.id && !group.isAdmin)}
-            className="w-full rounded-lg bg-brand px-4 py-2.5 font-semibold text-white shadow-sm hover:bg-brand-dark disabled:cursor-not-allowed disabled:bg-slate-300"
-          >
-            {loading ? t.finding : t.find}
-          </button>
-          <p className={`text-xs ${ready ? 'text-slate-500' : 'text-amber-700'}`}>{ready ? t.readyCount(readyCount, state.people.length) : t.needLocations}</p>
-          {error && <p className="text-xs text-rose-600">{error}</p>}
-        </footer>
-      </aside>
+  return (
+    <div className="flex h-dvh md:flex-row">
+      <BottomSheet mobile={mobile} snap={snap} onSnap={setSnap} top={top} footer={footer}>
+        {body}
+      </BottomSheet>
 
-      <main className="relative order-1 h-[45dvh] md:order-2 md:h-auto md:flex-1">
+      <main className={mobile ? 'fixed inset-0' : 'relative flex-1'}>
         <MeetupMap
           people={state.people}
           stationsGeoJson={stations}
@@ -472,6 +559,7 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
             act({ type: 'setLocation', id: pickingId, location, address: null, source: 'pin', districtId: d?.id ?? null });
             setPickingId(null);
             setFocusDistrict(null);
+            if (mobile) setSnap('half');
           }}
           onDragPerson={(id, location) => {
             const d = districtAt(location, districts);
@@ -484,13 +572,15 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
           onSelectVenue={(id) => {
             setSelectedId(id);
             setTab('results');
+            if (mobile) setSnap('half');
           }}
           overlays={overlays}
           fitTo={fitTo}
           allVenues={visibleVenues}
           showAllVenues={showAllVenues}
           onToggleAllVenues={() => setShowAllVenues((s) => !s)}
-          onPickVenue={!group.id || group.isAdmin ? pickVenue : undefined}
+          onPickVenue={!friendOnly ? pickVenue : undefined}
+          insetBottom={mobile ? sheetPx(snap) : 0}
         />
         {focusPerson !== null && result && selected && (() => {
           const e = selected.etas.find((x) => x.person === focusPerson);
@@ -498,28 +588,28 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
           if (!e || !who?.location) return null;
           const car = routes[routeRequests(selected, result.people).find((r) => r.person === focusPerson && r.mode === 'car')?.key ?? ''];
           return (
-            <div className="absolute inset-x-3 bottom-10 z-[1100] mx-auto flex max-w-md items-center gap-3 rounded-xl bg-white/95 p-3 shadow-lg">
+            <div className={`absolute inset-x-3 z-[1100] mx-auto flex max-w-md items-center gap-3 rounded-2xl bg-white/95 p-3 shadow-card ${mobile ? 'top-16' : 'bottom-10'}`}>
               <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: personColor(focusPerson) }} aria-hidden />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">
-                  {e.mode === 'metro' ? '🚇' : '🚗'} {t.routeOf(displayName(who, focusPerson, t.namePlaceholder))} → {n(selected.venue.name, selected.venue.nameAr)}
+                  {t.routeOf(displayName(who, focusPerson, t.namePlaceholder))} → {n(selected.venue.name, selected.venue.nameAr)}
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-ink-soft">
                   {t.minutes(e.minutes)}
                   {car && typeof car === 'object' ? ` · ${t.distance(car.km * 1000)}` : ''}
                 </p>
               </div>
-              <a href={googleDirectionsUrl(who.location, selected.venue.location, e.mode)} target="_blank" rel="noreferrer" className="shrink-0 rounded-md border border-slate-300 px-2 py-1 text-xs hover:border-brand">
-                🧭 {t.directions}
+              <a href={googleDirectionsUrl(who.location, selected.venue.location, e.mode)} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-sand-dark px-2 py-1 text-xs hover:border-brand">
+                <Navigation size={13} aria-hidden /> {t.directions}
               </a>
-              <button type="button" onClick={() => setFocusPerson(null)} className="shrink-0 rounded-md bg-slate-100 px-2 py-1 text-xs hover:bg-slate-200">
+              <button type="button" onClick={() => setFocusPerson(null)} className="shrink-0 rounded-lg bg-sand px-2 py-1 text-xs hover:bg-sand-dark">
                 {t.showEveryone}
               </button>
             </div>
           );
         })()}
         {pickingName && (
-          <div className="pointer-events-auto absolute inset-x-0 top-3 z-[1100] mx-auto flex w-fit max-w-[calc(100%-2rem)] items-center gap-3 rounded-full bg-slate-900/90 px-4 py-2 text-sm text-white shadow-lg">
+          <div className="pointer-events-auto absolute inset-x-0 top-3 z-[1100] mx-auto flex w-fit max-w-[calc(100%-2rem)] items-center gap-3 rounded-full bg-ink/90 px-4 py-2 text-sm text-white shadow-card">
             <span>{focusDistrict ? t.refineBanner(pickingName, n(shortEn(focusDistrict), shortAr(focusDistrict))) : t.pickBanner(pickingName)}</span>
             <button
               type="button"
@@ -527,6 +617,7 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
               onClick={() => {
                 setPickingId(null);
                 setFocusDistrict(null);
+                if (mobile) setSnap('half');
               }}
             >
               {focusDistrict ? (locale === 'ar' ? 'تم' : 'OK') : t.cancel}
@@ -536,4 +627,5 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
       </main>
     </div>
   );
+
 }

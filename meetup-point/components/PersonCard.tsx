@@ -6,6 +6,7 @@ import PlaceSearch from './PlaceSearch';
 import type { District } from '@/lib/districts';
 import { useName, useT } from './LocaleProvider';
 import { shortAr, shortEn } from '@/lib/districts';
+import { Car, Footprints, TrainFront } from 'lucide-react';
 import { CUISINE_GROUPS } from '@/lib/cuisine';
 import { nearestStations, type Station } from '@/lib/metro';
 import { personInitial, displayName, personColor, personIssues, type PeopleAction, type Person, type TravelMode } from '@/lib/people';
@@ -34,9 +35,9 @@ export default function PersonCard({ person, index, canRemove, dispatch, station
   const district = person.districtId ? districts.find((d) => d.id === person.districtId) : undefined;
   const districtName = district ? n(shortEn(district), shortAr(district)) : '';
   const label = person.locationSource === 'district' && district ? t.districtCentre(districtName) : person.locationSource === 'pin' && district ? t.pinnedIn(districtName) : (person.address ?? t.pinnedOnMap);
-  const MODES: { mode: TravelMode; label: string; icon: string }[] = [
-    { mode: 'car', label: t.car, icon: '🚗' },
-    { mode: 'metro', label: t.metro, icon: '🚇' },
+  const MODES: { mode: TravelMode; label: string; icon: React.ReactNode }[] = [
+    { mode: 'car', label: t.car, icon: <Car size={15} className="inline" /> },
+    { mode: 'metro', label: t.metro, icon: <TrainFront size={15} className="inline" /> },
   ];
   const color = personColor(index);
   const issues = personIssues(person);
@@ -44,7 +45,7 @@ export default function PersonCard({ person, index, canRemove, dispatch, station
   const nameId = `name-${person.id}`;
 
   return (
-    <li className={`rounded-xl border bg-white p-3 shadow-sm transition ${picking ? 'border-brand ring-2 ring-brand/30' : 'border-slate-200'}`}>
+    <li className={`rounded-2xl border bg-white p-3 shadow-card transition ${picking ? 'border-brand ring-2 ring-brand/30' : 'border-sand-dark'}`}>
       <div className="flex items-center gap-2">
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style={{ background: color }} aria-hidden>
           {personInitial(person, index)}
@@ -73,7 +74,7 @@ export default function PersonCard({ person, index, canRemove, dispatch, station
         )}
       </div>
 
-      <div role="radiogroup" aria-label={t.modeLabel} className="mt-2 grid grid-cols-2 gap-1 rounded-lg bg-slate-100 p-1">
+      <div role="radiogroup" aria-label={t.modeLabel} className="mt-2 grid grid-cols-2 gap-1 rounded-xl bg-sand p-1">
         {MODES.map(({ mode, label, icon }) => (
           <button
             key={mode}
@@ -101,7 +102,8 @@ export default function PersonCard({ person, index, canRemove, dispatch, station
               onClick={() => dispatch({ type: 'setAccess', id: person.id, access: acc })}
               className={`rounded-full border px-2 py-0.5 ${(person.access ?? 'walk') === acc ? 'border-brand bg-brand-light text-brand-dark' : 'border-slate-300 text-slate-600'}`}
             >
-              {acc === 'walk' ? `🚶 ${t.accessWalk}` : `🚗 ${t.accessCar}`}
+              {acc === 'walk' ? <Footprints size={13} className="me-1 inline" /> : <Car size={13} className="me-1 inline" />}
+              {acc === 'walk' ? t.accessWalk : t.accessCar}
             </button>
           ))}
         </div>
@@ -112,7 +114,7 @@ export default function PersonCard({ person, index, canRemove, dispatch, station
           🍽 {t.tasteLabel}
           {(person.likes?.length || person.avoids?.length) ? <span className="ms-1 text-brand-dark">({(person.likes?.length ?? 0) + (person.avoids?.length ?? 0)})</span> : null}
         </summary>
-        <p className="mt-1 text-[11px] text-slate-400">{t.tasteHint}</p>
+        <p className="mt-1 text-xs text-slate-400">{t.tasteHint}</p>
         <div className="mt-1 flex flex-wrap gap-1">
           {CUISINE_GROUPS.map((g) => {
             const liked = person.likes?.includes(g);
@@ -185,7 +187,7 @@ export default function PersonCard({ person, index, canRemove, dispatch, station
 
         {issues.includes('missingLocation') && !picking && <p className="mt-1 text-xs text-amber-700">{t.missingLocation}</p>}
         {issues.includes('outsideRiyadh') && <p className="mt-1 text-xs text-amber-700">{t.outsideRiyadh}</p>}
-        {readOnly && <p className="mt-1 text-[11px] text-slate-400">🔒 {t.readOnlyPerson}</p>}
+        {readOnly && <p className="mt-1 text-xs text-slate-400">🔒 {t.readOnlyPerson}</p>}
         {nearest && (
           <p className="mt-1 text-xs text-slate-500">
             {t.nearestStation(n(nearest.station.name_en, nearest.station.name_ar), (nearest.meters / 1000).toFixed(1))}

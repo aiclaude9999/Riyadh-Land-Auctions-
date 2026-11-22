@@ -13,7 +13,7 @@ export default function SharePanel({ group, canShare }: { group: GroupApi; canSh
 
   if (!group.id) {
     return (
-      <div className="mx-4 mt-3 rounded-lg border border-brand/30 bg-brand-light/40 p-3 text-sm">
+      <div className="mx-4 mt-1 rounded-2xl border border-brand/20 bg-white p-3 text-sm shadow-card">
         <p className="font-semibold text-brand-dark">{t.shareTitle}</p>
         <p className="mt-0.5 text-xs text-slate-600">{t.shareIntro}</p>
         <button
@@ -45,7 +45,7 @@ export default function SharePanel({ group, canShare }: { group: GroupApi; canSh
   const expires = group.view ? new Date(group.view.expiresAt).toLocaleDateString(locale === 'ar' ? 'ar-SA-u-nu-latn' : 'en-GB', { day: 'numeric', month: 'long' }) : '';
 
   return (
-    <div className="mx-4 mt-3 space-y-2 rounded-lg border border-brand/30 bg-brand-light/40 p-3 text-sm">
+    <div className="mx-4 mt-1 space-y-2 rounded-2xl border border-brand/20 bg-white p-3 text-sm shadow-card">
       <div className="flex items-center justify-between gap-2">
         <p className="font-semibold text-brand-dark">{role}</p>
         <button type="button" onClick={group.leave} className="text-xs text-slate-500 hover:underline">

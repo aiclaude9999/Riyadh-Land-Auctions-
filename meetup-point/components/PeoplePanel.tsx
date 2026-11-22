@@ -36,7 +36,7 @@ export default function PeoplePanel({ state, dispatch, stations, pickingId, onPi
           type="button"
           onClick={() => (onAdd ? onAdd() : dispatch({ type: 'add' }))}
           disabled={people.length >= MAX_PEOPLE}
-          className="rounded-lg bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-dark disabled:cursor-not-allowed disabled:bg-slate-300"
+          className="rounded-xl bg-white px-3 py-1.5 text-sm font-semibold text-brand-dark shadow-card ring-1 ring-brand/30 hover:bg-brand-light disabled:cursor-not-allowed disabled:opacity-40"
         >
           + {addLabel ?? t.addPerson}
         </button>

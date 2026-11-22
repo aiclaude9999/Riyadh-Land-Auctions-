@@ -43,6 +43,9 @@ export default function FreeMap(props: MapViewProps) {
   const overlayRef = useRef<L.LayerGroup | null>(null);
   const venuesLayerRef = useRef<L.Layer | null>(null);
   const labelsFor = useVenueLabels();
+  // phone pull-up panel covers the bottom of the map: keep zooms and credits above it
+  const insetRef = useRef(0);
+  insetRef.current = props.insetBottom ?? 0;
   // latest callbacks without re-binding map listeners
   const cb = useRef(props);
   cb.current = props;
@@ -177,7 +180,7 @@ export default function FreeMap(props: MapViewProps) {
     const map = mapRef.current;
     if (!map || !resultsKey || !results.length) return;
     const pts = [...people.flatMap((p) => (p.location ? [[p.location.lat, p.location.lng] as [number, number]] : [])), ...results.map((r) => [r.venue.location.lat, r.venue.location.lng] as [number, number])];
-    map.fitBounds(L.latLngBounds(pts), { padding: [50, 50], maxZoom: 15 });
+    map.fitBounds(L.latLngBounds(pts), { paddingTopLeft: [50, 60], paddingBottomRight: [50, 50 + insetRef.current], maxZoom: 15 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resultsKey]);
 
@@ -255,7 +258,7 @@ export default function FreeMap(props: MapViewProps) {
     if (!map || !fitTo?.points.length) return;
     if (fitTo.points.length === 1) map.setView([fitTo.points[0].lat, fitTo.points[0].lng], 17, { animate: true });
     // extra room at the bottom for the route card
-    else map.fitBounds(L.latLngBounds(fitTo.points.map((p) => [p.lat, p.lng] as [number, number])), { paddingTopLeft: [50, 60], paddingBottomRight: [50, 130], maxZoom: 16, animate: true });
+    else map.fitBounds(L.latLngBounds(fitTo.points.map((p) => [p.lat, p.lng] as [number, number])), { paddingTopLeft: [50, 60], paddingBottomRight: [50, 60 + (insetRef.current || 70)], maxZoom: 16, animate: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fitTo?.key]);
 
@@ -268,10 +271,15 @@ export default function FreeMap(props: MapViewProps) {
   return (
     <>
       {/* Leaflet expects a left-to-right container even when the page is Arabic */}
-      <div ref={el} dir="ltr" className="h-full w-full" />
+      <div ref={el} dir="ltr" className="h-full w-full" style={{ ['--inset-bottom' as string]: `${props.insetBottom ?? 0}px` }} />
       {/* the map is always left-to-right: keep controls on the right, away from the zoom buttons */}
       <MapToggles {...props} />
-      <p className="pointer-events-none absolute bottom-6 left-2 z-[1000] max-w-[70%] rounded bg-white/80 px-1.5 text-[10px] leading-tight text-slate-600">{t.mapCredits}</p>
+      <details style={{ bottom: (props.insetBottom ?? 0) + 24 }} className="absolute left-2 z-[1000] max-w-[75%] text-xs text-ink-soft">
+        <summary className="inline-flex h-6 w-6 cursor-pointer list-none items-center justify-center rounded-full bg-white/90 shadow-card" aria-label="credits">
+          ⓘ
+        </summary>
+        <p className="mt-1 rounded-lg bg-white/95 p-2 leading-tight shadow-card">{t.mapCredits}</p>
+      </details>
     </>
   );
 }

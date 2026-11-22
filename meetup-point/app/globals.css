@@ -7,5 +7,18 @@ body {
   height: 100%;
 }
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply bg-sand text-ink antialiased;
+}
+/* tidy scrollbars for the sideways place carousel */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+/* the phone's pull-up panel covers the map bottom: lift Leaflet's corner controls (zoom, credits) above it */
+.leaflet-bottom {
+  bottom: var(--inset-bottom, 0px);
+  transition: bottom 220ms ease;
 }

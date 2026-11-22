@@ -46,6 +46,8 @@ export interface MapViewProps {
   onToggleAllVenues: () => void;
   /** undefined = picking not allowed (e.g. a friend in a shared group) */
   onPickVenue?: (v: Venue) => void;
+  /** px hidden at the bottom by the phone's pull-up panel (keep routes and credits above it) */
+  insetBottom?: number;
 }
 
 /** Pop-up for a place on the "all places" layer (built as DOM so the button can call back). */
@@ -103,6 +105,8 @@ export function venueMarkerHtml(rank: number, selected: boolean): string {
 }
 
 /** Google map: draw overlays (routes with a white casing, dots, areas) and zoom to the current target. */
+const insetBottomRef: { current: number } = { current: 0 };
+
 function GoogleOverlays({ overlays, fitTo }: Pick<MapViewProps, 'overlays' | 'fitTo'>) {
   const map = useMap();
   useEffect(() => {
@@ -126,7 +130,7 @@ function GoogleOverlays({ overlays, fitTo }: Pick<MapViewProps, 'overlays' | 'fi
     }
     const b = new google.maps.LatLngBounds();
     fitTo.points.forEach((p) => b.extend(p));
-    map.fitBounds(b, { top: 60, left: 50, right: 50, bottom: 130 });
+    map.fitBounds(b, { top: 60, left: 50, right: 50, bottom: 130 + (insetBottomRef.current ?? 0) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, fitTo?.key]);
   return null;
@@ -239,6 +243,7 @@ export function MapToggles(props: Pick<MapViewProps, 'showMetro' | 'onToggleMetr
 export default function MeetupMap(props: MapViewProps) {
   const t = useT();
   const labelsFor = useVenueLabels();
+  insetBottomRef.current = props.insetBottom ?? 0;
   if (!BROWSER_KEY) return <FreeMap {...props} />;
 
   const { people, pickingId } = props;
@@ -299,7 +304,7 @@ export default function MeetupMap(props: MapViewProps) {
       </Map>
 
       <MapToggles {...props} />
-      <p className="pointer-events-none absolute bottom-6 left-2 z-10 rounded bg-white/80 px-1.5 text-[10px] text-slate-600">{t.metroAttribution}</p>
+      <p className="pointer-events-none absolute bottom-6 left-2 z-10 rounded bg-white/80 px-1.5 text-xs text-slate-600">{t.metroAttribution}</p>
     </APIProvider>
   );
 }

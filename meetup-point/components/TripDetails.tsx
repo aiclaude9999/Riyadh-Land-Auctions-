@@ -139,7 +139,7 @@ export default function TripDetails({ eta, from, to, route, onShowRoute, onZoom 
         >
           🧭 {t.directions} ↗
         </a>
-        <span className="text-[11px] text-slate-400">{t.stepHint}</span>
+        <span className="text-xs text-slate-400">{t.stepHint}</span>
       </div>
     </div>
   );
