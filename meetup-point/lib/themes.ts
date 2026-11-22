@@ -1,7 +1,9 @@
 /**
  * Colour themes: the default Riyadh green plus the colours of popular Saudi clubs.
- * Colours only: official club logos are registered trademarks and are not included.
- * If a club gives written permission, put its logo at public/clubs/<id>.png and set `logo: true`.
+ * Logos (public/clubs/<id>.webp, 128 px) were taken from the clubs' pages on the Saudi Pro League site
+ * (spl.com.sa) and, for Al Raed, from Wikipedia. They are the clubs' registered trademarks, used here
+ * without a licence at the owner's request: fine for a private prototype; get permission before
+ * publishing or earning money from the app, or set `logo` to false to fall back to the plain shield.
  * Colours are approximate kit colours; `brand` carries white text, so it must stay dark enough (tests check it).
  */
 export interface Theme {
@@ -16,6 +18,7 @@ export interface Theme {
   light: string;
   /** second club colour (badge) */
   accent: string;
+  /** show public/clubs/<id>.webp instead of the plain shield */
   logo?: boolean;
 }
 
@@ -24,17 +27,17 @@ export const THEME_COOKIE = 'theme';
 
 export const THEMES: Theme[] = [
   { id: 'riyadh', en: 'Riyadh green (default)', ar: 'أخضر الرياض (الافتراضي)', initial: { en: 'R', ar: 'ر' }, brand: '#1F6F5C', dark: '#17574A', light: '#E1F0EA', accent: '#F6F0E6' },
-  { id: 'hilal', en: 'Al Hilal', ar: 'الهلال', initial: { en: 'H', ar: 'هـ' }, brand: '#1D4FA0', dark: '#163D7C', light: '#E3ECF9', accent: '#FFFFFF' },
-  { id: 'nassr', en: 'Al Nassr', ar: 'النصر', initial: { en: 'N', ar: 'ن' }, brand: '#1B2D5C', dark: '#121F44', light: '#FFF4C7', accent: '#FFD100' },
-  { id: 'ittihad', en: 'Al Ittihad', ar: 'الاتحاد', initial: { en: 'I', ar: 'ا' }, brand: '#1A1A1A', dark: '#000000', light: '#FFF4C2', accent: '#FFCC00' },
-  { id: 'ahli', en: 'Al Ahli', ar: 'الأهلي', initial: { en: 'A', ar: 'أ' }, brand: '#00703C', dark: '#005A30', light: '#DCF2E5', accent: '#FFFFFF' },
-  { id: 'shabab', en: 'Al Shabab', ar: 'الشباب', initial: { en: 'S', ar: 'ش' }, brand: '#3A3A3A', dark: '#1E1E1E', light: '#ECECEC', accent: '#FFFFFF' },
-  { id: 'ettifaq', en: 'Al Ettifaq', ar: 'الاتفاق', initial: { en: 'E', ar: 'ت' }, brand: '#0A7438', dark: '#07592B', light: '#FDE3E3', accent: '#D71920' },
-  { id: 'qadsiah', en: 'Al Qadsiah', ar: 'القادسية', initial: { en: 'Q', ar: 'ق' }, brand: '#C8102E', dark: '#A10D25', light: '#FFF1C9', accent: '#F5B400' },
-  { id: 'taawoun', en: 'Al Taawoun', ar: 'التعاون', initial: { en: 'T', ar: 'ت' }, brand: '#2A2A2A', dark: '#141414', light: '#FFF2BF', accent: '#F9C80E' },
-  { id: 'fateh', en: 'Al Fateh', ar: 'الفتح', initial: { en: 'F', ar: 'ف' }, brand: '#1565C0', dark: '#0F4C94', light: '#E2EEFB', accent: '#FFFFFF' },
-  { id: 'raed', en: 'Al Raed', ar: 'الرائد', initial: { en: 'R', ar: 'ر' }, brand: '#B3121F', dark: '#8E0E18', light: '#F4E1E2', accent: '#1A1A1A' },
-  { id: 'fayha', en: 'Al Fayha', ar: 'الفيحاء', initial: { en: 'F', ar: 'ف' }, brand: '#C2410C', dark: '#9A3412', light: '#FFEBDD', accent: '#1E3A8A' },
+  { id: 'hilal', en: 'Al Hilal', ar: 'الهلال', initial: { en: 'H', ar: 'هـ' }, brand: '#1D4FA0', dark: '#163D7C', light: '#E3ECF9', accent: '#FFFFFF', logo: true },
+  { id: 'nassr', en: 'Al Nassr', ar: 'النصر', initial: { en: 'N', ar: 'ن' }, brand: '#1B2D5C', dark: '#121F44', light: '#FFF4C7', accent: '#FFD100', logo: true },
+  { id: 'ittihad', en: 'Al Ittihad', ar: 'الاتحاد', initial: { en: 'I', ar: 'ا' }, brand: '#1A1A1A', dark: '#000000', light: '#FFF4C2', accent: '#FFCC00', logo: true },
+  { id: 'ahli', en: 'Al Ahli', ar: 'الأهلي', initial: { en: 'A', ar: 'أ' }, brand: '#00703C', dark: '#005A30', light: '#DCF2E5', accent: '#FFFFFF', logo: true },
+  { id: 'shabab', en: 'Al Shabab', ar: 'الشباب', initial: { en: 'S', ar: 'ش' }, brand: '#3A3A3A', dark: '#1E1E1E', light: '#ECECEC', accent: '#FFFFFF', logo: true },
+  { id: 'ettifaq', en: 'Al Ettifaq', ar: 'الاتفاق', initial: { en: 'E', ar: 'ت' }, brand: '#0A7438', dark: '#07592B', light: '#FDE3E3', accent: '#D71920', logo: true },
+  { id: 'qadsiah', en: 'Al Qadsiah', ar: 'القادسية', initial: { en: 'Q', ar: 'ق' }, brand: '#C8102E', dark: '#A10D25', light: '#FFF1C9', accent: '#F5B400', logo: true },
+  { id: 'taawoun', en: 'Al Taawoun', ar: 'التعاون', initial: { en: 'T', ar: 'ت' }, brand: '#0B2A6F', dark: '#071D4F', light: '#FFF4C7', accent: '#F9C80E', logo: true },
+  { id: 'fateh', en: 'Al Fateh', ar: 'الفتح', initial: { en: 'F', ar: 'ف' }, brand: '#0039C6', dark: '#002C99', light: '#DDF7E3', accent: '#00C853', logo: true },
+  { id: 'raed', en: 'Al Raed', ar: 'الرائد', initial: { en: 'R', ar: 'ر' }, brand: '#B3121F', dark: '#8E0E18', light: '#F4E1E2', accent: '#1A1A1A', logo: true },
+  { id: 'fayha', en: 'Al Fayha', ar: 'الفيحاء', initial: { en: 'F', ar: 'ف' }, brand: '#C2410C', dark: '#9A3412', light: '#FFEBDD', accent: '#1E3A8A', logo: true },
 ];
 
 export const themeById = (id: string | undefined): Theme => THEMES.find((t) => t.id === id) ?? THEMES[0];
@@ -67,4 +70,5 @@ export function applyTheme(id: string) {
   for (const [k, v] of Object.entries(themeVars(t))) root.style.setProperty(k, v);
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', t.brand);
   document.cookie = `${THEME_COOKIE}=${t.id}; path=/; max-age=31536000; samesite=lax`;
+  window.dispatchEvent(new CustomEvent('themechange', { detail: t.id }));
 }

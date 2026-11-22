@@ -4,7 +4,8 @@ import type { Theme } from '@/lib/themes';
 /** Shield in the club's colours with its initial (not the official logo). The default theme shows the app logo. */
 export default function ClubBadge({ theme, locale, size = 36 }: { theme: Theme; locale: 'en' | 'ar'; size?: number }) {
   if (theme.id === 'riyadh') return <Logo size={size} color={theme.brand} />;
-  if (theme.logo) return <img src={`/clubs/${theme.id}.png`} alt="" width={size} height={size} className="object-contain" />;
+  // eslint-disable-next-line @next/next/no-img-element
+  if (theme.logo) return <img src={`/clubs/${theme.id}.webp`} alt="" width={size} height={size} className="shrink-0 object-contain" style={{ width: size, height: size }} />;
   return (
     <svg width={size} height={size} viewBox="0 0 40 44" aria-hidden>
       <path d="M20 2 L37 8 V22 C37 32 29 39 20 42 C11 39 3 32 3 22 V8 Z" fill={theme.brand} stroke={theme.accent} strokeWidth="3" />

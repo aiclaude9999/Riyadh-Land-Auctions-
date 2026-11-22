@@ -8,6 +8,7 @@ import MeetupMap from './MeetupMap';
 import PeoplePanel from './PeoplePanel';
 import PrefsPanel from './PrefsPanel';
 import ResultsList from './ResultsList';
+import ClubMark from './ClubMark';
 import BottomSheet, { sheetPx, useIsMobile, type Snap } from './BottomSheet';
 import InstallButton from './InstallButton';
 import Logo from './Logo';
@@ -359,6 +360,7 @@ export default function MeetupApp({ stations, lines, districts }: { stations: St
     <div className="shrink-0 px-4 pb-2 pt-1 md:pt-4">
       <div className="flex items-center gap-2">
         <Logo size={mobile ? 28 : 34} />
+        <ClubMark size={mobile ? 28 : 34} />
         <div className="min-w-0 flex-1">
           <h1 className={`truncate font-bold text-ink md:text-lg ${mobile ? 'sr-only' : 'text-base'}`}>{t.appTitle}</h1>
           <p className="hidden truncate text-xs text-ink-soft md:block">{t.appTagline}</p>
