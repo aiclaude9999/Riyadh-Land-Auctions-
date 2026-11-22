@@ -56,10 +56,10 @@ function MetroSteps({ legs, from, to, onZoom }: { legs: MetroLeg[]; from: LatLng
   for (const l of legs) {
     if (l.kind === 'walk') {
       if (walkAll) items.push({ icon: '🚶', text: t.stepWalkAll(fmt(l.minutes)), zoom: [from, to] });
-      else if (l.to === 'station') items.push({ icon: '🚶', text: t.stepWalkToStation(fmt(l.minutes), n(l.station ?? '', l.stationAr)), zoom: [from, rides[0].path[0]] });
+      else if (l.to === 'station') items.push({ icon: '🚶', text: t.stepWalkToStation(fmt(l.minutes), n(l.station ?? '', l.stationAr)), zoom: rides[0] ? [from, rides[0].path[0]] : [from] });
       else items.push({ icon: '🚶', text: t.stepWalkToVenue(fmt(l.minutes)), zoom: lastRideEnd ? [lastRideEnd, to] : [to] });
     } else if (l.kind === 'drive') {
-      items.push({ icon: '🚗', text: t.stepDriveToStation(fmt(l.minutes), n(l.station, l.stationAr)), zoom: [from, rides[0].path[0]] });
+      items.push({ icon: '🚗', text: t.stepDriveToStation(fmt(l.minutes), n(l.station, l.stationAr)), zoom: rides[0] ? [from, rides[0].path[0]] : [from] });
     } else if (l.kind === 'wait') {
       items.push({ icon: '⏱', text: t.stepWait(fmt(l.minutes)), zoom: rides[0] ? [rides[0].path[0]] : undefined });
     } else if (l.kind === 'transfer') {

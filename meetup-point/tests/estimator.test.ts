@@ -116,3 +116,15 @@ describe('reaching the station by car', () => {
     expect(car.walkMinutes).toBeLessThan(walk.walkMinutes);
   });
 });
+
+describe('car/taxi to the station never produces a trip without a train ride', () => {
+  it('every non-walking metro trip has at least one ride', () => {
+    const est = createMetroEstimator(real, { access: 'car' });
+    const from = real.find((s) => /Malaz/.test(s.name_en))!.position;
+    for (const s of real) {
+      const dest = { lat: s.position.lat + 0.001, lng: s.position.lng + 0.001 };
+      const r = est.from(from)(dest);
+      if (!r.walkOnly) expect(r.legs.some((l) => l.kind === 'ride')).toBe(true);
+    }
+  });
+});

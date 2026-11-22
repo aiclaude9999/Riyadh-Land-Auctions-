@@ -223,7 +223,8 @@ export function createMetroEstimator(stations: Station[], params: Partial<MetroP
           const walkOut = walkMinutes(station.position, dest, p);
           for (const node of g.byStation.get(station.id) ?? []) {
             const l = best[node];
-            if (!l) continue;
+            // a metro trip must ride at least one stop (getting on and off at the same station is not a trip)
+            if (!l || l.stations === 0) continue;
             const total = l.min + walkOut;
             if (total < result.minutes) {
               result = {
