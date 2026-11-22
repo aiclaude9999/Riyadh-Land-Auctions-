@@ -74,7 +74,7 @@ export default function MarketPage() {
                   <td className="num whitespace-nowrap">{fmtArea(x.areaSqm) ?? '—'}</td>
                   <td className="num whitespace-nowrap">{fmtMoney(x.finalPrice) ?? '—'}<div className="muted text-xs">{x.priceKind === 'sold' ? 'سعر الترسية' : 'آخر سعر ظاهر'}</div></td>
                   <td className="num whitespace-nowrap">{n(x.ppm)}</td>
-                  <td className="text-xs">{x.insights?.verdict ? `${VERDICT[x.insights.verdict as 'below'].dot} ${Math.round(x.insights.diffPct * 100)}%` : '—'}</td>
+                  <td className="text-xs">{x.insights?.verdict ? <><span style={{ color: VERDICT[x.insights.verdict as 'below'].color }}>●</span> <span className="num">{Math.round(x.insights.diffPct * 100)}%</span></> : '—'}</td>
                   <td className="num whitespace-nowrap text-xs">{formatRiyadh(x.listing.auction.endAt)}</td>
                 </tr>
               ))}

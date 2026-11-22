@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { Countdown } from './Countdown';
 import { Cover } from './Cover';
+import { Icon } from './Icon';
 import { STATUS_STYLE, catLabel, fmtArea, fmtMoney, formatRiyadh, statusLabel, usageLabel } from './format';
 
 export interface AuctionItem {
@@ -24,7 +25,7 @@ export function AuctionCard({ a, sourceNames, onToggleSave }: { a: AuctionItem; 
     <div className="flex items-baseline justify-between gap-2"><span className="muted">{k}</span><span className={`num ${strong ? 'text-[15px] font-bold' : ''}`}>{v}</span></div>
   );
   return (
-    <article className="card flex flex-col overflow-hidden transition-colors hover:border-[var(--border-strong)]">
+    <article className="card lift flex flex-col overflow-hidden">
       <Link href={`/auctions/${a.id}`} className="relative block">
         <Cover src={img} ratio="aspect-[16/9]"
           figure={a.hasLand && a.landAreaSqm ? fmtArea(a.landAreaSqm) : null}
@@ -40,8 +41,8 @@ export function AuctionCard({ a, sourceNames, onToggleSave }: { a: AuctionItem; 
           <Link href={`/auctions/${a.id}`} className="line-clamp-2 text-[15px] font-bold leading-snug hover:text-[var(--accent)]">{a.title}</Link>
           {onToggleSave && (
             <button onClick={() => onToggleSave(a)} aria-label={a.saved ? 'إزالة من المحفوظة' : 'حفظ المزاد'} aria-pressed={!!a.saved}
-              className={`-m-1 rounded-md p-1 text-xl leading-none transition-colors ${a.saved ? 'text-[var(--accent)]' : 'muted hover:text-[var(--text)]'}`}>
-              {a.saved ? '★' : '☆'}
+              className={`press -m-1 rounded-md p-1 transition-colors ${a.saved ? 'text-[var(--accent)]' : 'muted hover:text-[var(--text)]'}`}>
+              <Icon name="star" size={20} fill={!!a.saved} />
             </button>
           )}
         </div>

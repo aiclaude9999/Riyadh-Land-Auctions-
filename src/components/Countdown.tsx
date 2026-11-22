@@ -23,7 +23,7 @@ export function Countdown({ to, compact }: { to: string; compact?: boolean }) {
   const urgent = ms < 3_600_000;
   const pad = (n: number) => String(n).padStart(2, '0');
   return (
-    <span className={`num font-semibold ${urgent ? 'text-red-600' : 'text-brand-600'} ${compact ? 'text-sm' : 'text-base'}`}>
+    <span className={`num font-semibold ${urgent ? 'text-[var(--danger)]' : 'text-[var(--accent)]'} ${compact ? 'text-sm' : 'text-base'}`}>
       {d > 0 && <span>{d} يوم </span>}
       <span dir="ltr">{pad(h)}:{pad(m)}:{pad(sec)}</span>
     </span>

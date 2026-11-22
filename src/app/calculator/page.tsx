@@ -1,6 +1,7 @@
 'use client';
 import { Suspense, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { Icon } from '@/components/Icon';
 
 const sar = (n: number) => (isFinite(n) ? Math.round(n).toLocaleString('en-US') : '—');
 const numOf = (s: string) => {
@@ -55,9 +56,20 @@ function Calculator() {
       {hint && <span className="muted text-xs">{hint}</span>}
     </label>
   );
-  const row = (k: string, v: string, strong = false) => (
-    <div className={`flex justify-between gap-3 border-b border-[var(--border)] py-1.5 ${strong ? 'font-bold' : ''}`}><span className={strong ? '' : 'muted'}>{k}</span><span className="num">{v}</span></div>
+  const line = (k: string, v: string, hint?: string) => (
+    <div className="flex items-baseline justify-between gap-3 py-1.5">
+      <span className="muted">{k}{hint && <span className="block text-[11px]">{hint}</span>}</span>
+      <span className="num font-semibold">{v}</span>
+    </div>
   );
+  const big = (label: string, v: string, sub?: string, accent = false) => (
+    <div className={`rounded-xl px-4 py-3 ${accent ? 'bg-[var(--accent)] text-[var(--accent-ink)]' : 'bg-[var(--sunk)]'}`}>
+      <div className={`text-xs font-semibold ${accent ? 'opacity-80' : 'muted'}`}>{label}</div>
+      <div className="num text-[28px] font-bold leading-tight tracking-tight">{v} <span className="text-sm font-semibold opacity-70">ريال</span></div>
+      {sub && <div className={`text-xs ${accent ? 'opacity-80' : 'muted'}`}>{sub}</div>}
+    </div>
+  );
+  const pctOf = (x: number) => (r.p ? ` (${((x / r.p) * 100).toFixed(2).replace(/\.?0+$/, '')}%)` : '');
 
   return (
     <div className="space-y-4">
@@ -65,49 +77,73 @@ function Calculator() {
         <h1 className="text-2xl font-bold">حاسبة المزايدة</h1>
         <p className="muted text-sm">كم يكلفك سعر الترسية فعلياً؟ النسب الافتراضية شائعة في المزادات العقارية — راجع كراسة شروط كل مزاد.</p>
       </div>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="card grid grid-cols-1 gap-3 p-4 sm:grid-cols-2">
-          {field('calc-price', 'سعر الترسية (المزايدة)', price, setPrice, 'ريال')}
-          {field('calc-area', 'المساحة', area, setArea, 'م²')}
-          {field('calc-deposit', 'العربون / مبلغ الدخول', deposit, setDeposit, 'ريال', 'يُخصم من المبلغ المطلوب أو يُسترد إن لم تفز')}
-          {field('calc-bench', 'سعر متر الحي (للمقارنة)', bench, setBench, 'ريال/م²', 'يُملأ تلقائياً من صفحة العقار إن توفر')}
-          {field('calc-commission', 'السعي (عمولة شركة المزاد)', commission, setCommission, '%')}
-          {field('calc-vat', 'ضريبة القيمة المضافة على السعي', vat, setVat, '%')}
-          {field('calc-rett', 'ضريبة التصرفات العقارية', rett, setRett, '%')}
-          {field('calc-wl', 'رسوم الأراضي البيضاء (إن وجدت)', whiteLand, setWhiteLand, '% سنوياً', '0 إذا لا تنطبق؛ 2.5% إلى 10% حسب النطاق')}
-        </div>
-        <div className="card space-y-1 p-4 text-sm">
-          {row('سعر الترسية', sar(r.p))}
-          {row('السعي', sar(r.com))}
-          {row('ضريبة القيمة المضافة على السعي', sar(r.comVat))}
-          {row('ضريبة التصرفات العقارية', sar(r.tax))}
-          {row('الإجمالي المطلوب', sar(r.total), true)}
-          {r.d > 0 && row('بعد خصم العربون', sar(r.rest))}
-          {r.a > 0 && row('سعر المتر (الترسية)', sar(r.ppm))}
-          {r.a > 0 && row('سعر المتر شاملاً التكاليف', sar(r.totalPpm))}
-          {r.yearlyFee > 0 && row('رسوم أراضٍ بيضاء تقديرية سنوياً', sar(r.yearlyFee))}
-          {isFinite(r.maxBid) && (
-            <div className="mt-3 rounded-lg bg-brand-50 p-3 dark:bg-brand-900/40">
-              💡 حد أعلى مقترح للمزايدة حسب سعر الحي: <b className="num">{sar(r.maxBid)}</b> ريال
-              <div className="muted text-xs">= سعر متر الحي × المساحة ÷ (1 + التكاليف). سعر ترسية أعلى منه يعني دفع أكثر من وسيط الحي.</div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+        <div className="space-y-4 lg:col-span-3">
+          <section className="card space-y-3 p-4">
+            <h2 className="font-bold">المزاد</h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {field('calc-price', 'سعر الترسية (المزايدة)', price, setPrice, 'ريال')}
+              {field('calc-area', 'المساحة', area, setArea, 'م²')}
+              {field('calc-deposit', 'العربون / مبلغ الدخول', deposit, setDeposit, 'ريال', 'يُخصم من المبلغ المطلوب أو يُسترد إن لم تفز')}
+              {field('calc-bench', 'سعر متر الحي (للمقارنة)', bench, setBench, 'ريال/م²', 'يُملأ تلقائياً من صفحة العقار إن توفر')}
             </div>
-          )}
-          <div className="mt-4 space-y-2 border-t border-[var(--border)] pt-3">
-            <b>التمويل (اختياري)</b>
+          </section>
+          <section className="card space-y-3 p-4">
+            <h2 className="font-bold">الرسوم والضرائب</h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {field('calc-commission', 'السعي (عمولة شركة المزاد)', commission, setCommission, '%')}
+              {field('calc-vat', 'ضريبة القيمة المضافة على السعي', vat, setVat, '%')}
+              {field('calc-rett', 'ضريبة التصرفات العقارية', rett, setRett, '%')}
+              {field('calc-wl', 'رسوم الأراضي البيضاء (إن وجدت)', whiteLand, setWhiteLand, '% سنوياً', '0 إذا لا تنطبق؛ 2.5% إلى 10% حسب النطاق')}
+            </div>
+          </section>
+          <section className="card space-y-3 p-4">
+            <h2 className="font-bold">التمويل (اختياري)</h2>
             <div className="grid grid-cols-3 gap-2">
               {field('fin-down', 'الدفعة الأولى', downPct, setDownPct, '%')}
               {field('fin-rate', 'نسبة الربح السنوية', rate, setRate, '%')}
               {field('fin-years', 'المدة', years, setYears, 'سنة')}
             </div>
-            {row('الدفعة الأولى', sar(fin.down))}
-            {row('مبلغ التمويل', sar(fin.loan))}
-            {row('القسط الشهري التقريبي', sar(fin.monthly), true)}
-            {row('إجمالي الأرباح على المدة', sar(fin.interest))}
-            {row('النقد المطلوب عند الترسية (الدفعة + التكاليف)', sar(fin.cashNeeded), true)}
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {big('القسط الشهري التقريبي', sar(fin.monthly))}
+              {big('النقد المطلوب عند الترسية', sar(fin.cashNeeded), 'الدفعة الأولى + التكاليف')}
+            </div>
+            <div className="divide-y divide-[var(--border)] text-sm">
+              {line('الدفعة الأولى', sar(fin.down))}
+              {line('مبلغ التمويل', sar(fin.loan))}
+              {line('إجمالي الأرباح على المدة', sar(fin.interest))}
+            </div>
             <p className="muted text-xs">حساب تقريبي بقسط ثابت (طريقة التمويل العقاري الشائعة). العرض الفعلي يحدده البنك.</p>
-          </div>
-          <p className="muted pt-2 text-xs">الأرقام تقديرية. تحقق من النسب في كراسة الشروط، ومن رسوم الأراضي البيضاء عبر idlelands.momah.gov.sa أو 920022440.</p>
+          </section>
         </div>
+
+        {/* the receipt: what you will actually pay, largest first */}
+        <aside className="lg:col-span-2">
+          <div className="card sticky top-24 space-y-3 p-4" aria-live="polite">
+            <h2 className="font-bold">الفاتورة التقديرية</h2>
+            {big('الإجمالي المطلوب', sar(r.total), r.d > 0 ? `بعد خصم العربون: ${sar(r.rest)} ريال` : undefined, true)}
+            <div className="divide-y divide-[var(--border)] text-sm">
+              {line('سعر الترسية', sar(r.p))}
+              {line(`السعي${pctOf(r.com)}`, sar(r.com))}
+              {line('ضريبة القيمة المضافة على السعي', sar(r.comVat))}
+              {line(`ضريبة التصرفات العقارية${pctOf(r.tax)}`, sar(r.tax))}
+              {r.a > 0 && line('سعر المتر (الترسية)', sar(r.ppm))}
+              {r.a > 0 && line('سعر المتر شاملاً التكاليف', sar(r.totalPpm))}
+              {r.yearlyFee > 0 && line('رسوم أراضٍ بيضاء تقديرية سنوياً', sar(r.yearlyFee))}
+            </div>
+            {isFinite(r.maxBid) ? (
+              <div className="rounded-xl border-2 border-[var(--accent)] px-4 py-3">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--accent)]"><Icon name="target" size={15} />حد أعلى مقترح للمزايدة</div>
+                <div className="num text-[26px] font-bold leading-tight">{sar(r.maxBid)} <span className="text-sm font-semibold opacity-70">ريال</span></div>
+                <div className="muted text-xs">= سعر متر الحي × المساحة ÷ (1 + التكاليف). أعلى منه يعني دفع أكثر من وسيط الحي.</div>
+                {r.p > 0 && <div className={`mt-1 text-xs font-semibold ${r.p > r.maxBid ? 'text-[var(--danger)]' : 'text-[var(--accent)]'}`}>{r.p > r.maxBid ? `سعرك أعلى من الحد بـ ${sar(r.p - r.maxBid)} ريال` : `سعرك أقل من الحد بـ ${sar(r.maxBid - r.p)} ريال`}</div>}
+              </div>
+            ) : (
+              <p className="muted rounded-lg bg-[var(--sunk)] p-3 text-xs">أدخل المساحة وسعر متر الحي لحساب حد أعلى مقترح للمزايدة.</p>
+            )}
+            <p className="muted text-xs">الأرقام تقديرية. تحقق من النسب في كراسة الشروط، ومن رسوم الأراضي البيضاء عبر idlelands.momah.gov.sa أو 920022440.</p>
+          </div>
+        </aside>
       </div>
     </div>
   );

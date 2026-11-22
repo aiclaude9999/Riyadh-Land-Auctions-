@@ -10,7 +10,7 @@ const thisMonth = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia
 
 interface Item { id: string; title: string; status: string; startAt: string | null; endAt: string | null; hasLand: boolean; saved: { id: string } | null }
 
-/** Month view: which auctions open (🟢) and close (🔴) on each day. */
+/** Month view: which auctions open (green) and close (red) on each day. */
 export default function CalendarPage() {
   const [month, setMonth] = useState(thisMonth());
   const [geo, setGeo] = useState('riyadh_city');
@@ -45,7 +45,7 @@ export default function CalendarPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">تقويم المزادات</h1>
-          <p className="muted text-sm">🟢 يفتح · 🔴 يغلق (بتوقيت الرياض). اضغط على يوم لعرض مزاداته.</p>
+          <p className="muted text-sm"><span className="text-[var(--accent)]">●</span> يفتح · <span className="text-[var(--danger)]">●</span> يغلق (بتوقيت الرياض). اضغط على يوم لعرض مزاداته.</p>
         </div>
         <div className="seg flex-wrap">
           {[['riyadh_city', 'مدينة الرياض'], ['riyadh_region', 'منطقة الرياض'], ['all', 'كل المملكة']].map(([v, l]) => (
@@ -67,18 +67,18 @@ export default function CalendarPage() {
             return (
               <button key={k} onClick={() => setDay(k)} className={`min-h-[64px] rounded-lg border p-1 text-right align-top ${day === k ? 'border-brand-600 bg-brand-50 dark:bg-brand-900/40' : 'border-[var(--border)]'} ${k === today ? 'ring-1 ring-brand-600' : ''}`}>
                 <div className="num font-semibold">{Number(k.slice(8))}</div>
-                {e?.open.length ? <div className="num">🟢 {e.open.length}</div> : null}
-                {e?.close.length ? <div className="num">🔴 {e.close.length}</div> : null}
+                {e?.open.length ? <div className="num"><span className="text-[var(--accent)]">●</span> {e.open.length}</div> : null}
+                {e?.close.length ? <div className="num"><span className="text-[var(--danger)]">●</span> {e.close.length}</div> : null}
               </button>
             );
           })}
         </div>
       </div>
-      {!items && <div className="muted text-sm">جاري التحميل…</div>}
+      {!items && <div className="skeleton h-64" role="status" aria-label="جاري التحميل" />}
       {sel && (
         <div className="card space-y-3 p-4 text-sm">
           <h2 className="font-semibold">{Number(day!.slice(8))} {MONTHS[mo - 1]}</h2>
-          {[['🟢 تفتح', sel.open], ['🔴 تغلق', sel.close]].map(([label, list]) => (list as Item[]).length > 0 && (
+          {[['تفتح', sel.open], ['تغلق', sel.close]].map(([label, list]) => (list as Item[]).length > 0 && (
             <div key={label as string}>
               <div className="mb-1 font-semibold">{label as string} ({(list as Item[]).length})</div>
               <ul className="space-y-1">

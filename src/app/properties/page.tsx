@@ -1,6 +1,8 @@
 'use client';
 import Link from 'next/link';
 import { Cover } from '@/components/Cover';
+import { GridSkeleton } from '@/components/Skeleton';
+import { PriceMark } from '@/components/AssetInsights';
 import { useEffect, useMemo, useState } from 'react';
 import { CompareBar, useCompare } from '@/components/compare';
 import { Countdown } from '@/components/Countdown';
@@ -89,15 +91,18 @@ export default function PropertiesPage() {
       <div className="muted text-sm">{data ? <><span className="num font-semibold text-[var(--text)]">{data.total}</span> عقار</> : 'جاري التحميل…'}</div>
 
       {data?.items.length === 0 && <div className="card muted p-10 text-center">لا توجد عقارات مطابقة — جرّب توسيع النطاق أو تغيير الفلاتر.</div>}
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+      {!data && <GridSkeleton n={6} cover="aspect-[3/1] md:aspect-[21/9]" className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3" />}
+      <div key={`${geo}|${type}|${page}`} className="rise-list grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         {data?.items.map((x: any) => {
           const a = x.listing.auction;
           const img = x.images?.[0];
           return (
-            <article key={x.id} className="card flex flex-col overflow-hidden transition-colors hover:border-[var(--border-strong)]">
+            <article key={x.id} className="card lift flex flex-col overflow-hidden">
               <Link href={`/auctions/${a.id}`} className="block" tabIndex={-1} aria-hidden="true">
                 <Cover src={img} ratio="aspect-[3/1] md:aspect-[21/9]" figure={fmtArea(x.areaSqm)}
-                  caption={[propertyLabel(x.propertyType) === '—' ? null : propertyLabel(x.propertyType), x.district && `حي ${x.district.replace(/^حي\s+/, '')}`].filter(Boolean).join(' · ') || null} />
+                  caption={[propertyLabel(x.propertyType) === '—' ? null : propertyLabel(x.propertyType), x.district && `حي ${x.district.replace(/^حي\s+/, '')}`].filter(Boolean).join(' · ') || null}>
+                  {x.insights?.verdict && <PriceMark verdict={x.insights.verdict} diff={x.insights.diffPct} />}
+                </Cover>
               </Link>
               <div className="flex min-w-0 flex-1 flex-col gap-2 p-3 text-xs">
                 <div className="flex items-center justify-between gap-2">

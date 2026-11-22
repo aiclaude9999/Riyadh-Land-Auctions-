@@ -5,6 +5,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { fmtArea, fmtMoney, formatRiyadh, propertyLabel, statusLabel, usageLabel } from './format';
 import type { DealsData, DistrictDeals } from '@/lib/deals';
 import type { Insights } from '@/lib/insights';
+import Link from 'next/link';
+import AssetInsights, { PriceMark } from './AssetInsights';
+import { Cover } from './Cover';
+import { Icon } from './Icon';
+import { Countdown } from './Countdown';
+import { STATUS_STYLE } from './format';
 
 interface Pin {
   id: string; lat: number; lng: number; t: string | null; pt: string | null; u: string | null; ar: number | null;
@@ -12,6 +18,7 @@ interface Pin {
   a: { id: string; title: string; status: string; startAt: string | null; endAt: string | null };
   nt?: string | null;
   ins?: Insights | null;
+  img?: string | null; ss?: number | null; sw?: number | null; co?: boolean | null;
 }
 
 const TYPE_COLORS: Record<string, string> = {
@@ -38,26 +45,15 @@ const METRICS: Record<MetricKey, { label: string; unit: string; value: (r: Distr
 interface Shape { name: string; rings: [number, number][][] }
 interface MetroLine { ref: string; name: string; nameEn: string; colour: string; paths: [number, number][][]; stations: { name: string; lat: number; lng: number }[] }
 /** Drop-pin icon for auction assets (so they don't look like the coloured districts). */
-const pinIcon = (color: string) => L.divIcon({
-  className: '', iconSize: [22, 30], iconAnchor: [11, 29], popupAnchor: [0, -26],
-  html: `<svg width="22" height="30" viewBox="0 0 22 30" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.45))"><path d="M11 29C11 29 21 17.5 21 11A10 10 0 0 0 1 11C1 17.5 11 29 11 29Z" fill="${color}" stroke="#fff" stroke-width="1.6"/><circle cx="11" cy="11" r="3.6" fill="#fff"/></svg>`,
+const pinIcon = (color: string, big = false) => L.divIcon({
+  className: '', iconSize: big ? [32, 44] : [22, 30], iconAnchor: big ? [16, 43] : [11, 29], popupAnchor: [0, -26],
+  html: `<svg width="${big ? 32 : 22}" height="${big ? 44 : 30}" viewBox="0 0 22 30" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.45))"><path d="M11 29C11 29 21 17.5 21 11A10 10 0 0 0 1 11C1 17.5 11 29 11 29Z" fill="${color}" stroke="#fff" stroke-width="1.6"/><circle cx="11" cy="11" r="3.6" fill="#fff"/></svg>`,
 });
 const sar = (n: number | null) => (n == null ? '—' : Math.round(n).toLocaleString('en-US'));
 function quantileBreaks(values: number[], k = DEAL_COLORS.length): number[] {
   const s = [...values].sort((a, b) => a - b);
   if (!s.length) return [];
   return Array.from({ length: k - 1 }, (_, i) => s[Math.min(s.length - 1, Math.floor(((i + 1) * s.length) / k))]);
-}
-const V: Record<string, [string, string]> = { below: ['🟢', 'أقل من سعر الحي'], near: ['🟡', 'قريب من سعر الحي'], above: ['🔴', 'أعلى من سعر الحي'] };
-function insightHtml(i?: Insights | null): string {
-  if (!i) return '';
-  const n = (x?: number) => (x == null ? '—' : Math.round(x).toLocaleString('en-US'));
-  const out: string[] = [];
-  if (i.verdict && i.diffPct != null) out.push(`<div><b>${V[i.verdict][0]} ${V[i.verdict][1]}${i.verdict !== 'near' ? ' بـ ' + Math.abs(Math.round(i.diffPct * 100)) + '%' : ''}</b> · ${n(i.plotPpm)} مقابل ${n(i.benchPpm)} ريال/م²</div>`);
-  if (i.maxBid != null) out.push(`<div>💡 حد أعلى مقترح: <b>${n(i.maxBid)}</b> ريال</div>`);
-  if (i.metro) out.push(`<div>🚇 ${i.metro.km} كم — محطة ${i.metro.name}</div>`);
-  if (i.whiteLand) out.push('<div style="color:#b45309">⚠️ قد تخضع لرسوم الأراضي البيضاء</div>');
-  return out.join('');
 }
 const esc = (s: unknown) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 
@@ -79,6 +75,8 @@ export default function MapView() {
   const [types, setTypes] = useState<Set<string>>(new Set());
   const [pins, setPins] = useState<Pin[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [sel, setSel] = useState<Pin | null>(null);
+  const [panel, setPanel] = useState(false); // phone: filters sheet
 
   // create the map once
   useEffect(() => {
@@ -99,7 +97,8 @@ export default function MapView() {
     let saved = 'خريطة الشوارع';
     try { saved = localStorage.getItem('mapBase') ?? saved; } catch { /* ignore */ }
     (bases[saved] ?? streets).addTo(map.current);
-    L.control.layers(bases, undefined, { position: 'topright', collapsed: false }).addTo(map.current);
+    L.control.layers(bases, undefined, { position: 'topleft', collapsed: true }).addTo(map.current);
+    map.current.on('click', () => setSel(null));
     map.current.on('baselayerchange', (e: L.LayersControlEvent) => { try { localStorage.setItem('mapBase', e.name); } catch { /* ignore */ } });
     dealsLayer.current = L.layerGroup().addTo(map.current); // coloured districts (pins are markers, always on top)
     // metro lines above the coloured districts, below the auction pins
@@ -122,6 +121,7 @@ export default function MapView() {
     const g = GEO.find((x) => x.v === geo)!;
     map.current?.setView(g.center, g.zoom);
     setPins(null);
+    setSel(null);
   }, [geo, category, status]);
   useEffect(() => {
     setErr(null);
@@ -143,26 +143,15 @@ export default function MapView() {
     lg.clearLayers();
     for (const p of shown) {
       const color = TYPE_COLORS[p.pt ?? 'other'] ?? TYPE_COLORS.other;
-      const closing = p.a.status === 'upcoming' ? `يبدأ ${formatRiyadh(p.a.startAt)}` : `يغلق ${formatRiyadh(p.a.endAt)}`;
-      const html = `<div dir="rtl" style="font-family:inherit;min-width:220px;line-height:1.6">
-        <div style="font-weight:700;margin-bottom:2px">${esc(p.t ?? p.a.title)}</div>
-        <div style="color:${color};font-weight:600">${esc(propertyLabel(p.pt) === '—' ? 'غير محدد' : propertyLabel(p.pt))}${p.u ? ' · ' + esc(usageLabel(p.u)) : ''} · ${esc(statusLabel(p.a.status))}</div>
-        <div>📍 ${esc([p.d, p.ci].filter(Boolean).join('، ') || '—')}</div>
-        <div>المساحة: <b>${esc(fmtArea(p.ar) ?? '—')}</b></div>
-        <div>${p.cur ? 'آخر سعر' : 'الافتتاح'}: <b>${esc(fmtMoney(p.p) ?? '—')}</b> · العربون: ${esc(fmtMoney(p.dp) ?? '—')}</div>
-        <div>${esc(closing)}</div>
-        ${insightHtml(p.ins)}
-        ${p.nt ? `<div style="color:#92400e;font-size:12px;max-height:3.4em;overflow:hidden">📌 ${esc(p.nt)}</div>` : ''}
-        <div style="margin-top:4px">🔨 <a href="/auctions/${esc(p.a.id)}">${esc(p.a.title)}</a> · <a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(SOURCE[p.src] ?? p.src)} ↗</a></div>
-      </div>`;
-      L.marker([p.lat, p.lng], { icon: pinIcon(color), riseOnHover: true }).bindPopup(html).addTo(lg);
+      L.marker([p.lat, p.lng], { icon: pinIcon(color, sel?.id === p.id), riseOnHover: true, zIndexOffset: sel?.id === p.id ? 1000 : 0 })
+        .on('click', () => setSel(p)).addTo(lg);
     }
     if (shown.length && map.current && fitNext.current) {
       fitNext.current = false; // only after a filter change, not on the 5-minute refresh
       const b = L.latLngBounds(shown.map((p) => [p.lat, p.lng] as [number, number]));
       if (b.isValid()) map.current.fitBounds(b.pad(0.15), { maxZoom: 14 });
     }
-  }, [shown]);
+  }, [shown, sel]);
 
   // load deal summaries + district boundaries (only while the layer is on)
   useEffect(() => {
@@ -191,7 +180,7 @@ export default function MapView() {
     if (!deals) return '';
     const rows = deals.rows.filter((r) => r.q !== 'all' && r.p.includes(shapeName)).sort((a, b) => a.q.localeCompare(b.q));
     if (rows.length < 2) return '';
-    return `<div style="margin-top:4px"><b>📈 حسب الربع (أراضي · كل الصفقات):</b>${rows.map((r) => `<div>${esc(qLabel(r.q))}: ${r.nl >= MIN_DEALS ? sar(r.ml) : '—'} · ${r.n >= MIN_DEALS ? sar(r.m) : '—'} (${r.n} صفقة)</div>`).join('')}</div>`;
+    return `<div style="margin-top:4px"><b>حسب الربع (أراضي · كل الصفقات):</b>${rows.map((r) => `<div>${esc(qLabel(r.q))}: ${r.nl >= MIN_DEALS ? sar(r.ml) : '—'} · ${r.n >= MIN_DEALS ? sar(r.m) : '—'} (${r.n} صفقة)</div>`).join('')}</div>`;
   };
 
   // colour every district by the chosen metric
@@ -240,14 +229,14 @@ export default function MapView() {
     if (!showMetro || !metro) return;
     const renderer = L.svg({ pane: 'metro' });
     for (const line of metro) {
-      const label = `🚇 ${line.name} (${line.ref})`;
+      const label = `مترو: ${line.name} (${line.ref})`;
       L.polyline(line.paths, { pane: 'metro', renderer, color: '#ffffff', weight: 7, opacity: 0.9, interactive: false }).addTo(lg);
       L.polyline(line.paths, { pane: 'metro', renderer, color: line.colour, weight: 4, opacity: 1 }).bindTooltip(label, { sticky: true }).addTo(lg);
     }
     for (const line of metro) {
       for (const st of line.stations) {
         L.circleMarker([st.lat, st.lng], { pane: 'metro', renderer, radius: 4, color: line.colour, weight: 2, fillColor: '#ffffff', fillOpacity: 1 })
-          .bindTooltip(`🚇 محطة ${st.name} — ${line.name}`, { direction: 'top' }).addTo(lg);
+          .bindTooltip(`محطة ${st.name} — ${line.name}`, { direction: 'top' }).addTo(lg);
       }
     }
   }, [showMetro, metro]);
@@ -255,81 +244,155 @@ export default function MapView() {
 
   const toggle = (t: string) => setTypes((s) => { const n = new Set(s); n.has(t) ? n.delete(t) : n.add(t); return n; });
 
-  return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">خريطة الأصول</h1>
-          <p className="muted text-xs">كل أصل له موقع على الخريطة (غالباً من مباشر والسعودية للمزادات ومزادات). اضغط على النقطة للتفاصيل.</p>
+  // keep Leaflet's size right when the layout around it changes (panel, card)
+  useEffect(() => { const t = setTimeout(() => map.current?.invalidateSize(), 50); return () => clearTimeout(t); }, [panel]);
+
+  const filters = (
+    <div className="space-y-5 text-sm">
+      <section className="space-y-2">
+        <h2 className="label font-semibold">ما يظهر على الخريطة</h2>
+        <div className="grid grid-cols-2 gap-2">
+          <select className="input" value={category} onChange={(e) => setCategory(e.target.value)} aria-label="النوع">
+            <option value="real_estate">العقارات</option><option value="all">كل الأنواع</option>
+          </select>
+          <select className="input" value={status} onChange={(e) => setStatus(e.target.value)} aria-label="الحالة">
+            <option value="">النشطة</option><option value="live">جاري</option><option value="upcoming">قادم</option><option value="all">الكل</option>
+          </select>
         </div>
-        <div className="seg flex-wrap">
-          {GEO.map((g) => <button key={g.v} onClick={() => setGeo(g.v)} aria-pressed={geo === g.v}>{g.l}</button>)}
+        <div className="flex flex-wrap gap-1.5">
+          {Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([t, n]) => {
+            const on = types.has(t), c = TYPE_COLORS[t] ?? '#6b7280';
+            return (
+              <button key={t} onClick={() => toggle(t)} aria-pressed={on} className="press chip min-h-[2.1rem] border px-3 text-[13px]"
+                style={{ borderColor: on ? c : 'var(--border)', background: on ? c : 'var(--card)', color: on ? '#fff' : 'var(--text)' }}>
+                <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: on ? '#fff' : c }} />
+                {propertyLabel(t) === '—' ? 'غير محدد' : propertyLabel(t)} <span className="num opacity-75">{n}</span>
+              </button>
+            );
+          })}
         </div>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <select className="input w-auto" value={category} onChange={(e) => setCategory(e.target.value)} aria-label="النوع">
-          <option value="real_estate">العقارات</option><option value="all">كل الأنواع</option>
-        </select>
-        <select className="input w-auto" value={status} onChange={(e) => setStatus(e.target.value)} aria-label="الحالة">
-          <option value="">النشطة (جاري + قادم)</option><option value="live">جاري</option><option value="upcoming">قادم</option><option value="all">الكل</option>
-        </select>
-        {Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([t, n]) => (
-          <button key={t} onClick={() => toggle(t)} className={`chip min-h-[2.25rem] border px-3 text-sm ${types.has(t) ? 'text-white' : ''}`}
-            style={{ borderColor: TYPE_COLORS[t] ?? '#6b7280', background: types.has(t) ? TYPE_COLORS[t] ?? '#6b7280' : undefined }}>
-            <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: TYPE_COLORS[t] ?? '#6b7280' }} />
-            {propertyLabel(t) === '—' ? 'غير محدد' : propertyLabel(t)} <span className="num opacity-75">{n}</span>
-          </button>
-        ))}
-        <select className="input w-auto" value={dealsMode} onChange={(e) => setDealsMode(e.target.value as 'off' | MetricKey)} aria-label="تلوين الأحياء">
-          <option value="off">تلوين الأحياء: إيقاف</option>
-          {(Object.keys(METRICS) as MetricKey[]).map((k) => <option key={k} value={k}>تلوين الأحياء: {METRICS[k].label}</option>)}
+        {types.size > 0 && <button className="link text-xs" onClick={() => setTypes(new Set())}>عرض كل الأنواع</button>}
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="label font-semibold">تلوين الأحياء حسب صفقات وزارة العدل</h2>
+        <select className="input" value={dealsMode} onChange={(e) => setDealsMode(e.target.value as 'off' | MetricKey)} aria-label="تلوين الأحياء">
+          <option value="off">إيقاف</option>
+          {(Object.keys(METRICS) as MetricKey[]).map((k) => <option key={k} value={k}>{METRICS[k].label}</option>)}
         </select>
         {dealsMode !== 'off' && deals && (
-          <select className="input w-auto" value={dealsQ} onChange={(e) => setDealsQ(e.target.value)} aria-label="الفترة">
+          <select className="input" value={dealsQ} onChange={(e) => setDealsQ(e.target.value)} aria-label="الفترة">
             <option value="all">{qLabel('all')} ({deals.quarters.reduce((s, q) => s + q.mapped, 0)} صفقة)</option>
             {[...deals.quarters].reverse().map((q) => <option key={q.q} value={q.q}>{qLabel(q.q)} ({q.mapped} صفقة)</option>)}
           </select>
         )}
-        <button onClick={toggleMetro} className={`chip min-h-[2.25rem] border px-3 text-sm ${showMetro ? 'border-[var(--text)] bg-[var(--text)] text-[var(--card)]' : 'border-[var(--border-strong)]'}`} aria-pressed={showMetro}>
-          مترو الرياض
+        {metric && deals && (
+          <div className="space-y-1.5 text-xs">
+            <div className="flex overflow-hidden rounded-md">
+              {DEAL_COLORS.map((c) => <span key={c} className="h-2.5 flex-1" style={{ background: c }} />)}
+            </div>
+            <div className="num muted flex justify-between" dir="ltr">
+              <span>{sar(breaks[0] ?? null)}&minus;</span><span>{sar(breaks[breaks.length - 1] ?? null)}+</span>
+            </div>
+            <div className="muted">{metric.unit} · {rated.length} حي ملوّن · المخطط الرمادي = صفقات أقل من {MIN_DEALS}</div>
+            {rated.length === 0 && <div className="text-amber-700">لا توجد صفقات كافية لهذه الفترة.</div>}
+          </div>
+        )}
+      </section>
+
+      <section className="space-y-2">
+        <button onClick={toggleMetro} aria-pressed={showMetro}
+          className={`press flex w-full items-center justify-between rounded-lg border px-3 py-2.5 font-semibold ${showMetro ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]' : 'border-[var(--border)]'}`}>
+          <span className="flex items-center gap-2"><Icon name="metro" />مترو الرياض</span>
+          <span className={`relative h-5 w-9 rounded-full transition-colors ${showMetro ? 'bg-[var(--accent)]' : 'bg-[var(--border-strong)]'}`}>
+            <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all ${showMetro ? 'left-0.5' : 'left-[18px]'}`} />
+          </span>
         </button>
-        <span className="muted text-sm">{pins ? `${shown.length} أصل على الخريطة` : err ? `تعذر التحميل: ${err}` : 'جاري التحميل…'}</span>
+        {showMetro && metro && (
+          <div className="muted grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+            {metro.map((l) => <span key={l.ref} className="flex items-center gap-1.5"><span className="inline-block h-1.5 w-4 rounded" style={{ background: l.colour }} />{l.name}</span>)}
+          </div>
+        )}
+      </section>
+
+      <details className="muted text-[11px] leading-relaxed">
+        <summary className="cursor-pointer font-semibold">عن البيانات</summary>
+        <p className="mt-1">صفقات وزارة العدل (open.data.gov.sa)، مدينة الرياض فقط؛ السعر = الوسيط لكل حي، تقريبي. حدود الأحياء من العنوان الوطني (سبل). المترو © مساهمو OpenStreetMap.
+          {deals && ` عدد الصفقات لكل ربع: ${deals.quarters.map((q) => `${qLabel(q.q)}: ${q.riyadhDeals}`).join('، ')}.`}</p>
+        <p className="mt-1">لا تظهر الأصول التي لا يذكر مصدرها موقعاً دقيقاً — تجدها في صفحة العقارات.</p>
+      </details>
+    </div>
+  );
+
+  const card = sel && (
+    <div className="drop absolute inset-x-2 bottom-2 z-[1000] mx-auto max-w-md overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-[0_16px_40px_-12px_rgba(16,33,27,.35)] sm:inset-x-auto sm:left-3 sm:w-[380px]">
+      <div className="flex">
+        <div className="w-28 flex-none sm:w-32">
+          <Cover src={sel.img} ratio="h-full min-h-[132px]" figure={null} caption={propertyLabel(sel.pt) === '—' ? null : propertyLabel(sel.pt)}>
+            {sel.ins?.verdict && <span className="absolute inset-x-1 top-1 flex justify-center [&>span]:static [&>span]:px-2 [&>span]:text-[11px]"><PriceMark verdict={sel.ins.verdict} diff={sel.ins.diffPct} /></span>}
+          </Cover>
+        </div>
+        <div className="min-w-0 flex-1 space-y-1.5 p-3 text-xs">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex flex-wrap gap-1">
+              <span className={`chip ${STATUS_STYLE[sel.a.status]}`}>{statusLabel(sel.a.status)}</span>
+              <span className="chip chip-quiet">{propertyLabel(sel.pt) === '—' ? 'غير محدد' : propertyLabel(sel.pt)}{sel.u ? ` · ${usageLabel(sel.u)}` : ''}</span>
+            </div>
+            <button onClick={() => setSel(null)} className="muted -m-1 rounded-md p-1 hover:text-[var(--text)]" aria-label="إغلاق"><Icon name="close" size={16} /></button>
+          </div>
+          <Link href={`/auctions/${sel.a.id}`} className="line-clamp-2 text-[14px] font-bold leading-snug hover:text-[var(--accent)]">{sel.t ?? sel.a.title}</Link>
+          <div className="muted truncate">{[sel.d && `حي ${String(sel.d).replace(/^حي\s+/, '')}`, sel.ci].filter(Boolean).join('، ') || '—'} · {SOURCE[sel.src] ?? sel.src}</div>
+          <div className="num grid grid-cols-3 gap-1 rounded-lg bg-[var(--sunk)] px-2 py-1.5">
+            <div><div className="label">المساحة</div><div className="font-bold">{fmtArea(sel.ar) ?? '—'}</div></div>
+            <div><div className="label">{sel.cur ? 'آخر سعر' : 'الافتتاح'}</div><div className="font-bold">{fmtMoney(sel.p) ?? '—'}</div></div>
+            <div><div className="label">العربون</div><div className="font-bold">{fmtMoney(sel.dp) ?? '—'}</div></div>
+          </div>
+          <div className="muted">{sel.a.status === 'live' && sel.a.endAt ? <>يغلق خلال <Countdown to={sel.a.endAt} compact /></> : sel.a.status === 'upcoming' ? `يبدأ ${formatRiyadh(sel.a.startAt)}` : `أغلق ${formatRiyadh(sel.a.endAt)}`}</div>
+        </div>
       </div>
-      <div ref={el} className="card overflow-hidden" style={{ height: 'min(70vh, 640px)', minHeight: 360 }} />
-      {metric && deals && (
-        <div className="card space-y-2 p-3 text-xs">
-          <div className="flex flex-wrap items-center gap-3">
-            <b>{metric.label} ({metric.unit}) · {qLabel(dealsQ)}:</b>
-            {DEAL_COLORS.map((c, i) => (
-              <span key={c} className="flex items-center gap-1">
-                <span className="inline-block h-3 w-4 rounded-sm border" style={{ background: c }} />
-                <span className="num" dir="ltr">{i === 0 ? `< ${sar(breaks[0] ?? null)}` : i === DEAL_COLORS.length - 1 ? `${sar(breaks[i - 1] ?? null)}+` : `${sar(breaks[i - 1] ?? null)}–${sar(breaks[i] ?? null)}`}</span>
-              </span>
-            ))}
-            <span className="flex items-center gap-1">
-              <span className="inline-block h-3 w-4 rounded-sm border border-dashed border-gray-400 bg-gray-100" />
-              لا توجد بيانات كافية (أقل من {MIN_DEALS} صفقات)
-            </span>
-            <span className="muted">· {rated.length} حي ملوّن · 📍 الدبابيس = أصول المزادات</span>
-          </div>
-          {rated.length === 0 && <div className="text-amber-700">لا توجد صفقات كافية لمدينة الرياض في ملف وزارة العدل لهذه الفترة.</div>}
-          <div className="muted">
-            المصدر: وزارة العدل، البيانات المفتوحة (open.data.gov.sa)، صفقات مدينة الرياض فقط. حدود الأحياء من خريطة العنوان الوطني (سبل). السعر = الوسيط لكل حي؛ الملف لا يحتوي على موقع العقار داخل الحي ولا نوعه.
-            ملفات الوزارة تحتوي على عدد صفقات للرياض أقل بكثير من مؤشرات الهيئة العامة للعقار، وقد انخفض العدد كل ربع
-            ({deals.quarters.map((q) => `${qLabel(q.q)}: ${q.riyadhDeals}`).join('، ')}) — لذا اعتبر الأسعار مؤشراً تقريبياً.
+      {(sel.ins || sel.ss || sel.co) && (
+        <div className="max-h-40 overflow-y-auto border-t border-[var(--border)] px-3 py-2">
+          <AssetInsights ins={sel.ins} area={sel.ar} price={sel.p} deposit={sel.dp} asset={{ latitude: sel.lat, longitude: sel.lng, streetSides: sel.ss, streetWidth: sel.sw, corner: sel.co }} />
+        </div>
+      )}
+      <div className="flex gap-2 border-t border-[var(--border)] p-2">
+        <Link href={`/auctions/${sel.a.id}`} className="btn btn-primary press flex-1 text-[13px]">تفاصيل المزاد</Link>
+        <a href={sel.url} target="_blank" rel="noreferrer" className="btn press text-[13px]">{SOURCE[sel.src] ?? sel.src}<Icon name="external" size={14} /></a>
+        <a href={`https://www.google.com/maps?q=${sel.lat},${sel.lng}`} target="_blank" rel="noreferrer" className="btn press px-3" aria-label="فتح في خرائط Google"><Icon name="map" size={16} /></a>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">خريطة الأصول</h1>
+          <p className="muted text-sm">{pins ? <><span className="num font-semibold text-[var(--text)]">{shown.length}</span> أصل على الخريطة · اضغط على الدبوس للتفاصيل</> : err ? `تعذر التحميل: ${err}` : 'جاري تحميل الأصول…'}</p>
+        </div>
+        <div className="seg" role="group" aria-label="النطاق الجغرافي">
+          {GEO.map((g) => <button key={g.v} onClick={() => setGeo(g.v)} aria-pressed={geo === g.v}>{g.l}</button>)}
+        </div>
+      </div>
+      <div className="grid gap-3 lg:grid-cols-[320px_1fr]">
+        <aside className="card hidden max-h-[calc(100dvh-210px)] min-h-[520px] overflow-y-auto p-4 lg:block">{filters}</aside>
+        <div className="relative">
+          <div ref={el} className="card h-[64dvh] min-h-[380px] overflow-hidden lg:h-[calc(100dvh-210px)] lg:min-h-[520px]" />
+          {!pins && !err && <div className="pointer-events-none absolute inset-0 z-[500] grid place-items-center"><span className="skeleton rounded-full px-4 py-2 text-xs" style={{ opacity: .9 }}>جاري تحميل الأصول…</span></div>}
+          <button onClick={() => setPanel(true)} className="btn press absolute right-2 top-2 z-[1000] shadow-md lg:hidden"><Icon name="filter" size={16} />الفلاتر والطبقات{types.size ? <span className="num chip bg-[var(--accent)] text-[var(--accent-ink)]">{types.size}</span> : null}</button>
+          {card}
+        </div>
+      </div>
+      {panel && (
+        <div className="fixed inset-0 z-[1200] lg:hidden" role="dialog" aria-modal="true" aria-label="الفلاتر والطبقات">
+          <button className="absolute inset-0 bg-black/30" onClick={() => setPanel(false)} aria-label="إغلاق" />
+          <div className="sheet-in absolute inset-x-0 bottom-0 max-h-[82dvh] overflow-y-auto rounded-t-2xl bg-[var(--card)] p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[var(--border-strong)]" />
+            <div className="mb-3 flex items-center justify-between"><h2 className="text-lg font-bold">الفلاتر والطبقات</h2><button className="btn" onClick={() => setPanel(false)}>تم</button></div>
+            {filters}
           </div>
         </div>
       )}
-      {showMetro && metro && (
-        <div className="muted flex flex-wrap items-center gap-3 text-xs">
-          <b>🚇 مترو الرياض:</b>
-          {metro.map((l) => (
-            <span key={l.ref} className="flex items-center gap-1"><span className="inline-block h-1.5 w-5 rounded" style={{ background: l.colour }} />{l.name}</span>
-          ))}
-          <span>· الدوائر البيضاء = المحطات · البيانات © مساهمو OpenStreetMap</span>
-        </div>
-      )}
-      <p className="muted text-xs">لا تظهر هنا الأصول التي لا يذكر مصدرها موقعاً دقيقاً (مثل بعض أصول إنفاذ وسومتك) — تجدها في صفحة العقارات.</p>
     </div>
   );
 }

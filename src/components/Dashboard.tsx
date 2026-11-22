@@ -1,4 +1,5 @@
 'use client';
+import { GridSkeleton } from './Skeleton';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AuctionCard, type AuctionItem } from './AuctionCard';
 import { SOURCE_STATUS, catLabel, formatRiyadh, timeAgo } from './format';
@@ -229,7 +230,7 @@ export function Dashboard({ savedOnly = false }: { savedOnly?: boolean }) {
 
       <div className="flex items-center justify-between text-sm">
         <span className="muted">{data ? <><span className="num font-semibold">{data.total}</span> مزاد{quick && ` · ${{ endingToday: 'تنتهي اليوم', new24h: 'جديدة خلال 24 ساعة', live: 'الجارية', upcoming: 'القادمة' }[quick]}`}{filters.category && ` · ${catLabel(filters.category)}`}</> : '...'}</span>
-        {loading && <span className="muted text-xs">جاري التحميل…</span>}
+        {loading && data && <span className="muted text-xs">يتم التحديث…</span>}
       </div>
 
       {data && data.items.length === 0 ? (
@@ -238,7 +239,8 @@ export function Dashboard({ savedOnly = false }: { savedOnly?: boolean }) {
           <p className="muted text-sm">{stats?.total === 0 && !savedOnly ? 'لم يتم جلب بيانات بعد — اضغط "تحديث الآن" أو شغّل الـ worker.' : 'جرّب توسيع النطاق الجغرافي أو تغيير الفلاتر.'}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        !data ? <GridSkeleton n={8} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" /> :
+        <div key={`${geo}|${focus}|${page}|${quick}`} className="rise-list grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {data?.items.map((a) => <AuctionCard key={a.id} a={a} sourceNames={sourceNames} onToggleSave={toggleSave} />)}
         </div>
       )}

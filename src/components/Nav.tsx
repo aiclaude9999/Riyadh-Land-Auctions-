@@ -2,22 +2,10 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { Icon, type IconName } from './Icon';
 
-type L = { href: string; label: string; icon?: keyof typeof ICONS };
+type L = { href: string; label: string; icon?: IconName };
 
-/** Thin line icons drawn for this product (24px grid, 1.7 stroke, currentColor). */
-const ICONS = {
-  gavel: <><path d="m14.5 4.5 5 5" /><path d="m12 7 5 5" /><path d="m13.2 5.8 4.9 4.9-3.4 3.4-4.9-4.9z" /><path d="M11.3 11.3 4 18.6a1.4 1.4 0 0 0 2 2l7.3-7.3" /><path d="M14 21h7" /></>,
-  building: <><path d="M4 21V5.5L12 3v18" /><path d="M12 9h8v12" /><path d="M3 21h18" /><path d="M7.5 8v.01M7.5 11.5v.01M7.5 15v.01M15.5 13v.01M15.5 16.5v.01" strokeWidth="2.2" strokeLinecap="round" /></>,
-  map: <><path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6z" /><path d="M9 4v14M15 6v14" /></>,
-  deals: <><path d="M3 12.5V4h8.5l9 9-8.5 8.5z" /><circle cx="7.5" cy="8.5" r="1.3" /><path d="m11 13 2.5 2.5 3-5" /></>,
-  tools: <><rect x="4" y="4" width="6.5" height="6.5" rx="1.5" /><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5" /><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5" /><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5" /></>,
-  user: <><circle cx="12" cy="8.5" r="3.5" /><path d="M5 20c1.2-3.6 4-5 7-5s5.8 1.4 7 5" /></>,
-  bell: <><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15L6 16Z" /><path d="M10 20.5a2 2 0 0 0 4 0" /></>,
-};
-function Icon({ name, size = 18 }: { name: keyof typeof ICONS; size?: number }) {
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true">{ICONS[name]}</svg>;
-}
 /** The four places people go most; everything else sits in two small menus (desktop) or "المزيد" (phone). */
 const MAIN: L[] = [
   { href: '/', label: 'المزادات', icon: 'gavel' },
@@ -53,7 +41,7 @@ export function Mark({ size = 28 }: { size?: number }) {
 
 const isActive = (path: string, href: string) => (href === '/' ? path === '/' : path.startsWith(href));
 
-function Menu({ label, icon, items, path, badge }: { label: string; icon: keyof typeof ICONS; items: L[]; path: string; badge?: number }) {
+function Menu({ label, icon, items, path, badge }: { label: string; icon: IconName; items: L[]; path: string; badge?: number }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => setOpen(false), [path]);
@@ -77,7 +65,7 @@ function Menu({ label, icon, items, path, badge }: { label: string; icon: keyof 
         {here && <span className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-[var(--accent)]" />}
       </button>
       {open && (
-        <div role="menu" className="absolute left-0 top-[calc(100%-6px)] z-30 min-w-48 rounded-xl border border-[var(--border)] bg-[var(--card)] p-1.5 shadow-[0_12px_32px_-12px_rgba(16,33,27,.25)]">
+        <div role="menu" className="drop absolute left-0 top-[calc(100%-6px)] z-30 min-w-48 rounded-xl border border-[var(--border)] bg-[var(--card)] p-1.5 shadow-[0_12px_32px_-12px_rgba(16,33,27,.25)]">
           {items.map((i) => (
             <Link key={i.href} role="menuitem" href={i.href}
               className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm ${isActive(path, i.href) ? 'bg-[var(--accent-soft)] font-semibold text-[var(--accent)]' : 'hover:bg-[var(--sunk)]'}`}>
@@ -153,7 +141,7 @@ export function Nav() {
       {/* phone: bottom tab bar with the four main places + "المزيد" */}
       <nav aria-label="الأقسام" className="fixed inset-x-0 bottom-0 z-[1100] border-t border-[var(--border)] bg-[var(--card)] pb-[env(safe-area-inset-bottom)] md:hidden">
         {more && (
-          <div className="grid grid-cols-2 gap-1 border-b border-[var(--border)] p-2">
+          <div className="sheet-in grid grid-cols-2 gap-1 border-b border-[var(--border)] p-2">
             {[...TOOLS, ...ACCOUNT].map((l) => (
               <Link key={l.href} href={l.href} className={`rounded-lg px-3 py-2.5 text-sm font-semibold ${isActive(path, l.href) ? 'bg-[var(--accent-soft)] text-[var(--accent)]' : 'bg-[var(--sunk)]'}`}>{l.label}</Link>
             ))}

@@ -5,7 +5,7 @@ import { useState } from 'react';
  * A card's picture. With no picture, or one that fails to load, the plot itself is the picture:
  * its area at display size and what it is — same frame size, so card rows stay even.
  */
-export function Cover({ src, ratio, figure, caption }: { src?: string | null; ratio: string; figure?: string | null; caption?: string | null }) {
+export function Cover({ src, ratio, figure, caption, children }: { src?: string | null; ratio: string; figure?: string | null; caption?: string | null; children?: React.ReactNode }) {
   const [broken, setBroken] = useState(false);
   return (
     <div className={`relative overflow-hidden bg-[var(--sunk)] ${ratio}`}>
@@ -18,6 +18,7 @@ export function Cover({ src, ratio, figure, caption }: { src?: string | null; ra
           {caption && <span className="muted mt-1.5 text-xs font-semibold">{caption}</span>}
         </div>
       )}
+      {children}
     </div>
   );
 }

@@ -14,7 +14,7 @@ export default function SettingsPage() {
   const [s, setS] = useState<any>(null);
   const [saved, setSaved] = useState<string | null>(null);
   useEffect(() => { fetch('/api/settings').then((r) => r.json()).then(setS); }, []);
-  if (!s) return <div className="muted p-6">جاري التحميل…</div>;
+  if (!s) return <div className="space-y-3" role="status" aria-label="جاري التحميل"><div className="skeleton h-8 w-40" /><div className="skeleton h-48" /></div>;
 
   const save = async () => {
     const r = await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(s) }).then((x) => x.json());
